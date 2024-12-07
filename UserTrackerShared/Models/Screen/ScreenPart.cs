@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserTrackerShared.Models
+namespace UserTrackerShared.Models.Screen
 {
     public abstract class ScreenPart : ScreenBase
     {

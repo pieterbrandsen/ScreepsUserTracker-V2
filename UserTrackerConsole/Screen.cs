@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using UserTrackerShared.Models.Screen;
 
-namespace UserTrackerShared.Models
+namespace UserTrackerConsole
 {
     public class Screen : ScreenBase, IDisposable
     {
@@ -13,7 +14,7 @@ namespace UserTrackerShared.Models
         {
             Name = name;
             Console.Title = Name;
-            
+
             UpdateSize();
 
             CheckAndUpdateSizeTimer = new System.Timers.Timer();
