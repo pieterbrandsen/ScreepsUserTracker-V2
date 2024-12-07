@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserTrackerShared.States
+namespace UserTrackerShared.Helpers
 {
-    internal class LeaderboardState
+    public static class ScreepsAPIHelper
     {
     }
 }

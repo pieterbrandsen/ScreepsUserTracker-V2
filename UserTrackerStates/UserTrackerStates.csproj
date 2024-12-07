@@ -1,25 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <AppConfig>App.Live.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UserTrackerScreepsApi\UserTrackerScreepsApi.csproj" />
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
-    <ProjectReference Include="..\UserTrackerStates\UserTrackerStates.csproj" />
   </ItemGroup>
 
 </Project>
