@@ -19,13 +19,13 @@ namespace UserTrackerShared.Models.Screen
 
         void DisplayLogs()
         {
-            SetCursorPosition(5);
+            UserTrackerShared.Screen.SetCursorPosition(5);
             Console.WriteLine(new string(' ', Console.WindowWidth)); // Clear log area
             for (int i = 0; i < logEntries.Count; i++)
             {
                 if (i < Height) // Only display the maximum allowed logs
                 {
-                    SetCursorPosition(StartHeight + i);
+                    UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
                     Console.WriteLine(logEntries[i]); // Show current log
                 }
             }

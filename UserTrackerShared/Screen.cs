@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using System.Timers;
 using UserTrackerShared.Models.Screen;
 
-namespace UserTrackerConsole
+namespace UserTrackerShared
 {
-    public class Screen : ScreenBase, IDisposable
+    public static class Screen
     {
-        public Screen(string name)
+        public static void Init()
         {
-            Name = name;
             Console.Title = Name;
 
             UpdateSize();
@@ -25,15 +24,15 @@ namespace UserTrackerConsole
             CheckAndUpdateSizeTimer.Start();
         }
 
-        public string Name { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public TitleScreenPart TitlePart { get; set; } = new TitleScreenPart(false, 0, 0, 0);
-        public LogScreenPart LogsPart { get; set; } = new LogScreenPart(false, 0, 0, 0);
-        public FooterScreenPart FooterPart { get; set; } = new FooterScreenPart(false, 0, 0, 0);
-        public System.Timers.Timer? CheckAndUpdateSizeTimer { get; set; } = new System.Timers.Timer();
+        public static string Name { get; set; } = "User Tracker Screen";
+        public static int Width { get; set; }
+        public static int Height { get; set; }
+        public static TitleScreenPart TitlePart = new TitleScreenPart(false, 0, 0, 0);
+        public static LogScreenPart LogsPart = new LogScreenPart(false, 0, 0, 0);
+        public static FooterScreenPart FooterPart = new FooterScreenPart(false, 0, 0, 0);
+        public static System.Timers.Timer? CheckAndUpdateSizeTimer = new System.Timers.Timer();
 
-        public void UpdateSize()
+        public static void UpdateSize()
         {
             Width = Console.WindowWidth;
             Height = Console.WindowHeight;
@@ -63,7 +62,7 @@ namespace UserTrackerConsole
             }
         }
 
-        public void CheckAndUpdateSize(object? source, ElapsedEventArgs e)
+        public static void CheckAndUpdateSize(object? source, ElapsedEventArgs e)
         {
             if (Console.WindowWidth != Width || Console.WindowHeight != Height)
             {
@@ -71,14 +70,20 @@ namespace UserTrackerConsole
             }
         }
 
-        public void Dispose()
+        public static void SetCursorPosition(int y)
         {
-            if (CheckAndUpdateSizeTimer != null)
+            try
             {
-                CheckAndUpdateSizeTimer.Dispose();
-                CheckAndUpdateSizeTimer = null;
+                Console.SetCursorPosition(0, y);
             }
-            throw new NotImplementedException();
+            catch (Exception)
+            {
+            }
+        }
+        public static void WriteDivider(int location)
+        {
+            SetCursorPosition(location);
+            Console.WriteLine(new string('=', Console.WindowWidth)); // Draw top border
         }
     }
 }

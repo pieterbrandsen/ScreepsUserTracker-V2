@@ -1,16 +1,13 @@
-﻿using UserTrackerConsole;
+﻿using UserTrackerShared;
 using UserTrackerShared.States;
 
-var screen = new Screen("Main");
-
+Screen.Init();
 GameState.Init();
 
 var a = 1;
 while (true)
 {
     a += 1;
-    screen.LogsPart.AddLog($"h {a}");
+    Screen.LogsPart.AddLog($"h {a}");
     Thread.Sleep(1000);
 }
-
-Console.ReadLine();

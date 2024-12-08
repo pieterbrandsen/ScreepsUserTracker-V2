@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace UserTrackerShared.Models.Screen
 {
-    public abstract class ScreenPart : ScreenBase
+    public abstract class ScreenPart
     {
         public ScreenPart(bool enabled, int width, int startHeight, int height)
         {
