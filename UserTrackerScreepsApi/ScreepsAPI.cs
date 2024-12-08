@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Net.Http.Headers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static UserTrackerShared.Models.ScreepsAPI.Season;
+using UserTrackerShared;
 
 namespace UserTrackerScreepsApi
 {
@@ -45,6 +46,9 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
                 var response = await client.SendAsync(request);
+
+                Screen.LogsPart.AddLog($"{path} - {response.StatusCode}");
+
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
