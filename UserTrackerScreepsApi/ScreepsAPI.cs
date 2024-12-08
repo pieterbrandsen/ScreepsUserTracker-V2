@@ -7,6 +7,11 @@ using System.Net.Http.Headers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using static UserTrackerShared.Models.ScreepsAPI.Season;
 using UserTrackerShared;
+using System.IO.Compression;
+using System.Text;
+using System.Xml.Linq;
+using System.Net.Http.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace UserTrackerScreepsApi
 {
@@ -51,9 +56,40 @@ namespace UserTrackerScreepsApi
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var responseContent = await response.Content.ReadAsStringAsync();
+                    var encoding = response.Content.Headers.ContentEncoding.ToString();
+                    byte[] responseData = await response.Content.ReadAsByteArrayAsync();
 
-                    T? result = JsonConvert.DeserializeObject<T>(responseContent);
+                    var json = "";
+                    if (encoding.Contains("gzip"))
+                    {
+                        using var decompressedStream = new GZipStream(new MemoryStream(responseData), CompressionMode.Decompress);
+                        using var reader = new StreamReader(decompressedStream, Encoding.UTF8);
+                        json = await reader.ReadToEndAsync();
+                    }
+                    else
+                    {
+                        json = Encoding.UTF8.GetString(responseData);
+                    }
+
+                    JsonSerializerSettings settings = new JsonSerializerSettings
+                    {
+                        // Handle errors (unknown properties, etc.)
+                        Error = (sender, e) =>
+                        {
+                            // If an unknown property is found, fail the deserialization
+                            Console.WriteLine($"Error: {e.ErrorContext.Error.Message}");
+                            e.ErrorContext.Handled = false; // Don't mark the error as handled, so deserialization fails
+                        },
+                        // Set MissingMemberHandling to Error to ensure failure for unknown properties
+                        MissingMemberHandling = MissingMemberHandling.Error,
+                        // This will fail on any unknown properties (additional properties not in the model)
+                        ContractResolver = new DefaultContractResolver
+                        {
+                            // Ignore properties not defined in the model (will trigger an error)
+                            DefaultMembersSearchFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                        }
+                    };
+                    T? result = JsonConvert.DeserializeObject<T>(json, settings);
 
                     return (result, response.StatusCode);
                 }
@@ -125,6 +161,14 @@ namespace UserTrackerScreepsApi
             var path = $"/api/leaderboard/find?mode={mode}&username={username}";
 
             var (Result, Status) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
+            return Result;
+        }
+
+        public static async Task<HistoryResponse?> GetHistory(string shard, string room, int tick)
+        {
+            var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
+
+            var (Result, Status) = await ExecuteRequestAsync<HistoryResponse>(HttpMethod.Get, path);
             return Result;
         }
     }

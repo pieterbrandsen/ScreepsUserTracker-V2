@@ -1,7 +1,5 @@
 ﻿using System.Configuration;
-using System.Threading;
 using System.Timers;
-using System.Xml.Linq;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models.ScreepsAPI;
 using Timer = System.Timers.Timer;
@@ -14,6 +12,7 @@ namespace UserTrackerShared.States
         public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
         public static string ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
         public static string ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
+        public static bool IsPrivateServer = ScreepsAPIUrl != "https://screeps.com";
 
         public static List<SeaonListItem> CurrentLeaderboard { get; set; }
 
@@ -22,6 +21,28 @@ namespace UserTrackerShared.States
 
         public static async void Init()
         {
+            // debug purposes only
+            for (int i = 0; i < 50; i++)
+            {
+                for (int j = 0; j < 50; j++)
+                {
+                    for (int k = 0; k < 10; k++)
+                    {
+                        await ScreepsAPI.GetHistory("shard0", $"E{i}N{j}", 64920600 - (k * 100));
+                        await Task.Delay(500);
+
+                        await ScreepsAPI.GetHistory("shard0", $"E{i}S{j}", 64920600 - (k * 100));
+                        await Task.Delay(500);
+
+                        await ScreepsAPI.GetHistory("shard0", $"W{i}N{j}", 64920600 - (k * 100));
+                        await Task.Delay(500);
+
+                        await ScreepsAPI.GetHistory("shard0", $"W{i}S{j}", 64920600 - (k * 100));
+                        await Task.Delay(500);
+                    }
+                }
+            }
+
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {
