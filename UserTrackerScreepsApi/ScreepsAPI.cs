@@ -1,4 +1,6 @@
 ﻿using System.Net;
+using UserTrackerShared.Models.ScreepsAPI;
+using Newtonsoft.Json;
 
 namespace UserTrackerScreepsApi
 {
@@ -17,56 +19,77 @@ namespace UserTrackerScreepsApi
             return new Uri(apiUrl + path);
         }
 
-        private async Task<HttpStatusCode> ExecuteGetRequest(string path)
+        private async Task<(T? Result, HttpStatusCode Status)> ExecuteGetRequestAsync<T>(string path)
         {
             try
             {
-                HttpClient client = new();
+                using HttpClient client = new();
 
                 var response = await client.GetAsync(CombineUrl(path));
-                return response.StatusCode;
-            }
-            catch (Exception)
-            {
 
-                throw;
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    T? result = JsonConvert.DeserializeObject<T>(responseContent);
+
+                    return (result, response.StatusCode);
+                }
+                else
+                {
+                    return (default, response.StatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                return (default, HttpStatusCode.InternalServerError);
             }
         }
 
-        private async Task<HttpStatusCode> ExecutePostRequest(string path, HttpContent httpContent)
+        private async Task<(T? Result, HttpStatusCode Status)> ExecutePostRequestAsync<T>(string path, HttpContent httpContent)
         {
             try
             {
-                HttpClient client = new();
+                using HttpClient client = new();
 
                 var response = await client.PostAsync(CombineUrl(path), httpContent);
-                return response.StatusCode;
-            }
-            catch (Exception)
-            {
 
-                throw;
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+
+                    T? result = JsonConvert.DeserializeObject<T>(responseContent);
+
+                    return (result, response.StatusCode);
+                }
+                else
+                {
+                    return (default, response.StatusCode);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
+                return (default, HttpStatusCode.InternalServerError);
             }
         }
 
-        public async Task SignIn(string username, string password)
+        public async Task<SignInResponse?> SignIn(string username, string password)
         {
-            var path = "/api/auth/signin";
+            var path = $"/api/auth/signin?email={username}&password={password}";
+            var content = new FormUrlEncodedContent(new Dictionary<string,string>());
 
-            var values = new Dictionary<string, string>
-            {
-                { "email", username },
-                { "password", password }
-            };
-
-            var content = new FormUrlEncodedContent(values);
-
-            var response = await ExecutePostRequest(path, content);
+            var (Result, Status) = await ExecutePostRequestAsync<SignInResponse>(path, content);
+            return Result;
         }
 
-        public void GetTimeOfShard(string shard)
+        public async Task<TimeResponse?> GetTimeOfShard(string shard)
         {
-            var path = "/";
+            var path = $"/api/game/time?shard={shard}";
+
+            var (Result, Status) = await ExecuteGetRequestAsync<TimeResponse>(path);
+            return Result;
         }
     }
 }

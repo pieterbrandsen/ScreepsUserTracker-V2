@@ -21,8 +21,14 @@ namespace UserTrackerShared.States
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {
-                await (new ScreepsAPI(ScreepsAPIUrl)).SignIn(ScreepsAPIUsername, ScreepsAPIPassword);
-                ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] = "";
+                var signinReponse = await (new ScreepsAPI(ScreepsAPIUrl)).SignIn(ScreepsAPIUsername, ScreepsAPIPassword);
+
+                if (signinReponse == null)
+                    throw new Exception("Failed to sign in");
+                ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] = signinReponse.Token;
+                var signinReponse2 = await (new ScreepsAPI(ScreepsAPIUrl)).GetTimeOfShard("");
+
+
             }
         }
     }
