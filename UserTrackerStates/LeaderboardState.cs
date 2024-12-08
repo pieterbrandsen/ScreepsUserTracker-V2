@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 
 namespace UserTrackerShared.States
 {
-    public class LeaderboardState
+    public static class LeaderboardState
     {
+
+
     }
 }

@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Configuration;
-using System.ComponentModel.DataAnnotations;
+﻿using System.Configuration;
+using System.Threading;
+using System.Timers;
+using System.Xml.Linq;
 using UserTrackerScreepsApi;
+using UserTrackerShared.Models.ScreepsAPI;
+using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
 {
@@ -16,19 +15,45 @@ namespace UserTrackerShared.States
         public static string ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
         public static string ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
 
+        public static List<SeaonListItem> CurrentLeaderboard { get; set; }
+
+        public static List<ShardState> Shards = new List<ShardState>();
+        private static Timer? _onSetLeaderboardTimer;
+
         public static async void Init()
         {
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {
-                var signinReponse = await (new ScreepsAPI(ScreepsAPIUrl)).SignIn(ScreepsAPIUsername, ScreepsAPIPassword);
+                var signinReponse = await ScreepsAPI.SignIn(ScreepsAPIUsername, ScreepsAPIPassword);
 
                 if (signinReponse == null)
                     throw new Exception("Failed to sign in");
                 ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] = signinReponse.Token;
-                var signinReponse2 = await (new ScreepsAPI(ScreepsAPIUrl)).GetTimeOfShard("");
 
+                Shards.Add(new ShardState(ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? ""));
+            }
+            else
+            {
+                for (int i = 0; i <= 3; i++)
+                {
+                    Shards.Add(new ShardState($"shard{i}"));
+                }
+            }
 
+            _onSetLeaderboardTimer = new Timer(300000);
+            _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
+            _onSetLeaderboardTimer.AutoReset = true;
+            _onSetLeaderboardTimer.Enabled = true;
+            OnSetTimeTimer(null, null);
+        }
+
+        private static async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        {
+            var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
+            if (currentLeaderboardResponse != null)
+            {
+                CurrentLeaderboard = currentLeaderboardResponse;
             }
         }
     }
