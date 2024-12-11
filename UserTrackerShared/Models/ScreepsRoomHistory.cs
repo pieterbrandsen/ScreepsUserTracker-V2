@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserTrackerShared.Models.ScreepsAPI
+namespace UserTrackerShared.Models
 {
-    public class HistoryResponse
+    public class ScreepsRoomHistory
     {
-
     }
 }

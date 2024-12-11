@@ -21,28 +21,6 @@ namespace UserTrackerShared.States
 
         public static async void Init()
         {
-            // debug purposes only
-            for (int i = 0; i < 50; i++)
-            {
-                for (int j = 0; j < 50; j++)
-                {
-                    for (int k = 0; k < 10; k++)
-                    {
-                        await ScreepsAPI.GetHistory("shard0", $"E{i}N{j}", 64920600 - (k * 100));
-                        await Task.Delay(500);
-
-                        await ScreepsAPI.GetHistory("shard0", $"E{i}S{j}", 64920600 - (k * 100));
-                        await Task.Delay(500);
-
-                        await ScreepsAPI.GetHistory("shard0", $"W{i}N{j}", 64920600 - (k * 100));
-                        await Task.Delay(500);
-
-                        await ScreepsAPI.GetHistory("shard0", $"W{i}S{j}", 64920600 - (k * 100));
-                        await Task.Delay(500);
-                    }
-                }
-            }
-
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Models.Screen
 {
@@ -10,8 +7,22 @@ namespace UserTrackerShared.Models.Screen
     {
         public LogScreenPart(bool enabled, int width, int startHeight, int height) : base(enabled, width, startHeight, height)
         {
+            _updateTimer = new Timer(100);
+            _updateTimer.Elapsed += OnUpdateTimer;
+            _updateTimer.AutoReset = true;
+            _updateTimer.Enabled = true;
         }
+        private Timer? _updateTimer;
+        private bool isRenderingLogs = false;
         private List<string> logEntries = new List<string>();
+
+        private async void OnUpdateTimer(Object? source, ElapsedEventArgs e)
+        {
+            if (Height > 0)
+            {
+                DisplayLogs();
+            }
+        }
 
         public override void Draw()
         {
@@ -19,6 +30,15 @@ namespace UserTrackerShared.Models.Screen
 
         void DisplayLogs()
         {
+            if (isRenderingLogs) return;
+            isRenderingLogs = true;
+
+            // Remove the oldest log entry if we've exceeded the max logs
+            while (logEntries.Count > Height)
+            {
+                logEntries.RemoveAt(0); // Remove the oldest log entry
+            }
+
             UserTrackerShared.Screen.SetCursorPosition(5);
             Console.WriteLine(new string(' ', Console.WindowWidth)); // Clear log area
             for (int i = 0; i < logEntries.Count; i++)
@@ -26,9 +46,12 @@ namespace UserTrackerShared.Models.Screen
                 if (i < Height) // Only display the maximum allowed logs
                 {
                     UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
                     Console.WriteLine(logEntries[i]); // Show current log
                 }
             }
+            isRenderingLogs = false;
         }
 
         public void AddLog(string log)
@@ -39,17 +62,7 @@ namespace UserTrackerShared.Models.Screen
                 logEntries.Add(log); // Add new log entry
             }
 
-            // Remove the oldest log entry if we've exceeded the max logs
-            if (logEntries.Count > Height)
-            {
-                logEntries.RemoveAt(0); // Remove the oldest log entry
-            }
-
-            if (Height > 0)
-            {
-                DisplayLogs();
-            }
-            else
+            if (Height <= 0)
             {
                 Console.WriteLine(log);
             }
