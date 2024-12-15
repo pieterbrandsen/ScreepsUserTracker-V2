@@ -14,11 +14,12 @@ namespace UserTrackerShared.Models.Screen
         }
         private Timer? _updateTimer;
         private bool isRenderingLogs = false;
+        private bool hasNewLogs = false;
         private List<string> logEntries = new List<string>();
 
-        private async void OnUpdateTimer(Object? source, ElapsedEventArgs e)
+        private void OnUpdateTimer(Object? source, ElapsedEventArgs e)
         {
-            if (Height > 0)
+            if (Height > 0 && hasNewLogs)
             {
                 DisplayLogs();
             }
@@ -32,6 +33,7 @@ namespace UserTrackerShared.Models.Screen
         {
             if (isRenderingLogs) return;
             isRenderingLogs = true;
+            hasNewLogs = false;
 
             // Remove the oldest log entry if we've exceeded the max logs
             while (logEntries.Count > Height)
@@ -60,6 +62,7 @@ namespace UserTrackerShared.Models.Screen
             if (!string.IsNullOrWhiteSpace(log)) // Check if the input is not empty or whitespace
             {
                 logEntries.Add(log); // Add new log entry
+                hasNewLogs = true;
             }
 
             if (Height <= 0)

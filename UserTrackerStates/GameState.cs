@@ -14,7 +14,7 @@ namespace UserTrackerShared.States
         public static string ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
         public static bool IsPrivateServer = ScreepsAPIUrl != "https://screeps.com";
 
-        public static List<SeaonListItem> CurrentLeaderboard { get; set; }
+        public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
 
         public static List<ShardState> Shards = new List<ShardState>();
         private static Timer? _onSetLeaderboardTimer;
@@ -34,17 +34,21 @@ namespace UserTrackerShared.States
             }
             else
             {
-                for (int i = 0; i <= 3; i++)
+                //for (int i = 0; i <= 3; i++)
+                //{
+                //    Shards.Add(new ShardState($"shard{i}"));
+                //}
+                for (int i = 0; i <= 0; i++)
                 {
                     Shards.Add(new ShardState($"shard{i}"));
                 }
             }
 
-            _onSetLeaderboardTimer = new Timer(300000);
-            _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
-            _onSetLeaderboardTimer.AutoReset = true;
-            _onSetLeaderboardTimer.Enabled = true;
-            OnSetTimeTimer(null, null);
+            //_onSetLeaderboardTimer = new Timer(300000);
+            //_onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
+            //_onSetLeaderboardTimer.AutoReset = true;
+            //_onSetLeaderboardTimer.Enabled = true;
+            //OnSetTimeTimer(null, null);
         }
 
         private static async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)

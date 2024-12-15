@@ -68,7 +68,7 @@ namespace UserTrackerScreepsApi
                 {
                     while (InUse)
                     {
-                        Thread.Sleep(10);
+                        Thread.Sleep(1);
                     }
                     InUse = true;
                 }

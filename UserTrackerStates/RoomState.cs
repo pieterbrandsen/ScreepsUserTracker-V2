@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UserTrackerScreepsApi;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 
 namespace UserTrackerStates
@@ -24,15 +25,19 @@ namespace UserTrackerStates
 
         public async Task UpdateRoomData(long tick)
         {
+            await Task.Delay(500);
             var roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
             if (roomData != null)
             {
+                var roomHistory = ScreepsRoomHistoryComputedHelper.Compute(roomData);
 
+                RoomData = roomHistory;
+                LastRoomData = roomHistory;
             }
             else
             {
                 LastRoomData = null;
             }
-        } 
+        }
     }
 }
