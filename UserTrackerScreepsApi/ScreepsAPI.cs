@@ -1,10 +1,15 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Collections.Concurrent;
 using System.Configuration;
+using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using UserTrackerShared;
+using UserTrackerShared.Models.Screen;
 using UserTrackerShared.Models.ScreepsAPI;
 
 namespace UserTrackerScreepsApi
@@ -36,8 +41,8 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                Screen.LogsPart.AddLog(path);
-                Console.Error.WriteLine(ex);
+                Screen.LogsPart.AddLog($"{path} - {ex.Message}");
+                Debug.WriteLine(ex.Message);
                 return default(T);
             }
         }
@@ -54,26 +59,45 @@ namespace UserTrackerScreepsApi
         {
             return new Uri(ScreepsAPIUrl + path);
         }
+        private static readonly ConcurrentDictionary<string, HttpClient> ProxyClients = new();
 
-        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null)
+        private static HttpClient GetHttpClient(Uri? proxyUri)
+        {
+            if (proxyUri == null) return new HttpClient();
+
+            return ProxyClients.GetOrAdd(proxyUri.AbsoluteUri, uri =>
+            {
+                var httpClientHandler = new HttpClientHandler
+                {
+                    Proxy = new WebProxy(uri),
+                    UseProxy = true,
+                };
+
+                var httpClient = new HttpClient(httpClientHandler, disposeHandler: false);
+                httpClient.Timeout = TimeSpan.FromSeconds(10);
+                return httpClient;
+            });
+        }
+
+
+        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, Uri? proxyUri = null)
         {
             if (method == HttpMethod.Post && httpContent == null)
             {
                 throw new ArgumentNullException("No HttpContent provided");
             }
 
+            HttpClient client = GetHttpClient(proxyUri);
             try
             {
                 if (path.StartsWith("/api"))
                 {
                     while (InUse)
                     {
-                        Thread.Sleep(1);
+                        await Task.Delay(10);
                     }
                     InUse = true;
                 }
-
-                using HttpClient client = new();
 
                 var request = new HttpRequestMessage()
                 {
@@ -88,9 +112,8 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Token", ScreepsAPIToken);
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
-
                 var response = await client.SendAsync(request);
-                Screen.LogsPart.AddLog($"{path} - {response.StatusCode}");
+                //Screen.LogsPart.AddLog($"{path} - {response.StatusCode}");
 
                 if (path.StartsWith("/api"))
                 {
@@ -108,7 +131,8 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex);
+                Screen.LogsPart.AddLog($"{proxyUri} {path} - {ex.Message}");
+                Debug.WriteLine(ex.Message);
                 return (default, HttpStatusCode.InternalServerError);
             }
         }
@@ -179,6 +203,13 @@ namespace UserTrackerScreepsApi
             var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path);
             return Result;
         }
+        public static async Task<JObject?> GetHistory(string shard, string room, long tick, Uri uri)
+        {
+            var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
+
+            var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path, proxyUri:uri);
+            return Result;
+        }
 
         public static async Task<MapStatsResponse?> GetMapStats(List<string> rooms, string shard, string statName)
         {
@@ -193,6 +224,10 @@ namespace UserTrackerScreepsApi
             var body = new StringContent(jsonString, Encoding.UTF8, "application/json");
 
             var (Result, Status) = await ExecuteRequestAsync<MapStatsResponse>(HttpMethod.Post, path, body);
+            if (Result != null)
+            {
+                Result.Rooms = Result.Rooms.Where(s => s.Value.Status != "out of borders").ToDictionary();
+            }
             return Result;
         }
 

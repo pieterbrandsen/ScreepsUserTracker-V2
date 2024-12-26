@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.States;
 
 namespace UserTrackerStates
 {
@@ -23,10 +24,9 @@ namespace UserTrackerStates
             Shard = shard;
         }
 
-        public async Task UpdateRoomData(long tick)
+        public async Task UpdateRoomData(long tick, ProxyState proxy)
         {
-            await Task.Delay(500);
-            var roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
+            var roomData = await proxy.GetHistory(Shard, Name, tick);
             if (roomData != null)
             {
                 var roomHistory = ScreepsRoomHistoryComputedHelper.Compute(roomData);

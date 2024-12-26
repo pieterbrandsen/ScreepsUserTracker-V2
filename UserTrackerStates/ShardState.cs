@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System.Diagnostics;
+using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
@@ -53,10 +54,45 @@ namespace UserTrackerShared.States
                     if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 1000;
                     for (long i = LastSynceTime; i < syncTime; i += 100)
                     {
-                        foreach (var room in Rooms)
+                        var stopwatch2 = Stopwatch.StartNew();
+                        var stopwatches = new List<Stopwatch>();
+
+                        var roomsCount = Rooms.Count;
+                        List<Task> updateTasks = new List<Task>();
+
+                        var roomsChecked = 0;
+                        var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
+                        while (roomsChecked < roomsCount)
                         {
-                            await room.UpdateRoomData(i);
+                            var proxiesAvailable = GameState.GetAvailableProxiesAsync(roomNamesToBeChecked.Length);
+                            var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
+                            roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
+
+                            for (var j = 0; j < proxiesAvailable.Count; j++)
+                            {
+                                var roomName = checkingRooms[j];
+                                var room = Rooms.First(r => r.Name == roomName);
+                                var proxy = proxiesAvailable[j];
+                                var stopwatch = Stopwatch.StartNew();
+                                stopwatches.Add(stopwatch);
+                                var task = Task.Run(async () =>
+                                {
+                                    await room.UpdateRoomData(i, proxy);
+                                    stopwatch.Stop();
+                                });
+                                updateTasks.Add(task);
+
+                                roomsChecked++;
+                            }
+                            await Task.Delay(100);
                         }
+
+                        await Task.WhenAll(updateTasks);
+                        stopwatch2.Stop();
+
+                        var totalTime = stopwatch2.ElapsedMilliseconds;
+                        var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
+                        Screen.LogsPart.AddLog($"time {totalTime} rooms {Rooms.Count} shard {Name} time/time {totalTime/ Rooms.Count} ms / Average time taken per request: {averageTime} ms");
                     }
                     LastSynceTime = syncTime;
                     isSyncing = false;
