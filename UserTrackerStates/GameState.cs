@@ -46,10 +46,11 @@ namespace UserTrackerShared.States
             }
             else
             {
-                for (int i = 0; i <= 3; i++)
-                {
-                    Shards.Add(new ShardState($"shard{i}"));
-                }
+                Shards.Add(new ShardState($"shard0"));
+                //for (int i = 0; i <= 3; i++)
+                //{
+                //    Shards.Add(new ShardState($"shard{i}"));
+                //}
             }
 
             _onSetLeaderboardTimer = new Timer(300000);
@@ -63,34 +64,34 @@ namespace UserTrackerShared.States
         {
             while (true)
             {
-                    foreach (var proxy in ProxyStates)
-                    {
-                        if (!proxy.InUse)
-                        {
-                            proxy.SetUsed();
-                            return proxy;
-                        }
-                    }
-
-                await Task.Delay(100);
-            }
-        }
-
-        public static List<ProxyState> GetAvailableProxiesAsync(int max)
-        {
-            List<ProxyState> proxies = new List<ProxyState>();
                 foreach (var proxy in ProxyStates)
                 {
                     if (!proxy.InUse)
                     {
                         proxy.SetUsed();
-                        proxies.Add(proxy);
-                        if (proxies.Count >= max)
-                        {
-                            break;
-                        }
+                        return proxy;
                     }
                 }
+
+                await Task.Delay(100);
+            }
+        }
+
+        public static List<ProxyState> GetAvailableProxies(int max)
+        {
+            List<ProxyState> proxies = new List<ProxyState>();
+            foreach (var proxy in ProxyStates)
+            {
+                if (!proxy.InUse)
+                {
+                    proxy.SetUsed();
+                    proxies.Add(proxy);
+                    if (proxies.Count >= max)
+                    {
+                        break;
+                    }
+                }
+            }
             return proxies;
         }
 

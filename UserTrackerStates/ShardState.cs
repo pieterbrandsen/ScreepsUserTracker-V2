@@ -51,48 +51,49 @@ namespace UserTrackerShared.States
                     if (isSyncing) return;
                     isSyncing = true;
                     var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((timeResponse.Time - 500) / 100)) * 100);
-                    if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 1000;
+                    if (LastSynceTime == 0) LastSynceTime = syncTime - 500 * 100;
+                    
                     for (long i = LastSynceTime; i < syncTime; i += 100)
                     {
-                        var stopwatch2 = Stopwatch.StartNew();
+                        var mainStopwatch = Stopwatch.StartNew();
                         var stopwatches = new List<Stopwatch>();
 
-                        var roomsCount = Rooms.Count;
-                        List<Task> updateTasks = new List<Task>();
+                        var roomDict = Rooms.ToDictionary(r => r.Name);  // Faster lookups
+                        var proxiesAvailable = GameState.GetAvailableProxies(Rooms.Count);
 
-                        var roomsChecked = 0;
-                        var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
-                        while (roomsChecked < roomsCount)
+                        // Set up Parallel Options with max parallelism equal to the proxy count
+                        var parallelOptions = new ParallelOptions
                         {
-                            var proxiesAvailable = GameState.GetAvailableProxiesAsync(roomNamesToBeChecked.Length);
-                            var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
-                            roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
+                            MaxDegreeOfParallelism = proxiesAvailable.Count // Limit parallelism to the proxy count
+                        };
 
-                            for (var j = 0; j < proxiesAvailable.Count; j++)
+                        // Use Parallel.ForEachAsync to run tasks based on proxies
+                        await Parallel.ForEachAsync(proxiesAvailable.Zip(Rooms, (proxy, room) => (room, proxy)),
+                            parallelOptions,
+                            async (pair, cancellationToken) =>
                             {
-                                var roomName = checkingRooms[j];
-                                var room = Rooms.First(r => r.Name == roomName);
-                                var proxy = proxiesAvailable[j];
+                                var (room, proxy) = pair;
                                 var stopwatch = Stopwatch.StartNew();
                                 stopwatches.Add(stopwatch);
-                                var task = Task.Run(async () =>
+
+                                try
                                 {
                                     await room.UpdateRoomData(i, proxy);
                                     stopwatch.Stop();
-                                });
-                                updateTasks.Add(task);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"Error updating room {room.Name}: {ex.Message}");
+                                }
+                            });
 
-                                roomsChecked++;
-                            }
-                            await Task.Delay(100);
-                        }
 
-                        await Task.WhenAll(updateTasks);
-                        stopwatch2.Stop();
+                        mainStopwatch.Stop();
 
-                        var totalTime = stopwatch2.ElapsedMilliseconds;
+                        var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
+                        var totalMicroSeconds = totalMiliseconds * 1000;
                         var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
-                        Screen.LogsPart.AddLog($"time {totalTime} rooms {Rooms.Count} shard {Name} time/time {totalTime/ Rooms.Count} ms / Average time taken per request: {averageTime} ms");
+                        Screen.LogsPart.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count),2)}miS, avg time taken {Math.Round(averageTime)}ms");
                     }
                     LastSynceTime = syncTime;
                     isSyncing = false;

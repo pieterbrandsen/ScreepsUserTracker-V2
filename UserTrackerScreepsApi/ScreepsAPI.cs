@@ -16,37 +16,30 @@ namespace UserTrackerScreepsApi
 {
     internal static class JSONConvertHelper
     {
+        private static readonly JsonSerializer _jsonSerializer = new JsonSerializer();
+
         public async static Task<T?> DeserializeObject<T>(HttpContent httpContent, string path)
         {
-            var encoding = httpContent.Headers.ContentEncoding.ToString();
-            byte[] responseData = await httpContent.ReadAsByteArrayAsync();
-
-            var json = "";
-            if (encoding != null && encoding.Contains("gzip"))
-            {
-                using var decompressedStream = new GZipStream(new MemoryStream(responseData), CompressionMode.Decompress);
-                using var reader = new StreamReader(decompressedStream, Encoding.UTF8);
-                json = await reader.ReadToEndAsync();
-            }
-            else
-            {
-                json = Encoding.UTF8.GetString(responseData);
-            }
-
-            JsonSerializerSettings settings = new JsonSerializerSettings();
             try
             {
-                T? result = JsonConvert.DeserializeObject<T>(json, settings);
-                return result;
+                var isGzip = httpContent.Headers.ContentEncoding.Contains("gzip");
+                using var responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
+                using var decompressedStream = isGzip
+                    ? new GZipStream(responseStream, CompressionMode.Decompress)
+                    : responseStream;
+
+                using var streamReader = new StreamReader(decompressedStream, Encoding.UTF8, leaveOpen: true);
+                using var jsonReader = new JsonTextReader(streamReader);
+
+                return _jsonSerializer.Deserialize<T>(jsonReader);
             }
             catch (Exception ex)
             {
-                Screen.LogsPart.AddLog($"{path} - {ex.Message}");
+                _ = Task.Run(() => Screen.LogsPart.AddLog($"{path} - {ex.Message}"));
                 Debug.WriteLine(ex.Message);
-                return default(T);
+                return default;
             }
         }
-
     }
     public class ScreepsAPI
     {
@@ -200,8 +193,9 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
 
-            var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path);
-            return Result;
+            var (Result, Status) = await ExecuteRequestAsync<string>(HttpMethod.Get, path);
+            var jObject = JObject.Parse(Result);
+            return jObject;
         }
         public static async Task<JObject?> GetHistory(string shard, string room, long tick, Uri uri)
         {

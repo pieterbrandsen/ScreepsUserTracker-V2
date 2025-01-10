@@ -124,6 +124,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
         public long EndTime { get; set; }
     }
+    public class Datetime
+    {
+        public long Sign { get; set; }
+    }
     public class Sign
     {
         public string User { get; set; }
@@ -251,7 +255,7 @@ namespace UserTrackerShared.Models
         public string Name { get; set; }
         public long NeedTime { get; set; }
         public long SpawnTime { get; set; }
-        public List<long> Directions { get; set; }
+        public long[] Directions { get; set; } = [];
     }
     #endregion
     #region Parent Base
@@ -259,6 +263,7 @@ namespace UserTrackerShared.Models
     {
         public string Id { get; set; }
         public string Type { get; set; }
+        public string StructureType { get; set; }
     }
     public class Creep
     {
@@ -266,7 +271,7 @@ namespace UserTrackerShared.Models
         public string Name { get; set; }
         public long X { get; set; }
         public long Y { get; set; }
-        public List<BodyPart> Body { get; set; }
+        public BodyPart[] Body { get; set; } = [];
         public Store Store { get; set; }
         public long StoreCapacity { get; set; }
         public string Type { get; set; }
@@ -292,7 +297,7 @@ namespace UserTrackerShared.Models
         public string Mission { get; set; }
         public long TombstoneDecay { get; set; }
         public bool NoCapacityRecalc { get; set; }
-        public bool NolongerShard { get; set; }
+        public bool noInterShard { get; set; }
         public long _healToApply { get; set; }
         public long _damageToApply { get; set; }
     }
@@ -307,7 +312,7 @@ namespace UserTrackerShared.Models
         public Store Store { get; set; }
         public long StoreCapacity { get; set; }
         public long SpawnCooldownTime { get; set; }
-        public Dictionary<long, Power> Powers { get; set; }
+        public Dictionary<string, Power> Powers { get; set; } = new();
         public string Shard { get; set; }
         public string Type { get; set; }
         public string Room { get; set; }
@@ -317,7 +322,10 @@ namespace UserTrackerShared.Models
         public long AgeTime { get; set; }
         public ActionLog ActionLog { get; set; }
         public bool NotifyWhenAttacked { get; set; }
+        public long _oldFatigue { get; set; }
+        public long _fatigue { get; set; }
         public long Fatigue { get; set; }
+        public long DeleteTime { get; set; }
         public InterRoom InterRoom { get; set; }
     }
     public class GroundResource : Store
@@ -334,15 +342,20 @@ namespace UserTrackerShared.Models
     #region Structures
     public class StructureConstructionSite : BaseStructure
     {
-        public string StructureType { get; set; }
         public long X { get; set; }
         public long Y { get; set; }
         public string Room { get; set; }
         public string User { get; set; }
         public long Progress { get; set; }
         public long ProgressTotal { get; set; }
+        public long Hits { get; set; }
+        public long HitsMax { get; set; }
+        public long NextDecayTime { get; set; }
         public string Name { get; set; }
-    }
+        public bool NotifyWhenAttacked { get; set; }
+        public Store Store { get; set; }
+        public Store StoreCapacityResource { get; set; }
+    }   
     public class StructureTombstone : BaseStructure
     {
         public string Id { get; set; }
@@ -353,13 +366,20 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
         public long DeathTime { get; set; }
         public long DecayTime { get; set; }
-        public string CreepId { get; set; }
-        public string CreepName { get; set; }
-        public long CreepTicksToLive { get; set; }
-        public List<string> CreepBody { get; set; }
-        public string CreepSaying { get; set; }
         public Store Store { get; set; }
         public long Tick { get; set; }
+        public string CreepId { get; set; }
+        public string CreepName { get; set; }
+        public string CreepSaying { get; set; }
+        public long CreepTicksToLive { get; set; }
+        public string[] CreepBody { get; set; } = [];
+        public string PowerCreepId { get; set; }
+        public string PowerCreepName { get; set; }
+        public long PowerCreepTicksToLive { get; set; }
+        public string PowerCreepClassName { get; set; }
+        public long PowerCreepLevel { get; set; }
+        public Dictionary<string, Power> PowerCreepPowers { get; set; } = new();
+        public string PowerCreepSaying { get; set; }
     }
     public class StructureRuin : BaseStructure
     {
@@ -395,7 +415,7 @@ namespace UserTrackerShared.Models
         public long Updated { get; set; }
         public long Density { get; set; }
         public long NextRegenerationTime { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; } = new Dictionary<long, Effect>();
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructureSource : BaseStructure
     {
@@ -408,7 +428,7 @@ namespace UserTrackerShared.Models
         public long NextRegenerationTime { get; set; }
         public long InvaderHarvested { get; set; }
         public long Updated { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructureSpawn : BaseStructure
     {
@@ -428,7 +448,7 @@ namespace UserTrackerShared.Models
         public bool _off { get; set; }
         public Spawning Spawning { get; set; }
         public long Updated { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public long Tick { get; set; }
     }
     public class StructureExtension : BaseStructure 
@@ -452,14 +472,15 @@ namespace UserTrackerShared.Models
     {
         public long X { get; set; }
         public long Y { get; set; }
-        public string Room { get; set; }
+        public string User { get; set; }
+        public string Room   { get; set; }
         public bool NotifyWhenAttacked { get; set; }
         public long Hits { get; set; }
         public long HitsMax { get; set; }
         public long NextDecayTime { get; set; }
         public string StrongholdId { get; set; }
         public long DecayTime { get; set; }
-        public List<Effect> Effects { get; set; }
+        public Effect[] Effects { get; set; } = [];
         public long Updated { get; set; }
     }
     public class StructureWall : BaseStructure
@@ -468,11 +489,14 @@ namespace UserTrackerShared.Models
         public long Y { get; set; }
         public string Room { get; set; }
         public bool NotifyWhenAttacked { get; set; }
+        public string User { get; set; }
+        public long Progress { get; set; }
+        public long ProgressTotal { get; set; }
         public long Hits { get; set; }
         public long HitsMax { get; set; }
         public long Updated { get; set; }
         public DecayTime DecayTime { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; } = new Dictionary<long, Effect>();
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructureRampart : BaseStructure
     {
@@ -487,9 +511,11 @@ namespace UserTrackerShared.Models
         public long Updated { get; set; }
         public string StrongholdId { get; set; }
         public long DecayTime { get; set; }
-        public List<Effect> Effects { get; set; }
+        public Effect[] Effects { get; set; } = [];
         public long HitsTarget { get; set; }
         public bool IsPublic { get; set; }
+        public long Progress { get; set; }
+        public long ProgressTotal { get; set; }
     }
     public class StructureKeeperLair : BaseStructure
     {
@@ -526,16 +552,18 @@ namespace UserTrackerShared.Models
         public Reservation Reservation { get; set; }
         public long Updated { get; set; }
         public Sign Sign { get; set; }
+        public Datetime Datetime { get; set; }
         public long SafeModeAvailable { get; set; }
         public long SafeMode { get; set; }
         public long SafeModeCooldown { get; set; }
         public long UpgradeBlocked { get; set; }
         public bool IsPowerEnabled { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public long _upgraded { get; set; }
         public long NewField { get; set; }
         public HardSign HardSign { get; set; }
         public long PromoPeriodUntil { get; set; }
+        public long New_field { get; set; }
     }
     public class StructureLink : BaseStructure
     {
@@ -569,7 +597,7 @@ namespace UserTrackerShared.Models
         public long Hits { get; set; }
         public long HitsMax { get; set; }
         public long Updated { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructureTower : BaseStructure
     {
@@ -587,7 +615,7 @@ namespace UserTrackerShared.Models
         public ActionLog _actionLog { get; set; }
         public string StrongholdId { get; set; }
         public long DecayTime { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public long Tick { get; set; }
     }
     public class StructureObserver : BaseStructure
@@ -601,7 +629,7 @@ namespace UserTrackerShared.Models
         public long HitsMax { get; set; }
         public string ObserveRoom { get; set; }
         public long Updated { get; set; }
-        public Dictionary<string, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructurePowerBank : BaseStructure
     {
@@ -624,7 +652,7 @@ namespace UserTrackerShared.Models
         public long HitsMax { get; set; }
         public Store Store { get; set; }
         public Store StoreCapacityResource { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public long Updated { get; set; }
     }
     public class StructureExtractor : BaseStructure
@@ -638,6 +666,7 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
         public long Hits { get; set; }
         public long HitsMax { get; set; }
+        public long _cooldown { get; set; }
         public long Cooldown { get; set; }
         public long Updated { get; set; }
     }
@@ -661,7 +690,7 @@ namespace UserTrackerShared.Models
         public ActionLog _actionLog { get; set; }
         public long Updated { get; set; }
         public long CooldownTime { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public string Tick { get; set; }
     }
     public class StructureTerminal : BaseStructure
@@ -678,7 +707,7 @@ namespace UserTrackerShared.Models
         public long CooldownTime { get; set; }
         public Send Send { get; set; }
         public long Updated { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
     }
     public class StructureContainer : BaseStructure
     {
@@ -693,7 +722,7 @@ namespace UserTrackerShared.Models
         public long NextDecayTime { get; set; }
         public string StrongholdId { get; set; }
         public long DecayTime { get; set; }
-        public List<Effect> Effects { get; set; }
+        public Effect[] Effects { get; set; } = [];
         public long Updated { get; set; }
     }
     public class StructureNuker : BaseStructure
@@ -725,7 +754,7 @@ namespace UserTrackerShared.Models
         public ActionLog ActionLog { get; set; }
         public long CooldownTime { get; set; }
         public ActionLog _actionLog { get; set; }
-        public Dictionary<long, Effect> Effects { get; set; }
+        public Dictionary<string, Effect> Effects { get; set; } = new();
         public long Level { get; set; }
     }
     public class StructureInvaderCore : BaseStructure
@@ -745,12 +774,13 @@ namespace UserTrackerShared.Models
         public string DepositType { get; set; }
         public long DeployTime { get; set; }
         public string StrongholdId { get; set; }
-        public List<Effect> Effects { get; set; }
+        public Effect[] Effects { get; set; } = [];
         public ActionLog ActionLog { get; set; }
         public long DecayTime { get; set; }
         public ActionLog _actionLog { get; set; }
-        public Dictionary<long, Population> Population { get; set; }
-        public object Spawning { get; set; }
+        public Dictionary<string, Population> Population { get; set; } = new();
+        public bool _spawning { get; set; }
+        public Spawning Spawning { get; set; }
         public string Tick { get; set; }
     }
     public class StructureNuke : BaseStructure
@@ -766,45 +796,45 @@ namespace UserTrackerShared.Models
     #region Groups
     public class Creeps
     {
-        public List<PowerCreep> PowerCreeps = new List<PowerCreep>();
-        public List<Creep> OwnedCreeps = new List<Creep>();
-        public List<Creep> EnemyCreeps = new List<Creep>();
-        public List<Creep> OtherCreeps = new List<Creep>();
+        public Dictionary<string, Creep> OwnedCreeps { get; set; } = new Dictionary<string, Creep>();
+        public Dictionary<string, Creep> EnemyCreeps { get; set; } = new Dictionary<string, Creep>();
+        public Dictionary<string, Creep> OtherCreeps { get; set; } = new Dictionary<string, Creep>();
+        public Dictionary<string, PowerCreep> PowerCreeps { get; set; } = new Dictionary<string, PowerCreep>();
     }
 
 
     public class Structures
     {
-        public StructureDepsoit? Deposit = null;
-        public StructureMineral? Mineral = null;
-        public StructureController? Controller = null;
+        public StructureController Controller { get; set; }
+        public StructureMineral Mineral { get; set; }
+        public StructureDepsoit Deposit { get; set; }
 
-        public List<StructureConstructionSite> ConstructionSites = new List<StructureConstructionSite>();
-        public List<StructureTombstone> Tombstones = new List<StructureTombstone>();
-        public List<StructureRuin> Ruins = new List<StructureRuin>();
-        public List<StructureSource> Sources = new List<StructureSource>();
 
-        public List<StructureSpawn> Spawns = new List<StructureSpawn>();
-        public List<StructureExtension> Extensions = new List<StructureExtension>();
-        public List<StructureRoad> Roads = new List<StructureRoad>();
-        public List<StructureWall> Walls = new List<StructureWall>();
-        public List<StructureRampart> Ramparts = new List<StructureRampart>();
-        public List<StructureKeeperLair> KeeperLairs = new List<StructureKeeperLair>();
-        public List<StructurePortal> Portals = new List<StructurePortal>();
-        public List<StructureLink> Links = new List<StructureLink>();
-        public List<StructureStorage> Storages = new List<StructureStorage>();
-        public List<StructureTower> Towers = new List<StructureTower>();
-        public List<StructureObserver> Observers = new List<StructureObserver>();
-        public List<StructurePowerBank> PowerBanks = new List<StructurePowerBank>();
-        public List<StructurePowerSpawn> PowerSpawns = new List<StructurePowerSpawn>();
-        public List<StructureExtractor> Extractors = new List<StructureExtractor>();
-        public List<StructureLab> Labs = new List<StructureLab>();
-        public List<StructureTerminal> Terminals = new List<StructureTerminal>();
-        public List<StructureContainer> Containers = new List<StructureContainer>();
-        public List<StructureNuker> Nukers = new List<StructureNuker>();
-        public List<StructureFactory> Factories = new List<StructureFactory>();
-        public List<StructureInvaderCore> InvaderCores = new List<StructureInvaderCore>();
-        public List<StructureNuke> Nukes = new List<StructureNuke>();
+        public Dictionary<string, StructureWall> Walls { get; set; } = new Dictionary<string, StructureWall>();
+        public Dictionary<string, StructureConstructionSite> ConstructionSites { get; set; } = new Dictionary<string, StructureConstructionSite>();
+        public Dictionary<string, StructureContainer> Containers { get; set; } = new Dictionary<string, StructureContainer>();
+        public Dictionary<string, StructureExtension> Extensions { get; set; } = new Dictionary<string, StructureExtension>();
+        public Dictionary<string, StructureExtractor> Extractors { get; set; } = new Dictionary<string, StructureExtractor>();
+        public Dictionary<string, StructureFactory> Factories { get; set; } = new Dictionary<string, StructureFactory>();
+        public Dictionary<string, StructureInvaderCore> InvaderCores { get; set; } = new Dictionary<string, StructureInvaderCore>();
+        public Dictionary<string, StructureKeeperLair> KeeperLairs { get; set; } = new Dictionary<string, StructureKeeperLair>();
+        public Dictionary<string, StructureLab> Labs { get; set; } = new Dictionary<string, StructureLab>();
+        public Dictionary<string, StructureLink> Links { get; set; } = new Dictionary<string, StructureLink>();
+        public Dictionary<string, StructureNuker> Nukers { get; set; } = new Dictionary<string, StructureNuker>();
+        public Dictionary<string, StructureObserver> Observers { get; set; } = new Dictionary<string, StructureObserver>();
+        public Dictionary<string, StructurePortal> Portals { get; set; } = new Dictionary<string, StructurePortal>();
+        public Dictionary<string, StructurePowerBank> PowerBanks { get; set; } = new Dictionary<string, StructurePowerBank>();
+        public Dictionary<string, StructurePowerSpawn> PowerSpawns { get; set; } = new Dictionary<string, StructurePowerSpawn>();
+        public Dictionary<string, StructureRampart> Ramparts { get; set; } = new Dictionary<string, StructureRampart>();
+        public Dictionary<string, StructureRoad> Roads { get; set; } = new Dictionary<string, StructureRoad>();
+        public Dictionary<string, StructureRuin> Ruins { get; set; } = new Dictionary<string, StructureRuin>();
+        public Dictionary<string, StructureSource> Sources { get; set; } = new Dictionary<string, StructureSource>();
+        public Dictionary<string, StructureSpawn> Spawns { get; set; } = new Dictionary<string, StructureSpawn>();
+        public Dictionary<string, StructureStorage> Storages { get; set; } = new Dictionary<string, StructureStorage>();
+        public Dictionary<string, StructureTerminal> Terminals { get; set; } = new Dictionary<string, StructureTerminal>();
+        public Dictionary<string, StructureTombstone> Tombstones { get; set; } = new Dictionary<string, StructureTombstone>();
+        public Dictionary<string, StructureTower> Towers { get; set; } = new Dictionary<string, StructureTower>();
+        public Dictionary<string, StructureNuke> Nukes { get; set; } = new Dictionary<string, StructureNuke>();
     }
 
     #endregion
@@ -812,12 +842,10 @@ namespace UserTrackerShared.Models
     {
         public long TimeStamp { get; set; }
         public long Base { get; set; }
-
-        public List<GroundResource> GroundResources = new List<GroundResource>();
+        public Dictionary<string, GroundResource> GroundResources { get; set; } = new Dictionary<string, GroundResource>();
         public Creeps Creeps { get; set; } = new Creeps();
         public Structures Structures { get; set; } = new Structures();
-
-        public Dictionary<string,string> TypeMap = new Dictionary<string, string>();
-        public Dictionary<string,string> UserMap = new Dictionary<string, string>();
+        public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> UserMap { get; set; } = new Dictionary<string, string>();
     }
 }
