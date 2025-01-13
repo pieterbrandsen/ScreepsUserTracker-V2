@@ -217,8 +217,7 @@ namespace UserTrackerShared.Helpers
             Cts.Cancel();
         }
     }
-
-    public static class ScreepsRoomHistoryComputedHelper
+    internal static class ConvertJObjectToHistory
     {
         private static readonly Dictionary<string, string> PropertyNameMapping = new()
         {
@@ -280,7 +279,7 @@ namespace UserTrackerShared.Helpers
             if (index == properties.Length - 1)
             {
                 if (isNumericKey) CreateNewIndexItemIfNeeded(ref currentObj, numericKey);
-                
+
                 // Base case: Set the final property value
                 if (isNumericKey && currentObj is IList list)
                 {
@@ -452,10 +451,8 @@ namespace UserTrackerShared.Helpers
                     propInfo.SetValue(obj, null);
                 }
             }
-            else
-            {
-                propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
-            }
+
+            propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
         }
 
         private static void SetAllNestedPropertyValues(object obj, PropertiesList propertyLists)
@@ -510,86 +507,7 @@ namespace UserTrackerShared.Helpers
             }
         }
 
-        private static PropertiesList GetRecursiveProperties(PropertiesList propertyLists, JObject obj, string basePath = "")
-        {
-            foreach (var property in obj.Properties())
-            {
-                var propertyKey = property.Name;
-                var propertyValue = property.Value;
-                var computedKey = $"{(!string.IsNullOrEmpty(basePath) ? $"{basePath}." : "")}{propertyKey}";
-                switch (propertyValue.Type)
-                {
-                    case JTokenType.String:
-                        propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
-                        break;
-                    case JTokenType.Integer:
-                    case JTokenType.Float:
-                        if (propertyKey != "_id")
-                        {
-                            propertyLists.IntegerProperties[computedKey] = propertyValue.Value<long>();
-                        }
-                        else
-                        {
-                            propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
-                        }
-                        break;
-                    case JTokenType.Boolean:
-                        propertyLists.BooleanProperties[computedKey] = propertyValue.Value<bool>();
-                        break;
-                    case JTokenType.Null:
-                        propertyLists.NullProperties.Add(computedKey);
-                        break;
-                    case JTokenType.Object:
-                        propertyLists = GetRecursiveProperties(propertyLists, (JObject)propertyValue, computedKey);
-                        break;
-                    case JTokenType.Array:
-                        var childArray = (JArray)propertyValue;
-                        for (int i = 0; i < childArray.Count; i++)
-                        {
-                            var computedChildKey = $"{computedKey}.{i}";
-                            var childChildItem = childArray[i];
-                            if (childChildItem is JObject childChildObj)
-                            {
-                                propertyLists = GetRecursiveProperties(propertyLists, childChildObj, computedChildKey);
-                            }
-                            else
-                            {
-                                switch (childChildItem.Type)
-                                {
-                                    case JTokenType.String:
-                                        propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
-                                        break;
-                                    case JTokenType.Integer:
-                                    case JTokenType.Float:
-                                        if (propertyKey != "_id")
-                                        {
-                                            propertyLists.IntegerProperties[computedChildKey] = childChildItem.Value<long>();
-                                        }
-                                        else
-                                        {
-                                            propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
-                                        }
-                                        break;
-                                    case JTokenType.Boolean:
-                                        propertyLists.BooleanProperties[computedChildKey] = childChildItem.Value<bool>();
-                                        break;
-                                    case JTokenType.Null:
-                                        propertyLists.NullProperties.Add(computedChildKey);
-                                        break;
-                                    default:
-                                        throw new Exception("Unsupported JTokenType");
-                                }
-                            }
-                        }
-                        break;
-                    default:
-                        throw new Exception("Unsupported JTokenType");
-                }
-            }
-            return propertyLists;
-        }
-
-        private static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, PropertiesList propertyLists)
+        public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, PropertiesList propertyLists)
         {
             var id = propertyLists.StringProperties.GetValueOrDefault("_id") ?? "";
             var type = propertyLists.StringProperties.GetValueOrDefault("type");
@@ -869,6 +787,87 @@ namespace UserTrackerShared.Helpers
 
             return roomHistory;
         }
+    }
+    public static class ScreepsRoomHistoryComputedHelper
+    {
+        private static PropertiesList UpdateRecursiveProperties(PropertiesList propertyLists, JObject obj, string basePath = "")
+        {
+            foreach (var property in obj.Properties())
+            {
+                var propertyKey = property.Name;
+                var propertyValue = property.Value;
+                var computedKey = $"{(!string.IsNullOrEmpty(basePath) ? $"{basePath}." : "")}{propertyKey}";
+                switch (propertyValue.Type)
+                {
+                    case JTokenType.String:
+                        propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
+                        break;
+                    case JTokenType.Integer:
+                    case JTokenType.Float:
+                        if (propertyKey != "_id")
+                        {
+                            propertyLists.IntegerProperties[computedKey] = propertyValue.Value<long>();
+                        }
+                        else
+                        {
+                            propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
+                        }
+                        break;
+                    case JTokenType.Boolean:
+                        propertyLists.BooleanProperties[computedKey] = propertyValue.Value<bool>();
+                        break;
+                    case JTokenType.Null:
+                        propertyLists.NullProperties.Add(computedKey);
+                        break;
+                    case JTokenType.Object:
+                        propertyLists = UpdateRecursiveProperties(propertyLists, (JObject)propertyValue, computedKey);
+                        break;
+                    case JTokenType.Array:
+                        var childArray = (JArray)propertyValue;
+                        for (int i = 0; i < childArray.Count; i++)
+                        {
+                            var computedChildKey = $"{computedKey}.{i}";
+                            var childChildItem = childArray[i];
+                            if (childChildItem is JObject childChildObj)
+                            {
+                                propertyLists = UpdateRecursiveProperties(propertyLists, childChildObj, computedChildKey);
+                            }
+                            else
+                            {
+                                switch (childChildItem.Type)
+                                {
+                                    case JTokenType.String:
+                                        propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
+                                        break;
+                                    case JTokenType.Integer:
+                                    case JTokenType.Float:
+                                        if (propertyKey != "_id")
+                                        {
+                                            propertyLists.IntegerProperties[computedChildKey] = childChildItem.Value<long>();
+                                        }
+                                        else
+                                        {
+                                            propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
+                                        }
+                                        break;
+                                    case JTokenType.Boolean:
+                                        propertyLists.BooleanProperties[computedChildKey] = childChildItem.Value<bool>();
+                                        break;
+                                    case JTokenType.Null:
+                                        propertyLists.NullProperties.Add(computedChildKey);
+                                        break;
+                                    default:
+                                        throw new Exception("Unsupported JTokenType");
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception("Unsupported JTokenType");
+                }
+            }
+            return propertyLists;
+        }
 
         public static ScreepsRoomHistory Compute(JObject roomData)
         {
@@ -882,17 +881,17 @@ namespace UserTrackerShared.Helpers
                 var jTokenTicksValues = jTokenTicks.Values<JToken>();
                 for (int i = 0; i < jTokenTicksValues.Count(); i++)
                 {
+                    var propertiesListDictionary = new Dictionary<string, PropertiesList>();
                     var tickObject = jTokenTicksValues.ElementAt(i);
                     if (tickObject == null) continue;
                     var tickNumber = tickObject.Path.Substring(tickObject.Path.LastIndexOf('.') + 1);
 
-                    var propertiesListDictionary = new Dictionary<string, PropertiesList>();
                     foreach (var item in tickObject.Children().Children())
                     {
                         if (item.Children().First() is JObject obj)
                         {
                             var key = obj.Path.Substring(obj.Path.LastIndexOf('.') + 1);
-                            var propertiesList = GetRecursiveProperties(new PropertiesList(), obj);
+                            var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
                             propertiesListDictionary[key] = propertiesList;
 
                             //if (i == 0)
@@ -909,7 +908,7 @@ namespace UserTrackerShared.Helpers
                         {
                             var key = propertyList.Key;
                             var propertyLists = propertyList.Value;
-                            roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
+                            roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
                         }
                     }
 
@@ -917,7 +916,7 @@ namespace UserTrackerShared.Helpers
                     {
                         var key = propertyList.Key;
                         var propertyLists = propertyList.Value;
-                        roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
+                        roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
                     }
                 }
             }
