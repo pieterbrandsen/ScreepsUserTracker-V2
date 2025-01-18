@@ -564,6 +564,8 @@ namespace UserTrackerShared.Models
         public HardSign HardSign { get; set; }
         public long PromoPeriodUntil { get; set; }
         public long New_field { get; set; }
+        public Store Store { get; set; }
+        public Store StoreCapacityResource { get; set; }
     }
     public class StructureLink : BaseStructure
     {

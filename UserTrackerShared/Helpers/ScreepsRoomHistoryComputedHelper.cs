@@ -451,8 +451,10 @@ namespace UserTrackerShared.Helpers
                     propInfo.SetValue(obj, null);
                 }
             }
-
-            propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
+            else
+            {
+                propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
+            }
         }
 
         private static void SetAllNestedPropertyValues(object obj, PropertiesList propertyLists)
