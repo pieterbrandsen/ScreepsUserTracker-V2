@@ -2,11 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Timers;
 using UserTrackerShared.Models;
-using static UserTrackerShared.Models.StructureTombstone;
+using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Helpers
 {
@@ -23,9 +23,10 @@ namespace UserTrackerShared.Helpers
         private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
         private static readonly string TypesDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Types";
         private static readonly ConcurrentDictionary<string, JObject> Cache = new();
-        private static readonly SemaphoreSlim WriteLock = new(1,1);
         private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
         private static readonly CancellationTokenSource Cts = new();
+        private static Timer? _backgroundFlushTimer;
+        private static bool _isFlushing;
 
         static FileWriterManager()
         {
@@ -33,8 +34,10 @@ namespace UserTrackerShared.Helpers
             Directory.CreateDirectory(KeysDirectoryPath);
             Directory.CreateDirectory(TypesDirectoryPath);
 
-            // Start the background flush task
-            Task.Run(() => BackgroundFlush(Cts.Token));
+            _backgroundFlushTimer = new Timer(10 * 1000);
+            _backgroundFlushTimer.Elapsed += OnBackgroundFlushTimer;
+            _backgroundFlushTimer.AutoReset = true;
+            _backgroundFlushTimer.Enabled = true;
         }
 
         public static void GenerateFiles(string tick, JObject obj, PropertiesList propertiesList)
@@ -70,6 +73,8 @@ namespace UserTrackerShared.Helpers
 
         public static void GenerateFileByType(JObject obj)
         {
+            return;
+
             var objTypeToken = obj.GetValue("type");
             if (objTypeToken == null)
             {
@@ -88,133 +93,87 @@ namespace UserTrackerShared.Helpers
                 obj.AddFirst(new JProperty("tick", tick));
             }
 
+            string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
+            if (File.Exists(filePath) || Cache.ContainsKey(key)) return;
+
             Cache.AddOrUpdate(key, _ => new JObject(obj), (_, existing) =>
             {
-                foreach (var property in obj.Properties())
-                {
-                    if (existing[property.Name] == null)
-                    {
-                        existing.Add(property.Name, property.Value);
-                    }
-                    else if (property.Value.Type == JTokenType.Object)
-                    {
-                        var existingValue = existing[property.Name] as JObject;
-                        var newValue = property.Value as JObject;
-                        if (existingValue != null && newValue != null)
-                        {
-                            foreach (var subProperty in newValue.Properties())
-                            {
-                                existingValue[subProperty.Name] = subProperty.Value;
-                            }
-                        }
-                    }
-                    else if (property.Value.Type == JTokenType.Array)
-                    {
-                        var existingArray = existing[property.Name] as JArray;
-                        var newArray = property.Value as JArray;
-                        if (existingArray != null && newArray != null)
-                        {
-                            foreach (var item in newArray)
-                            {
-                                if (!existingArray.Contains(item))
-                                {
-                                    existingArray.Add(item);
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        existing[property.Name] = property.Value;
-                    }
-                }
                 return existing;
             });
         }
 
+        private static void MergeObjects(JObject target, JObject source)
+        {
+            foreach (var property in source.Properties())
+            {
+                JToken targetValue;
+                target.TryGetValue(property.Name, out targetValue);
+                if (target.ContainsKey(property.Name))
+                {
+                    // If both are objects, merge recursively
+                    if (targetValue is JObject targetObj && property.Value is JObject sourceObj)
+                    {
+                        MergeObjects(targetObj, sourceObj);
+                    }
+                    // Otherwise, keep the original value (do nothing)
+                }
+                else
+                {
+                    try
+                    {
+                        // Add new property if it doesn't exist
+                        target.Add(property.Name, property.Value);
+                    }
+                    catch (Exception e)
+                    {
+                    }
+                }
+            }
+        }
 
         private static void UpdateCacheForType(string type, JObject obj, string filePath)
         {
             Cache.AddOrUpdate(type, _ => new JObject(obj), (_, existing) =>
             {
-                existing.Merge(obj, new JsonMergeSettings
-                {
-                    MergeArrayHandling = MergeArrayHandling.Union
-                });
+                MergeObjects(existing, obj);
                 return existing;
             });
         }
 
-        private static async Task BackgroundFlush(CancellationToken token)
+        private static async void OnBackgroundFlushTimer(Object? source, ElapsedEventArgs? e)
         {
-            while (!token.IsCancellationRequested)
+            if (_isFlushing) return;
+            _isFlushing = true;
+            try
             {
-                try
+                IEnumerable<string> keys;
+                lock (Cache)
                 {
-                    IEnumerable<string> keys;
-                    lock (Cache)
-                    {
-                        keys = Cache.Keys.ToArray();
-                    }
-
-                    foreach (var key in keys)
-                    {
-                        try
-                        {
-                            Console.WriteLine($"Waiting to acquire lock for key: {key}");
-                            await WriteLock.WaitAsync(token);
-                            Console.WriteLine($"Lock acquired for key: {key}");
-
-                            if (!Cache.TryGetValue(key, out var obj) || obj == null) continue;
-
-                            string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
-
-                            try
-                            {
-                                if (File.Exists(filePath))
-                                {
-                                    var existingData = JObject.Parse(await File.ReadAllTextAsync(filePath, token));
-                                    obj.Merge(existingData, new JsonMergeSettings
-                                    {
-                                        MergeArrayHandling = MergeArrayHandling.Union
-                                    });
-                                }
-
-                                try
-                                {
-                                    var json = obj.ToString(Formatting.Indented);
-                                await File.WriteAllTextAsync(filePath, json, token);
-                                }
-                                catch (Exception)
-                                {
-
-                                    throw;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error writing file for key {key}: {ex.Message}");
-                            }
-                        }
-                        finally
-                        {
-                            Console.WriteLine($"Releasing lock for key: {key}");
-                            WriteLock.Release();
-                        }
-                    }
-
-                    await Task.Delay(FlushInterval, token);
+                    keys = Cache.Keys.ToArray();
                 }
-                catch (Exception ex)
+
+                foreach (var key in keys)
                 {
-                    Console.WriteLine($"Unexpected error in BackgroundFlush: {ex.Message}");
+                    try
+                    {
+                        var obj = Cache.GetValueOrDefault(key);
+                        if (obj == null) continue;
+                        string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
+
+                        var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+                        await File.WriteAllTextAsync(filePath, json);
+                    }
+                    catch (Exception ex)
+                    {
+                        Screen.LogsPart.AddLog($"Error writing file for key {key}: {ex.Message}");
+                    }
                 }
             }
-        }
-
-        public static void Stop()
-        {
-            Cts.Cancel();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error in BackgroundFlush: {ex.Message}");
+            }
+            _isFlushing = false;
         }
     }
     internal static class ConvertJObjectToHistory
@@ -896,11 +855,11 @@ namespace UserTrackerShared.Helpers
                             var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
                             propertiesListDictionary[key] = propertiesList;
 
-                            //if (i == 0)
-                            //{
-                            //    FileWriterManager.GenerateFiles(tickNumber, obj, propertiesList);
-                            //    FileWriterManager.GenerateFileByType(obj);
-                            //}
+                            if (i == 0)
+                            {
+                                FileWriterManager.GenerateFiles(tickNumber, obj, propertiesList);
+                                FileWriterManager.GenerateFileByType(obj);
+                            }
                         }
                     }
 

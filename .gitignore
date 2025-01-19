@@ -403,3 +403,4 @@ FodyWeavers.xsd
 
 # Development config
 /UserTrackerConsole/App.Live.config
+/UserTrackerConsole/Objects
