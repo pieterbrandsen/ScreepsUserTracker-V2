@@ -52,7 +52,7 @@ namespace UserTrackerShared.States
                     isSyncing = true;
                     var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((timeResponse.Time - 500) / 100)) * 100);
                     if (LastSynceTime == 0) LastSynceTime = syncTime - 500 * 100;
-                    
+
                     for (long i = LastSynceTime; i < syncTime; i += 100)
                     {
                         var mainStopwatch = Stopwatch.StartNew();
@@ -83,7 +83,7 @@ namespace UserTrackerShared.States
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine($"Error updating room {room.Name}: {ex.Message}");
+                                    Screen.LogsPart.AddLog($"Error updating room {room.Name}: {ex.Message}");
                                 }
                             });
 
@@ -95,7 +95,7 @@ namespace UserTrackerShared.States
                             var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                             var totalMicroSeconds = totalMiliseconds * 1000;
                             var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
-                            //Screen.LogsPart.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count),2)}miS, avg time taken {Math.Round(averageTime)}ms");
+                            Screen.LogsPart.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS, avg time taken {Math.Round(averageTime)}ms");
                         }
                         catch (Exception)
                         {

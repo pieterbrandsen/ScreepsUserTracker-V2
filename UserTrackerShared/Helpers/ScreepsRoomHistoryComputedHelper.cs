@@ -41,47 +41,33 @@ namespace UserTrackerShared.Helpers
             _backgroundFlushTimer.Enabled = true;
         }
 
-        public static void GenerateFiles(string tick, JObject obj, PropertiesList propertiesList)
+        public static void GenerateFiles(string tick, string type, JObject obj, PropertiesList propertiesList)
         {
-            var objTypeToken = obj.GetValue("type");
-            if (objTypeToken == null)
-            {
-                throw new Exception("Object type not found");
-            }
-            var objType = objTypeToken.Value<string>() ?? throw new Exception("Object type not found");
-
             foreach (var prop in propertiesList.NullProperties)
             {
-                var key = $"{objType}.{prop}.null";
+                var key = $"{type}.{prop}.null";
                 UpdateCache(tick, key, obj);
             }
             foreach (var prop in propertiesList.BooleanProperties)
             {
-                var key = $"{objType}.{prop.Key}.bool";
+                var key = $"{type}.{prop.Key}.bool";
                 UpdateCache(tick, key, obj);
             }
             foreach (var prop in propertiesList.StringProperties)
             {
-                var key = $"{objType}.{prop.Key}.string";
+                var key = $"{type}.{prop.Key}.string";
                 UpdateCache(tick, key, obj);
             }
             foreach (var prop in propertiesList.IntegerProperties)
             {
-                var key = $"{objType}.{prop.Key}.int";
+                var key = $"{type}.{prop.Key}.int";
                 UpdateCache(tick, key, obj);
             }
         }
 
-        public static void GenerateFileByType(JObject obj)
+        public static void GenerateFileByType(string type, JObject obj)
         {
-            var objTypeToken = obj.GetValue("type");
-            if (objTypeToken == null)
-            {
-                throw new Exception();
-            }
-            var objType = objTypeToken.Value<string>() ?? throw new Exception("Object type not found");
-
-            TypeCache.AddOrUpdate(objType, _ => obj, (_, existing) =>
+            TypeCache.AddOrUpdate(type, _ => obj, (_, existing) =>
             {
                 var json = JsonConvert.SerializeObject(existing);
                 JObject obj1 = JObject.Parse(json);
@@ -850,10 +836,12 @@ namespace UserTrackerShared.Helpers
                             var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
                             propertiesListDictionary[key] = propertiesList;
 
-                            FileWriterManager.GenerateFiles(tickNumber, obj, propertiesList);
+                            var type = propertiesList.StringProperties.GetValueOrDefault("type");
+                            if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
+                            FileWriterManager.GenerateFiles(tickNumber, type, obj, propertiesList);
                             if (i == 0)
                             {
-                                FileWriterManager.GenerateFileByType(obj);
+                                FileWriterManager.GenerateFileByType(type, obj);
                             }
                         }
                     }
