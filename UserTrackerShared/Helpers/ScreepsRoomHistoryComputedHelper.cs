@@ -22,7 +22,8 @@ namespace UserTrackerShared.Helpers
     {
         private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
         private static readonly string TypesDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Types";
-        private static readonly ConcurrentDictionary<string, JObject> Cache = new();
+        private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();
+        private static readonly ConcurrentDictionary<string, JObject> TypeCache = new();
         private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
         private static readonly CancellationTokenSource Cts = new();
         private static Timer? _backgroundFlushTimer;
@@ -73,17 +74,25 @@ namespace UserTrackerShared.Helpers
 
         public static void GenerateFileByType(JObject obj)
         {
-            return;
-
             var objTypeToken = obj.GetValue("type");
             if (objTypeToken == null)
             {
-                throw new Exception("Object type not found");
+                throw new Exception();
             }
             var objType = objTypeToken.Value<string>() ?? throw new Exception("Object type not found");
 
-            string filePath = Path.Combine(TypesDirectoryPath, $"{objType}.json");
-            UpdateCacheForType(objType, obj, filePath);
+            TypeCache.AddOrUpdate(objType, _ => obj, (_, existing) =>
+            {
+                var json = JsonConvert.SerializeObject(existing);
+                JObject obj1 = JObject.Parse(json);
+
+                obj1.Merge(obj, new JsonMergeSettings
+                {
+                    MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
+                });
+
+                return obj1;
+            });
         }
 
         private static void UpdateCache(string tick, string key, JObject obj)
@@ -94,48 +103,10 @@ namespace UserTrackerShared.Helpers
             }
 
             string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
-            if (File.Exists(filePath) || Cache.ContainsKey(key)) return;
+            if (File.Exists(filePath) || KeyCache.ContainsKey(key)) return;
 
-            Cache.AddOrUpdate(key, _ => new JObject(obj), (_, existing) =>
+            KeyCache.AddOrUpdate(key, _ => obj, (_, existing) =>
             {
-                return existing;
-            });
-        }
-
-        private static void MergeObjects(JObject target, JObject source)
-        {
-            foreach (var property in source.Properties())
-            {
-                JToken targetValue;
-                target.TryGetValue(property.Name, out targetValue);
-                if (target.ContainsKey(property.Name))
-                {
-                    // If both are objects, merge recursively
-                    if (targetValue is JObject targetObj && property.Value is JObject sourceObj)
-                    {
-                        MergeObjects(targetObj, sourceObj);
-                    }
-                    // Otherwise, keep the original value (do nothing)
-                }
-                else
-                {
-                    try
-                    {
-                        // Add new property if it doesn't exist
-                        target.Add(property.Name, property.Value);
-                    }
-                    catch (Exception e)
-                    {
-                    }
-                }
-            }
-        }
-
-        private static void UpdateCacheForType(string type, JObject obj, string filePath)
-        {
-            Cache.AddOrUpdate(type, _ => new JObject(obj), (_, existing) =>
-            {
-                MergeObjects(existing, obj);
                 return existing;
             });
         }
@@ -146,17 +117,41 @@ namespace UserTrackerShared.Helpers
             _isFlushing = true;
             try
             {
-                IEnumerable<string> keys;
-                lock (Cache)
+                IEnumerable<string> typeKeys;
+                lock (TypeCache)
                 {
-                    keys = Cache.Keys.ToArray();
+                    typeKeys = TypeCache.Keys.ToArray();
                 }
 
-                foreach (var key in keys)
+                foreach (var key in typeKeys)
                 {
                     try
                     {
-                        var obj = Cache.GetValueOrDefault(key);
+                        var obj = TypeCache.GetValueOrDefault(key);
+                        if (obj == null) continue;
+                        string filePath = Path.Combine(TypesDirectoryPath, $"{key}.json");
+
+                        var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+                        await File.WriteAllTextAsync(filePath, json);
+                    }
+                    catch (Exception ex)
+                    {
+                        Screen.LogsPart.AddLog($"Error writing file for type {key}: {ex.Message}");
+                    }
+                }
+
+
+                IEnumerable<string> keyKeys;
+                lock (KeyCache)
+                {
+                    keyKeys = KeyCache.Keys.ToArray();
+                }
+
+                foreach (var key in keyKeys)
+                {
+                    try
+                    {
+                        var obj = KeyCache.GetValueOrDefault(key);
                         if (obj == null) continue;
                         string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
 
@@ -855,9 +850,9 @@ namespace UserTrackerShared.Helpers
                             var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
                             propertiesListDictionary[key] = propertiesList;
 
+                            FileWriterManager.GenerateFiles(tickNumber, obj, propertiesList);
                             if (i == 0)
                             {
-                                FileWriterManager.GenerateFiles(tickNumber, obj, propertiesList);
                                 FileWriterManager.GenerateFileByType(obj);
                             }
                         }

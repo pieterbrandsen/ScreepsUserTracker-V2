@@ -90,10 +90,16 @@ namespace UserTrackerShared.States
 
                         mainStopwatch.Stop();
 
-                        var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
-                        var totalMicroSeconds = totalMiliseconds * 1000;
-                        var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
-                        //Screen.LogsPart.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count),2)}miS, avg time taken {Math.Round(averageTime)}ms");
+                        try
+                        {
+                            var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
+                            var totalMicroSeconds = totalMiliseconds * 1000;
+                            var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
+                            //Screen.LogsPart.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count),2)}miS, avg time taken {Math.Round(averageTime)}ms");
+                        }
+                        catch (Exception)
+                        {
+                        }
                     }
                     LastSynceTime = syncTime;
                     isSyncing = false;
