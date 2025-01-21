@@ -22,8 +22,14 @@ namespace UserTrackerShared
             CheckAndUpdateSizeTimer.Enabled = true;
             CheckAndUpdateSizeTimer.AutoReset = true;
             CheckAndUpdateSizeTimer.Start();
+
+            IsEnabled = true;
+            TitlePart.Draw();
+            FooterPart.Draw();
+
         }
 
+        public static bool IsEnabled { get; set; } = false;
         public static string Name { get; set; } = "User Tracker Screen";
         public static int Width { get; set; }
         public static int Height { get; set; }
@@ -61,7 +67,6 @@ namespace UserTrackerShared
                 }
             }
         }
-
         public static void CheckAndUpdateSize(object? source, ElapsedEventArgs e)
         {
             if (Console.WindowWidth != Width || Console.WindowHeight != Height)
@@ -69,7 +74,6 @@ namespace UserTrackerShared
                 UpdateSize();
             }
         }
-
         public static void SetCursorPosition(int y)
         {
             try
@@ -84,6 +88,21 @@ namespace UserTrackerShared
         {
             SetCursorPosition(location);
             Console.WriteLine(new string('=', Console.WindowWidth)); // Draw top border
+        }
+        public static void AddLog(string log)
+        {
+            if (!IsEnabled) return;
+            // Log the input only if it's not empty
+            if (!string.IsNullOrWhiteSpace(log)) // Check if the input is not empty or whitespace
+            {
+                LogsPart.LogEntries.Add(log); // Add new log entry
+                LogsPart.HasNewLogs = true;
+            }
+
+            if (Height <= 0)
+            {
+                Console.WriteLine(log);
+            }
         }
     }
 }

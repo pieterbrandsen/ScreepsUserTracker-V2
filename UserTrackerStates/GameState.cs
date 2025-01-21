@@ -18,9 +18,9 @@ namespace UserTrackerShared.States
         public static bool IsPrivateServer = ScreepsAPIUrl != "https://screeps.com";
 
         public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
-
-        private static ConcurrentBag<ProxyState> ProxyStates = new ConcurrentBag<ProxyState>();
+        public static ConcurrentBag<ProxyState> ProxyStates = new ConcurrentBag<ProxyState>();
         public static List<ShardState> Shards = new List<ShardState>();
+
         private static Timer? _onSetLeaderboardTimer;
 
         public static async void Init()
@@ -33,13 +33,7 @@ namespace UserTrackerShared.States
                     ProxyStates.Add(new ProxyState(new Uri($"http://{proxy}")));
                 }
             }
-            //lock (ProxyStates)
-            //{
-            //    for (int i = 0; i < 1000; i++)
-            //    {
-            //        ProxyStates.Add(new ProxyState(new Uri($"http://{i}")));
-            //    }
-            //}
+            
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {

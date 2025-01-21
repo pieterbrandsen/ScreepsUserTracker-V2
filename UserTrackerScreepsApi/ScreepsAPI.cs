@@ -35,7 +35,7 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                _ = Task.Run(() => Screen.LogsPart.AddLog($"{path} - {ex.Message}"));
+                _ = Task.Run(() => Screen.AddLog($"{path} - {ex.Message}"));
                 Debug.WriteLine(ex.Message);
                 return default;
             }
@@ -106,7 +106,7 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
                 var response = await client.SendAsync(request);
-                //Screen.LogsPart.AddLog($"{path} - {response.StatusCode}");
+                //Screen.AddLog($"{path} - {response.StatusCode}");
 
                 if (path.StartsWith("/api"))
                 {
@@ -124,7 +124,7 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                Screen.LogsPart.AddLog($"{proxyUri} {path} - {ex.Message}");
+                Screen.AddLog($"{proxyUri} {path} - {ex.Message}");
                 Debug.WriteLine(ex.Message);
                 return (default, HttpStatusCode.InternalServerError);
             }

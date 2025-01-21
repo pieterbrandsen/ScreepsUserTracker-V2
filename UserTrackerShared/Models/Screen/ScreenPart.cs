@@ -14,8 +14,6 @@ namespace UserTrackerShared.Models.Screen
             Width = width;
             StartHeight = startHeight;
             Height = height;
-
-            Draw();
         }
         public bool Enabled { get; set; }
         public int Width { get; set; }

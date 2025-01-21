@@ -14,12 +14,12 @@ namespace UserTrackerShared.Models.Screen
         }
         private Timer? _updateTimer;
         private bool isRenderingLogs = false;
-        private bool hasNewLogs = false;
-        private List<string> logEntries = new List<string>();
+        public bool HasNewLogs = false;
+        public List<string> LogEntries = new List<string>();
 
         private void OnUpdateTimer(Object? source, ElapsedEventArgs e)
         {
-            if (Height > 0 && hasNewLogs)
+            if (Height > 0 && HasNewLogs)
             {
                 DisplayLogs();
             }
@@ -33,42 +33,27 @@ namespace UserTrackerShared.Models.Screen
         {
             if (isRenderingLogs) return;
             isRenderingLogs = true;
-            hasNewLogs = false;
+            HasNewLogs = false;
 
             // Remove the oldest log entry if we've exceeded the max logs
-            while (logEntries.Count > Height)
+            while (LogEntries.Count > Height)
             {
-                logEntries.RemoveAt(0); // Remove the oldest log entry
+                LogEntries.RemoveAt(0); // Remove the oldest log entry
             }
 
             UserTrackerShared.Screen.SetCursorPosition(5);
             Console.WriteLine(new string(' ', Console.WindowWidth)); // Clear log area
-            for (int i = 0; i < logEntries.Count; i++)
+            for (int i = 0; i < LogEntries.Count; i++)
             {
                 if (i < Height) // Only display the maximum allowed logs
                 {
                     UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
                     Console.Write(new string(' ', Console.WindowWidth));
                     UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
-                    Console.WriteLine(logEntries[i]); // Show current log
+                    Console.WriteLine(LogEntries[i]); // Show current log
                 }
             }
             isRenderingLogs = false;
-        }
-
-        public void AddLog(string log)
-        {
-            // Log the input only if it's not empty
-            if (!string.IsNullOrWhiteSpace(log)) // Check if the input is not empty or whitespace
-            {
-                logEntries.Add(log); // Add new log entry
-                hasNewLogs = true;
-            }
-
-            if (Height <= 0)
-            {
-                Console.WriteLine(log);
-            }
         }
     }
 }

@@ -122,7 +122,7 @@ namespace UserTrackerShared.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Screen.LogsPart.AddLog($"Error writing file for type {key}: {ex.Message}");
+                        Screen.AddLog($"Error writing file for type {key}: {ex.Message}");
                     }
                 }
 
@@ -146,7 +146,7 @@ namespace UserTrackerShared.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Screen.LogsPart.AddLog($"Error writing file for key {key}: {ex.Message}");
+                        Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
                     }
                 }
             }
