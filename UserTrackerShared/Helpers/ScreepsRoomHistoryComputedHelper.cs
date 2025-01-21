@@ -366,7 +366,7 @@ namespace UserTrackerShared.Helpers
                     obj = (string)value;
                     return;
                 }
-                throw new ArgumentException($"Property '{property}' not found in {objType}.");
+                 throw new ArgumentException($"Property '{property}' not found in {objType}.");
             }
 
             if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
@@ -451,7 +451,6 @@ namespace UserTrackerShared.Helpers
 
         public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, PropertiesList propertyLists)
         {
-            var id = propertyLists.StringProperties.GetValueOrDefault("_id") ?? "";
             var type = propertyLists.StringProperties.GetValueOrDefault("type");
             if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
             else roomHistory.TypeMap.TryAdd(key, type);
@@ -462,26 +461,26 @@ namespace UserTrackerShared.Helpers
             switch (type)
             {
                 case "constructedWall":
-                    if (!roomHistory.Structures.Walls.TryGetValue(id, out var wall))
+                    if (!roomHistory.Structures.Walls.TryGetValue(key, out var wall))
                     {
                         wall = new StructureWall();
-                        roomHistory.Structures.Walls[id] = wall;
+                        roomHistory.Structures.Walls[key] = wall;
                     }
                     SetAllNestedPropertyValues(wall, propertyLists);
                     break;
                 case "constructionSite":
-                    if (!roomHistory.Structures.ConstructionSites.TryGetValue(id, out var constructionSite))
+                    if (!roomHistory.Structures.ConstructionSites.TryGetValue(key, out var constructionSite))
                     {
                         constructionSite = new StructureConstructionSite();
-                        roomHistory.Structures.ConstructionSites[id] = constructionSite;
+                        roomHistory.Structures.ConstructionSites[key] = constructionSite;
                     }
                     SetAllNestedPropertyValues(constructionSite, propertyLists);
                     break;
                 case "container":
-                    if (!roomHistory.Structures.Containers.TryGetValue(id, out var container))
+                    if (!roomHistory.Structures.Containers.TryGetValue(key, out var container))
                     {
                         container = new StructureContainer();
-                        roomHistory.Structures.Containers[id] = container;
+                        roomHistory.Structures.Containers[key] = container;
                     }
                     SetAllNestedPropertyValues(container, propertyLists);
                     break;
@@ -496,26 +495,26 @@ namespace UserTrackerShared.Helpers
                     Creep creep;
                     if (hasController && isOwnCreep)
                     {
-                        if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(id, out creep))
+                        if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out creep))
                         {
                             creep = new Creep();
-                            roomHistory.Creeps.OwnedCreeps[id] = creep;
+                            roomHistory.Creeps.OwnedCreeps[key] = creep;
                         }
                     }
                     else if (hasController && !isOwnCreep)
                     {
-                        if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(id, out creep))
+                        if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out creep))
                         {
                             creep = new Creep();
-                            roomHistory.Creeps.EnemyCreeps[id] = creep;
+                            roomHistory.Creeps.EnemyCreeps[key] = creep;
                         }
                     }
                     else
                     {
-                        if (!roomHistory.Creeps.OtherCreeps.TryGetValue(id, out creep))
+                        if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
                         {
                             creep = new Creep();
-                            roomHistory.Creeps.OtherCreeps[id] = creep;
+                            roomHistory.Creeps.OtherCreeps[key] = creep;
                         }
                     }
                     SetAllNestedPropertyValues(creep, propertyLists);
@@ -526,66 +525,66 @@ namespace UserTrackerShared.Helpers
                     roomHistory.Structures.Deposit = deposit;
                     break;
                 case "energy":
-                    if (!roomHistory.GroundResources.TryGetValue(id, out var resource))
+                    if (!roomHistory.GroundResources.TryGetValue(key, out var resource))
                     {
                         resource = new GroundResource();
-                        roomHistory.GroundResources[id] = resource;
+                        roomHistory.GroundResources[key] = resource;
                     }
                     SetAllNestedPropertyValues(resource, propertyLists);
                     break;
                 case "extension":
-                    if (!roomHistory.Structures.Extensions.TryGetValue(id, out var extension))
+                    if (!roomHistory.Structures.Extensions.TryGetValue(key, out var extension))
                     {
                         extension = new StructureExtension();
-                        roomHistory.Structures.Extensions[id] = extension;
+                        roomHistory.Structures.Extensions[key] = extension;
                     }
                     SetAllNestedPropertyValues(extension, propertyLists);
                     break;
                 case "extractor":
-                    if (!roomHistory.Structures.Extractors.TryGetValue(id, out var extractor))
+                    if (!roomHistory.Structures.Extractors.TryGetValue(key, out var extractor))
                     {
                         extractor = new StructureExtractor();
-                        roomHistory.Structures.Extractors[id] = extractor;
+                        roomHistory.Structures.Extractors[key] = extractor;
                     }
                     SetAllNestedPropertyValues(extractor, propertyLists);
                     break;
                 case "factory":
-                    if (!roomHistory.Structures.Factories.TryGetValue(id, out var factory))
+                    if (!roomHistory.Structures.Factories.TryGetValue(key, out var factory))
                     {
                         factory = new StructureFactory();
-                        roomHistory.Structures.Factories[id] = factory;
+                        roomHistory.Structures.Factories[key] = factory;
                     }
                     SetAllNestedPropertyValues(factory, propertyLists);
                     break;
                 case "invaderCore":
-                    if (!roomHistory.Structures.InvaderCores.TryGetValue(id, out var invaderCore))
+                    if (!roomHistory.Structures.InvaderCores.TryGetValue(key, out var invaderCore))
                     {
                         invaderCore = new StructureInvaderCore();
-                        roomHistory.Structures.InvaderCores[id] = invaderCore;
+                        roomHistory.Structures.InvaderCores[key] = invaderCore;
                     }
                     SetAllNestedPropertyValues(invaderCore, propertyLists);
                     break;
                 case "keeperLair":
-                    if (!roomHistory.Structures.KeeperLairs.TryGetValue(id, out var keeperLair))
+                    if (!roomHistory.Structures.KeeperLairs.TryGetValue(key, out var keeperLair))
                     {
                         keeperLair = new StructureKeeperLair();
-                        roomHistory.Structures.KeeperLairs[id] = keeperLair;
+                        roomHistory.Structures.KeeperLairs[key] = keeperLair;
                     }
                     SetAllNestedPropertyValues(keeperLair, propertyLists);
                     break;
                 case "lab":
-                    if (!roomHistory.Structures.Labs.TryGetValue(id, out var lab))
+                    if (!roomHistory.Structures.Labs.TryGetValue(key, out var lab))
                     {
                         lab = new StructureLab();
-                        roomHistory.Structures.Labs[id] = lab;
+                        roomHistory.Structures.Labs[key] = lab;
                     }
                     SetAllNestedPropertyValues(lab, propertyLists);
                     break;
                 case "link":
-                    if (!roomHistory.Structures.Links.TryGetValue(id, out var link))
+                    if (!roomHistory.Structures.Links.TryGetValue(key, out var link))
                     {
                         link = new StructureLink();
-                        roomHistory.Structures.Links[id] = link;
+                        roomHistory.Structures.Links[key] = link;
                     }
                     SetAllNestedPropertyValues(link, propertyLists);
                     break;
@@ -595,130 +594,130 @@ namespace UserTrackerShared.Helpers
                     roomHistory.Structures.Mineral = mineral;
                     break;
                 case "nuker":
-                    if (!roomHistory.Structures.Nukers.TryGetValue(id, out var nuker))
+                    if (!roomHistory.Structures.Nukers.TryGetValue(key, out var nuker))
                     {
                         nuker = new StructureNuker();
-                        roomHistory.Structures.Nukers[id] = nuker;
+                        roomHistory.Structures.Nukers[key] = nuker;
                     }
                     SetAllNestedPropertyValues(nuker, propertyLists);
                     break;
                 case "observer":
-                    if (!roomHistory.Structures.Observers.TryGetValue(id, out var observer))
+                    if (!roomHistory.Structures.Observers.TryGetValue(key, out var observer))
                     {
                         observer = new StructureObserver();
-                        roomHistory.Structures.Observers[id] = observer;
+                        roomHistory.Structures.Observers[key] = observer;
                     }
                     SetAllNestedPropertyValues(observer, propertyLists);
                     break;
                 case "portal":
-                    if (!roomHistory.Structures.Portals.TryGetValue(id, out var portal))
+                    if (!roomHistory.Structures.Portals.TryGetValue(key, out var portal))
                     {
                         portal = new StructurePortal();
-                        roomHistory.Structures.Portals[id] = portal;
+                        roomHistory.Structures.Portals[key] = portal;
                     }
                     SetAllNestedPropertyValues(portal, propertyLists);
                     break;
                 case "powerBank":
-                    if (!roomHistory.Structures.PowerBanks.TryGetValue(id, out var powerBank))
+                    if (!roomHistory.Structures.PowerBanks.TryGetValue(key, out var powerBank))
                     {
                         powerBank = new StructurePowerBank();
-                        roomHistory.Structures.PowerBanks[id] = powerBank;
+                        roomHistory.Structures.PowerBanks[key] = powerBank;
                     }
                     SetAllNestedPropertyValues(powerBank, propertyLists);
                     break;
                 case "powerCreep":
-                    if (!roomHistory.Creeps.PowerCreeps.TryGetValue(id, out var powerCreep))
+                    if (!roomHistory.Creeps.PowerCreeps.TryGetValue(key, out var powerCreep))
                     {
                         powerCreep = new PowerCreep();
-                        roomHistory.Creeps.PowerCreeps[id] = powerCreep;
+                        roomHistory.Creeps.PowerCreeps[key] = powerCreep;
                     }
                     SetAllNestedPropertyValues(powerCreep, propertyLists);
                     break;
                 case "powerSpawn":
-                    if (!roomHistory.Structures.PowerSpawns.TryGetValue(id, out var powerSpawn))
+                    if (!roomHistory.Structures.PowerSpawns.TryGetValue(key, out var powerSpawn))
                     {
                         powerSpawn = new StructurePowerSpawn();
-                        roomHistory.Structures.PowerSpawns[id] = powerSpawn;
+                        roomHistory.Structures.PowerSpawns[key] = powerSpawn;
                     }
                     SetAllNestedPropertyValues(powerSpawn, propertyLists);
                     break;
                 case "rampart":
-                    if (!roomHistory.Structures.Ramparts.TryGetValue(id, out var rampart))
+                    if (!roomHistory.Structures.Ramparts.TryGetValue(key, out var rampart))
                     {
                         rampart = new StructureRampart();
-                        roomHistory.Structures.Ramparts[id] = rampart;
+                        roomHistory.Structures.Ramparts[key] = rampart;
                     }
                     SetAllNestedPropertyValues(rampart, propertyLists);
                     break;
                 case "road":
-                    if (!roomHistory.Structures.Roads.TryGetValue(id, out var road))
+                    if (!roomHistory.Structures.Roads.TryGetValue(key, out var road))
                     {
                         road = new StructureRoad();
-                        roomHistory.Structures.Roads[id] = road;
+                        roomHistory.Structures.Roads[key] = road;
                     }
                     SetAllNestedPropertyValues(road, propertyLists);
                     break;
                 case "ruin":
-                    if (!roomHistory.Structures.Ruins.TryGetValue(id, out var ruin))
+                    if (!roomHistory.Structures.Ruins.TryGetValue(key, out var ruin))
                     {
                         ruin = new StructureRuin();
-                        roomHistory.Structures.Ruins[id] = ruin;
+                        roomHistory.Structures.Ruins[key] = ruin;
                     }
                     SetAllNestedPropertyValues(ruin, propertyLists);
                     break;
                 case "source":
-                    if (!roomHistory.Structures.Sources.TryGetValue(id, out var source))
+                    if (!roomHistory.Structures.Sources.TryGetValue(key, out var source))
                     {
                         source = new StructureSource();
-                        roomHistory.Structures.Sources[id] = source;
+                        roomHistory.Structures.Sources[key] = source;
                     }
                     SetAllNestedPropertyValues(source, propertyLists);
                     break;
                 case "spawn":
-                    if (!roomHistory.Structures.Spawns.TryGetValue(id, out var spawn))
+                    if (!roomHistory.Structures.Spawns.TryGetValue(key, out var spawn))
                     {
                         spawn = new StructureSpawn();
-                        roomHistory.Structures.Spawns[id] = spawn;
+                        roomHistory.Structures.Spawns[key] = spawn;
                     }
                     SetAllNestedPropertyValues(spawn, propertyLists);
                     break;
                 case "storage":
-                    if (!roomHistory.Structures.Storages.TryGetValue(id, out var storage))
+                    if (!roomHistory.Structures.Storages.TryGetValue(key, out var storage))
                     {
                         storage = new StructureStorage();
-                        roomHistory.Structures.Storages[id] = storage;
+                        roomHistory.Structures.Storages[key] = storage;
                     }
                     SetAllNestedPropertyValues(storage, propertyLists);
                     break;
                 case "terminal":
-                    if (!roomHistory.Structures.Terminals.TryGetValue(id, out var terminal))
+                    if (!roomHistory.Structures.Terminals.TryGetValue(key, out var terminal))
                     {
                         terminal = new StructureTerminal();
-                        roomHistory.Structures.Terminals[id] = terminal;
+                        roomHistory.Structures.Terminals[key] = terminal;
                     }
                     SetAllNestedPropertyValues(terminal, propertyLists);
                     break;
                 case "tombstone":
-                    if (!roomHistory.Structures.Tombstones.TryGetValue(id, out var tombstone))
+                    if (!roomHistory.Structures.Tombstones.TryGetValue(key, out var tombstone))
                     {
                         tombstone = new StructureTombstone();
-                        roomHistory.Structures.Tombstones[id] = tombstone;
+                        roomHistory.Structures.Tombstones[key] = tombstone;
                     }
                     SetAllNestedPropertyValues(tombstone, propertyLists);
                     break;
                 case "tower":
-                    if (!roomHistory.Structures.Towers.TryGetValue(id, out var tower))
+                    if (!roomHistory.Structures.Towers.TryGetValue(key, out var tower))
                     {
                         tower = new StructureTower();
-                        roomHistory.Structures.Towers[id] = tower;
+                        roomHistory.Structures.Towers[key] = tower;
                     }
                     SetAllNestedPropertyValues(tower, propertyLists);
                     break;
                 case "nuke":
-                    if (!roomHistory.Structures.Nukes.TryGetValue(id, out var nuke))
+                    if (!roomHistory.Structures.Nukes.TryGetValue(key, out var nuke))
                     {
                         nuke = new StructureNuke();
-                        roomHistory.Structures.Nukes[id] = nuke;
+                        roomHistory.Structures.Nukes[key] = nuke;
                     }
                     SetAllNestedPropertyValues(nuke, propertyLists);
                     break;

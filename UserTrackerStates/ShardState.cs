@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Linq;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models.ScreepsAPI;
@@ -56,42 +58,44 @@ namespace UserTrackerShared.States
                     for (long i = LastSynceTime; i < syncTime; i += 100)
                     {
                         var mainStopwatch = Stopwatch.StartNew();
-                        var stopwatches = new List<Stopwatch>();
+                        var stopwatches = new ConcurrentBag<Stopwatch>();
 
-                        var roomDict = Rooms.ToDictionary(r => r.Name);  // Faster lookups
-                        var proxiesAvailable = GameState.GetAvailableProxies(Rooms.Count);
+                        var roomsCount = Rooms.Count;
+                        List<Task> updateTasks = new List<Task>();
 
-                        // Set up Parallel Options with max parallelism equal to the proxy count
-                        var parallelOptions = new ParallelOptions
+                        var roomsChecked = 0;
+                        var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
+                        while (roomsChecked < roomsCount)
                         {
-                            MaxDegreeOfParallelism = proxiesAvailable.Count // Limit parallelism to the proxy count
-                        };
+                            var proxiesAvailable = GameState.GetAvailableProxies(roomNamesToBeChecked.Length);
+                            var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
+                            roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
 
-                        // Use Parallel.ForEachAsync to run tasks based on proxies
-                        await Parallel.ForEachAsync(proxiesAvailable.Zip(Rooms, (proxy, room) => (room, proxy)),
-                            parallelOptions,
-                            async (pair, cancellationToken) =>
+                            for (var j = 0; j < proxiesAvailable.Count; j++)
                             {
-                                var (room, proxy) = pair;
+                                var roomName = checkingRooms[j];
+                                var room = Rooms.First(r => r.Name == roomName);
+                                var proxy = proxiesAvailable[j];
                                 var stopwatch = Stopwatch.StartNew();
                                 stopwatches.Add(stopwatch);
-
-                                try
+                                var task = Task.Run(async () =>
                                 {
                                     await room.UpdateRoomData(i, proxy);
                                     stopwatch.Stop();
-                                }
-                                catch (Exception ex)
-                                {
-                                    Screen.LogsPart.AddLog($"Error updating room {room.Name}: {ex.Message}");
-                                }
-                            });
+                                });
+                                updateTasks.Add(task);
+
+                                roomsChecked++;
+                            }
+                            await Task.Delay(100);
+                        }
+                        await Task.WhenAll(updateTasks);
 
 
-                        mainStopwatch.Stop();
 
                         try
                         {
+                            mainStopwatch.Stop();
                             var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                             var totalMicroSeconds = totalMiliseconds * 1000;
                             var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
