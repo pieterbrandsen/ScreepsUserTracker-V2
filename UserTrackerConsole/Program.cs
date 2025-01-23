@@ -2,7 +2,8 @@
 using UserTrackerShared.States;
 
 Screen.Init();
-GameState.Init();
+var gameState = new GameState();
+await gameState.InitAsync();
 
 //var a = 1;
 //while (true)

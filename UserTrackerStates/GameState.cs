@@ -9,21 +9,20 @@ using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
 {
-    public static class GameState
+    public class GameState
     {
-        public static string ScreepsAPIUrl = "";
-        public static string ScreepsAPIToken = "";
-        public static string ScreepsAPIUsername = "";
-        public static string ScreepsAPIPassword = "";
-        public static bool IsPrivateServer = ScreepsAPIUrl != "https://screeps.com";
+        public string ScreepsAPIUrl = "";
+        public string ScreepsAPIToken = "";
+        public string ScreepsAPIUsername = "";
+        public string ScreepsAPIPassword = "";
 
-        public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
+        public List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
         public static ConcurrentBag<ProxyState> ProxyStates = new ConcurrentBag<ProxyState>();
-        public static List<ShardState> Shards = new List<ShardState>();
+        public List<ShardState> Shards = new List<ShardState>();
 
-        private static Timer? _onSetLeaderboardTimer;
+        private Timer? _onSetLeaderboardTimer;
 
-        public static async void Init()
+        public async Task InitAsync()
         {
             ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
             ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
@@ -100,13 +99,18 @@ namespace UserTrackerShared.States
             return proxies;
         }
 
-        private static async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        public async Task UpdateLeaderboard()
         {
             var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
             if (currentLeaderboardResponse != null)
             {
                 CurrentLeaderboard = currentLeaderboardResponse;
             }
+        }
+
+        private async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        {
+            await UpdateLeaderboard();
         }
     }
 }

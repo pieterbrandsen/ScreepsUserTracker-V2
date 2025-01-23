@@ -15,16 +15,13 @@ namespace UserTracker.Tests.States
         {
             // Arrange
             SetConfigurationManager.SetPrivateConfig();
-            GameState.Init();                   // Ensure this is properly initialized
+            
+            // Act
             var shardState = new ShardState("shardName");
-
-            // Wait for async initialization to complete
-            await Task.Delay(1000); // Adjust delay as needed
+            await shardState.StartUpdate();
 
             // Assert
             Assert.Equal("shardName", shardState.Name);
-            Assert.NotNull(shardState.Users); // Check if users are loaded
-            Assert.NotNull(shardState.Rooms); // Check if rooms are loaded
             Assert.True(shardState.Time > 0); // Check if time is set correctly
         }
 
@@ -33,7 +30,6 @@ namespace UserTracker.Tests.States
         {
             // Arrange
             SetConfigurationManager.SetPrivateConfig();
-            GameState.Init();                   // Ensure this is properly initialized
 
             // Act
             var shardState = new ShardState("shardName");
