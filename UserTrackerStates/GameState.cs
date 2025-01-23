@@ -11,10 +11,10 @@ namespace UserTrackerShared.States
 {
     public static class GameState
     {
-        public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
-        public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
-        public static string ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
-        public static string ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
+        public static string ScreepsAPIUrl = "";
+        public static string ScreepsAPIToken = "";
+        public static string ScreepsAPIUsername = "";
+        public static string ScreepsAPIPassword = "";
         public static bool IsPrivateServer = ScreepsAPIUrl != "https://screeps.com";
 
         public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
@@ -25,6 +25,11 @@ namespace UserTrackerShared.States
 
         public static async void Init()
         {
+            ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
+            ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
+            ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
+            ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
+
             var proxies = await ProxyHelper.GetProxyIps();
             lock (ProxyStates)
             {

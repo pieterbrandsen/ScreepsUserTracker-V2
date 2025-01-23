@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTrackerScreepsApi", "Us
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTrackerStates", "UserTrackerStates\UserTrackerStates.csproj", "{6C82240A-E985-4EB8-95F7-67CD272F1E3C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTracker.Tests", "UserTracker.Tests\UserTracker.Tests.csproj", "{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{6C82240A-E985-4EB8-95F7-67CD272F1E3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C82240A-E985-4EB8-95F7-67CD272F1E3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C82240A-E985-4EB8-95F7-67CD272F1E3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
