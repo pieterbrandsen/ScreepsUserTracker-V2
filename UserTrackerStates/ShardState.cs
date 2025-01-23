@@ -105,7 +105,7 @@ namespace UserTrackerShared.States
             isSyncing = false;
         }
 
-        public async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
+        public async Task StartUpdate()
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
             if (timeResponse != null)
@@ -116,6 +116,10 @@ namespace UserTrackerShared.States
                 }
                 Time = timeResponse.Time;
             }
+        }
+        private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
+        {
+            await StartUpdate();
         }
     }
 }

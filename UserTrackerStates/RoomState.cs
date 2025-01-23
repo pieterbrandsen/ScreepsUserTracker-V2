@@ -26,7 +26,15 @@ namespace UserTrackerStates
 
         public async Task UpdateRoomData(long tick, ProxyState proxy)
         {
-            var roomData = await proxy.GetHistory(Shard, Name, tick);
+            JObject? roomData = null;
+            if (proxy == null)
+            {
+                roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
+            }
+            else
+            {
+                roomData = await proxy.GetHistory(Shard, Name, tick);
+            }
             if (roomData != null)
             {
                 var roomHistory = ScreepsRoomHistoryComputedHelper.Compute(roomData);
