@@ -43,70 +43,76 @@ namespace UserTrackerShared.States
         private static Timer? _setTimeTimer;
         private static bool isSyncing = false;
 
-        private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
+        private async void StartSync(long time)
+        {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((time - 500) / 100)) * 100);
+            if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 100;
+
+            for (long i = LastSynceTime; i < syncTime; i += 100)
+            {
+                var mainStopwatch = Stopwatch.StartNew();
+                var stopwatches = new ConcurrentBag<Stopwatch>();
+
+                var roomsCount = Rooms.Count;
+                List<Task> updateTasks = new List<Task>();
+
+                var roomsChecked = 0;
+                var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
+                while (roomsChecked < roomsCount)
+                {
+                    var proxiesAvailable = GameState.GetAvailableProxies(roomNamesToBeChecked.Length);
+                    var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
+                    roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
+
+                    for (var j = 0; j < proxiesAvailable.Count; j++)
+                    {
+                        var roomName = checkingRooms[j];
+                        var room = Rooms.First(r => r.Name == roomName);
+                        var proxy = proxiesAvailable[j];
+                        var stopwatch = Stopwatch.StartNew();
+                        stopwatches.Add(stopwatch);
+                        var task = Task.Run(async () =>
+                        {
+                            await room.UpdateRoomData(i, proxy);
+                            stopwatch.Stop();
+                        });
+                        updateTasks.Add(task);
+
+                        roomsChecked++;
+                    }
+                    await Task.Delay(100);
+                }
+                await Task.WhenAll(updateTasks);
+
+
+
+                try
+                {
+                    mainStopwatch.Stop();
+                    var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
+                    var totalMicroSeconds = totalMiliseconds * 1000;
+                    var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
+                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS, avg time taken {Math.Round(averageTime)}ms");
+                }
+                catch (Exception)
+                {
+                }
+            }
+            LastSynceTime = syncTime;
+            isSyncing = false;
+        }
+
+        public async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
             if (timeResponse != null)
             {
                 if (Time != timeResponse.Time)
                 {
-                    if (isSyncing) return;
-                    isSyncing = true;
-                    var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((timeResponse.Time - 500) / 100)) * 100);
-                    if (LastSynceTime == 0) LastSynceTime = syncTime - 500 * 100;
-
-                    for (long i = LastSynceTime; i < syncTime; i += 100)
-                    {
-                        var mainStopwatch = Stopwatch.StartNew();
-                        var stopwatches = new ConcurrentBag<Stopwatch>();
-
-                        var roomsCount = Rooms.Count;
-                        List<Task> updateTasks = new List<Task>();
-
-                        var roomsChecked = 0;
-                        var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
-                        while (roomsChecked < roomsCount)
-                        {
-                            var proxiesAvailable = GameState.GetAvailableProxies(roomNamesToBeChecked.Length);
-                            var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
-                            roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
-
-                            for (var j = 0; j < proxiesAvailable.Count; j++)
-                            {
-                                var roomName = checkingRooms[j];
-                                var room = Rooms.First(r => r.Name == roomName);
-                                var proxy = proxiesAvailable[j];
-                                var stopwatch = Stopwatch.StartNew();
-                                stopwatches.Add(stopwatch);
-                                var task = Task.Run(async () =>
-                                {
-                                    await room.UpdateRoomData(i, proxy);
-                                    stopwatch.Stop();
-                                });
-                                updateTasks.Add(task);
-
-                                roomsChecked++;
-                            }
-                            await Task.Delay(100);
-                        }
-                        await Task.WhenAll(updateTasks);
-
-
-
-                        try
-                        {
-                            mainStopwatch.Stop();
-                            var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
-                            var totalMicroSeconds = totalMiliseconds * 1000;
-                            var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
-                            Screen.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS, avg time taken {Math.Round(averageTime)}ms");
-                        }
-                        catch (Exception)
-                        {
-                        }
-                    }
-                    LastSynceTime = syncTime;
-                    isSyncing = false;
+                    StartSync(timeResponse.Time);
                 }
                 Time = timeResponse.Time;
             }
