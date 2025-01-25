@@ -1,0 +1,19 @@
+{
+  "timestamp": 0,
+  "room": "E1N1",
+  "base": 0,
+  "ticks": {
+    "0": {
+      "6794ed1988dec79a5c81e440": {
+        "_id": "6794ed1988dec79a5c81e440",
+        "name": "Creep1",
+        "type": "creep",
+        "room": "E16N47",
+        "user": "5b9e35920f569e704864c4cc"
+      }
+    },
+    "1": {
+      "6794ed1988dec79a5c81e440": null
+    }
+  }
+}

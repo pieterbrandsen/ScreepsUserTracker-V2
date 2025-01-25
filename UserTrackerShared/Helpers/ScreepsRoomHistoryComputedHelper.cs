@@ -366,7 +366,7 @@ namespace UserTrackerShared.Helpers
                     obj = (string)value;
                     return;
                 }
-                 throw new ArgumentException($"Property '{property}' not found in {objType}.");
+                throw new ArgumentException($"Property '{property}' not found in {objType}.");
             }
 
             if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
@@ -728,7 +728,55 @@ namespace UserTrackerShared.Helpers
 
             return roomHistory;
         }
+
+        public static ScreepsRoomHistory RemoveFromRoomHistory(string key, ScreepsRoomHistory roomHistory)
+        {
+            roomHistory.GroundResources.Remove(key);
+            roomHistory.Creeps.OwnedCreeps.Remove(key);
+            roomHistory.Creeps.EnemyCreeps.Remove(key);
+            roomHistory.Creeps.OtherCreeps.Remove(key);
+            roomHistory.Creeps.PowerCreeps.Remove(key);
+
+            if (roomHistory.Structures.Mineral != null && roomHistory.Structures.Mineral.Id == key)
+                roomHistory.Structures.Mineral = null;
+
+            if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == key)
+                roomHistory.Structures.Deposit = null;
+
+            if (roomHistory.Structures.Controller != null && roomHistory.Structures.Controller.Id == key)
+                roomHistory.Structures.Controller = null;
+
+            roomHistory.Structures.ConstructionSites.Remove(key);
+            roomHistory.Structures.Containers.Remove(key);
+            roomHistory.Structures.Walls.Remove(key);
+
+            roomHistory.Structures.Extensions.Remove(key);
+            roomHistory.Structures.Extractors.Remove(key);
+            roomHistory.Structures.Factories.Remove(key);
+            roomHistory.Structures.InvaderCores.Remove(key);
+            roomHistory.Structures.KeeperLairs.Remove(key);
+            roomHistory.Structures.Labs.Remove(key);
+            roomHistory.Structures.Links.Remove(key);
+            roomHistory.Structures.Nukers.Remove(key);
+            roomHistory.Structures.Observers.Remove(key);
+            roomHistory.Structures.Portals.Remove(key);
+            roomHistory.Structures.PowerBanks.Remove(key);
+            roomHistory.Structures.PowerSpawns.Remove(key);
+            roomHistory.Structures.Ramparts.Remove(key);
+            roomHistory.Structures.Roads.Remove(key);
+            roomHistory.Structures.Ruins.Remove(key);
+            roomHistory.Structures.Sources.Remove(key);
+            roomHistory.Structures.Spawns.Remove(key);
+            roomHistory.Structures.Storages.Remove(key);
+            roomHistory.Structures.Terminals.Remove(key);
+            roomHistory.Structures.Tombstones.Remove(key);
+            roomHistory.Structures.Towers.Remove(key);
+            roomHistory.Structures.Nukes.Remove(key);
+
+            return roomHistory;
+        }
     }
+    
     public static class ScreepsRoomHistoryComputedHelper
     {
         private static PropertiesList UpdateRecursiveProperties(PropertiesList propertyLists, JObject obj, string basePath = "")
@@ -829,9 +877,9 @@ namespace UserTrackerShared.Helpers
 
                     foreach (var item in tickObject.Children().Children())
                     {
+                        var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
                         if (item.Children().First() is JObject obj)
                         {
-                            var key = obj.Path.Substring(obj.Path.LastIndexOf('.') + 1);
                             var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
                             propertiesListDictionary[key] = propertiesList;
 
@@ -842,6 +890,10 @@ namespace UserTrackerShared.Helpers
                             {
                                 FileWriterManager.GenerateFileByType(type, obj);
                             }
+                        }
+                        else
+                        {
+                            roomHistory = ConvertJObjectToHistory.RemoveFromRoomHistory(key, roomHistory);
                         }
                     }
 

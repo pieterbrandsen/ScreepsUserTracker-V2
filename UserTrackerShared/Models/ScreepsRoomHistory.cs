@@ -807,9 +807,9 @@ namespace UserTrackerShared.Models
 
     public class Structures
     {
-        public StructureController Controller { get; set; }
-        public StructureMineral Mineral { get; set; }
-        public StructureDepsoit Deposit { get; set; }
+        public StructureController? Controller { get; set; }
+        public StructureMineral? Mineral { get; set; }
+        public StructureDepsoit? Deposit { get; set; }
 
 
         public Dictionary<string, StructureWall> Walls { get; set; } = new Dictionary<string, StructureWall>();
