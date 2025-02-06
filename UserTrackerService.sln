@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTrackerStates", "UserTr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTracker.Tests", "UserTracker.Tests\UserTracker.Tests.csproj", "{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserTracker.HistoryFileTesterConsole", "UserTracker.HistoryFileTesterConsole\UserTracker.HistoryFileTesterConsole.csproj", "{05461800-C2E8-4CAE-9257-81D3B60B4B72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F2BEBEA-874D-4EDC-A014-7DAABA3CBA19}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05461800-C2E8-4CAE-9257-81D3B60B4B72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05461800-C2E8-4CAE-9257-81D3B60B4B72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05461800-C2E8-4CAE-9257-81D3B60B4B72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05461800-C2E8-4CAE-9257-81D3B60B4B72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

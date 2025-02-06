@@ -6,7 +6,7 @@ namespace UserTrackerShared.Helpers
     public static class ProxyHelper
     {
         public static string APIToken = ConfigurationManager.AppSettings["PROXYSCRAPE_API_TOKEN"] ?? "";
-        public static List<string> Proxies = new List<string>();
+        public static List<string> Proxies;
 
         public static async Task<List<string>> GetProxyIps()
         {

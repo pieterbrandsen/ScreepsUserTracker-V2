@@ -20,8 +20,10 @@ namespace UserTrackerShared.Helpers
 
     internal static class FileWriterManager
     {
+        private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Histories";
         private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
         private static readonly string TypesDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Types";
+        private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
         private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();
         private static readonly ConcurrentDictionary<string, JObject> TypeCache = new();
         private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
@@ -81,13 +83,24 @@ namespace UserTrackerShared.Helpers
             });
         }
 
+        public static void GenerateHistoryFile(JObject roomData)
+        {
+            var room = "";
+            roomData.TryGetValue("room", out JToken? jTokenRoom);
+            if (jTokenRoom != null) room = jTokenRoom.Value<string>();
+
+            long baseTick = 0;
+            roomData.TryGetValue("base", out JToken? jTokenBase);
+            if (jTokenBase != null) baseTick = jTokenBase.Value<long>();
+
+            HistoryCache.AddOrUpdate($"{baseTick}.{room}", _ => roomData, (_, existing) =>
+            {
+                return existing;
+            });
+        }
+
         private static void UpdateCache(string tick, string key, JObject obj)
         {
-            if (!obj.ContainsKey("tick"))
-            {
-                obj.AddFirst(new JProperty("tick", tick));
-            }
-
             string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
             if (File.Exists(filePath) || KeyCache.ContainsKey(key)) return;
 
@@ -149,6 +162,52 @@ namespace UserTrackerShared.Helpers
                         Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
                     }
                 }
+
+
+                IEnumerable<string> historyKeys;
+                lock (HistoryCache)
+                {
+                    // Extract keys upfront to minimize lock time
+                    historyKeys = HistoryCache.Keys.ToArray();
+                }
+
+                var tasks = new List<Task>();
+                SemaphoreSlim semaphore = new SemaphoreSlim(100); // Limit concurrent writes to avoid overloading the disk
+
+                foreach (var key in historyKeys)
+                {
+                    tasks.Add(Task.Run(async () =>
+                    {
+                        try
+                        {
+                            if (HistoryCache.TryRemove(key, out JObject obj))
+                            {
+                                if (obj == null) return;
+
+                                string filePath = Path.Combine(HistoryDirectoryPath, $"{key}.json");
+
+                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+
+                                await semaphore.WaitAsync(); // Throttle writes
+                                try
+                                {
+                                    await File.WriteAllTextAsync(filePath, json);
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
+                        }
+                    }));
+                }
+
+                // Wait for all tasks to complete
+                await Task.WhenAll(tasks);
             }
             catch (Exception ex)
             {
@@ -184,7 +243,6 @@ namespace UserTrackerShared.Helpers
             if (string.IsNullOrEmpty(input)) return input;
             return char.ToLower(input[0]) + input.Substring(1);
         }
-        private static readonly ConcurrentDictionary<Type, object> DefaultValuesCache = new ConcurrentDictionary<Type, object>();
         private static object GetDefaultValue(Type type)
         {
             if (type == typeof(string))
@@ -192,8 +250,9 @@ namespace UserTrackerShared.Helpers
                 return ""; // Default to empty string for strings
             }
 
-            return DefaultValuesCache.GetOrAdd(type, t => Activator.CreateInstance(t));
+            return Activator.CreateInstance(type);
         }
+      
         private static void SetNestedPropertyValue(ref object rootObj, string propertyPath, object value)
         {
             if (rootObj == null || string.IsNullOrEmpty(propertyPath))
@@ -349,57 +408,110 @@ namespace UserTrackerShared.Helpers
         }
         private static void SetPropertyValue(object obj, string property, object value)
         {
-            if (obj == null) throw new ArgumentNullException(nameof(obj));
-
-            // Handle property name mapping
-            property = PropertyNameMapping.TryGetValue(property, out var mappedName) ? mappedName : property;
-
-            var objType = obj.GetType();
-            PropertyInfo propInfo = objType.GetProperty(property, BindingFlags.Public | BindingFlags.Instance)
-                                  ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance)
-                                  ?? objType.GetProperty(DeCapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
-
-            if (propInfo == null)
+            try
             {
-                if (obj is string)
+                if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+                // Handle property name mapping
+                property = PropertyNameMapping.TryGetValue(property, out var mappedName) ? mappedName : property;
+
+                var objType = obj.GetType();
+                PropertyInfo propInfo = objType.GetProperty(property, BindingFlags.Public | BindingFlags.Instance)
+                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance)
+                                      ?? objType.GetProperty(DeCapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
+
+                if (propInfo == null)
                 {
-                    obj = (string)value;
-                    return;
+                    if (obj is string)
+                    {
+                        obj = (string)value;
+                        return;
+                    }
+                    throw new ArgumentException($"Property '{property}' not found in {objType}.");
                 }
-                throw new ArgumentException($"Property '{property}' not found in {objType}.");
-            }
 
-            if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
-                !NonInstantiableTypes.Contains(propInfo.PropertyType))
-            {
-                propInfo.SetValue(obj, GetDefaultValue(propInfo.PropertyType));
-            }
-
-            // Handle null assignment for value types
-            if (value == null)
-            {
-                if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null)
+                if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
+                    !NonInstantiableTypes.Contains(propInfo.PropertyType))
                 {
-                    propInfo.SetValue(obj, null);
+                    propInfo.SetValue(obj, GetDefaultValue(propInfo.PropertyType));
                 }
-                else if (propInfo.PropertyType.IsValueType)
+
+                // Handle null assignment for value types
+                if (value == null)
                 {
-                    propInfo.SetValue(obj, Activator.CreateInstance(propInfo.PropertyType));
+                    if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null)
+                    {
+                        propInfo.SetValue(obj, null);
+                    }
+                    else if (propInfo.PropertyType.IsValueType)
+                    {
+                        propInfo.SetValue(obj, Activator.CreateInstance(propInfo.PropertyType));
+                    }
+                    else
+                    {
+                        propInfo.SetValue(obj, null);
+                    }
                 }
                 else
                 {
-                    propInfo.SetValue(obj, null);
+                    propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
                 }
             }
-            else
+            catch (Exception)
             {
-                propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
+                if (obj == null) throw new ArgumentNullException(nameof(obj));
+
+                // Handle property name mapping
+                property = PropertyNameMapping.TryGetValue(property, out var mappedName) ? mappedName : property;
+
+                var objType = obj.GetType();
+                var a = string.Join(", ", objType.GetProperties().Select(p => p.Name));
+
+                PropertyInfo propInfo = objType.GetProperty(property, BindingFlags.Public | BindingFlags.Instance)
+                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance)
+                                      ?? objType.GetProperty(DeCapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
+
+                if (propInfo == null)
+                {
+                    if (obj is string)
+                    {
+                        obj = (string)value;
+                        return;
+                    }
+                    throw new ArgumentException($"Property '{property}' not found in {objType}.");
+                }
+
+                if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
+                    !NonInstantiableTypes.Contains(propInfo.PropertyType))
+                {
+                    propInfo.SetValue(obj, GetDefaultValue(propInfo.PropertyType));
+                }
+
+                // Handle null assignment for value types
+                if (value == null)
+                {
+                    if (Nullable.GetUnderlyingType(propInfo.PropertyType) != null)
+                    {
+                        propInfo.SetValue(obj, null);
+                    }
+                    else if (propInfo.PropertyType.IsValueType)
+                    {
+                        propInfo.SetValue(obj, Activator.CreateInstance(propInfo.PropertyType));
+                    }
+                    else
+                    {
+                        propInfo.SetValue(obj, null);
+                    }
+                }
+                else
+                {
+                    propInfo.SetValue(obj, Convert.ChangeType(value, Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType));
+                }
             }
         }
 
         private static void SetAllNestedPropertyValues(object obj, PropertiesList propertyLists)
         {
-            // Assuming the propertyLists structure contains keys and values for nested properties
             foreach (var item in propertyLists.NullProperties)
             {
                 try
@@ -731,52 +843,115 @@ namespace UserTrackerShared.Helpers
 
         public static ScreepsRoomHistory RemoveFromRoomHistory(string key, ScreepsRoomHistory roomHistory)
         {
-            roomHistory.GroundResources.Remove(key);
-            roomHistory.Creeps.OwnedCreeps.Remove(key);
-            roomHistory.Creeps.EnemyCreeps.Remove(key);
-            roomHistory.Creeps.OtherCreeps.Remove(key);
-            roomHistory.Creeps.PowerCreeps.Remove(key);
-
-            if (roomHistory.Structures.Mineral != null && roomHistory.Structures.Mineral.Id == key)
-                roomHistory.Structures.Mineral = null;
-
-            if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == key)
-                roomHistory.Structures.Deposit = null;
-
-            if (roomHistory.Structures.Controller != null && roomHistory.Structures.Controller.Id == key)
-                roomHistory.Structures.Controller = null;
-
-            roomHistory.Structures.ConstructionSites.Remove(key);
-            roomHistory.Structures.Containers.Remove(key);
-            roomHistory.Structures.Walls.Remove(key);
-
-            roomHistory.Structures.Extensions.Remove(key);
-            roomHistory.Structures.Extractors.Remove(key);
-            roomHistory.Structures.Factories.Remove(key);
-            roomHistory.Structures.InvaderCores.Remove(key);
-            roomHistory.Structures.KeeperLairs.Remove(key);
-            roomHistory.Structures.Labs.Remove(key);
-            roomHistory.Structures.Links.Remove(key);
-            roomHistory.Structures.Nukers.Remove(key);
-            roomHistory.Structures.Observers.Remove(key);
-            roomHistory.Structures.Portals.Remove(key);
-            roomHistory.Structures.PowerBanks.Remove(key);
-            roomHistory.Structures.PowerSpawns.Remove(key);
-            roomHistory.Structures.Ramparts.Remove(key);
-            roomHistory.Structures.Roads.Remove(key);
-            roomHistory.Structures.Ruins.Remove(key);
-            roomHistory.Structures.Sources.Remove(key);
-            roomHistory.Structures.Spawns.Remove(key);
-            roomHistory.Structures.Storages.Remove(key);
-            roomHistory.Structures.Terminals.Remove(key);
-            roomHistory.Structures.Tombstones.Remove(key);
-            roomHistory.Structures.Towers.Remove(key);
-            roomHistory.Structures.Nukes.Remove(key);
+            var type = roomHistory.TypeMap.GetValueOrDefault(key);
+            switch (type)
+            {
+                case "constructedWall":
+                    roomHistory.Structures.Walls.Remove(key);
+                    break;
+                case "constructionSite":
+                    roomHistory.Structures.ConstructionSites.Remove(key);
+                    break;
+                case "container":
+                    roomHistory.Structures.Containers.Remove(key);
+                    break;
+                case "controller":
+                    if (roomHistory.Structures.Controller != null && roomHistory.Structures.Controller.Id == key)
+                        roomHistory.Structures.Controller = null;
+                    break;
+                case "creep":
+                    roomHistory.Creeps.OwnedCreeps.Remove(key);
+                    roomHistory.Creeps.EnemyCreeps.Remove(key);
+                    roomHistory.Creeps.OtherCreeps.Remove(key);
+                    break;
+                case "deposit":
+                    if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == key)
+                        roomHistory.Structures.Deposit = null;
+                    break;
+                case "energy":
+                    roomHistory.GroundResources.Remove(key);
+                    break;
+                case "extension":
+                    roomHistory.Structures.Extensions.Remove(key);
+                    break;
+                case "extractor":
+                    roomHistory.Structures.Extractors.Remove(key);
+                    break;
+                case "factory":
+                    roomHistory.Structures.Factories.Remove(key);
+                    break;
+                case "invaderCore":
+                    roomHistory.Structures.InvaderCores.Remove(key);
+                    break;
+                case "keeperLair":
+                    roomHistory.Structures.KeeperLairs.Remove(key);
+                    break;
+                case "lab":
+                    roomHistory.Structures.Labs.Remove(key);
+                    break;
+                case "link":
+                    roomHistory.Structures.Links.Remove(key);
+                    break;
+                case "mineral":
+                    if (roomHistory.Structures.Mineral != null && roomHistory.Structures.Mineral.Id == key)
+                        roomHistory.Structures.Mineral = null;
+                    break;
+                case "nuker":
+                    roomHistory.Structures.Nukers.Remove(key);
+                    break;
+                case "observer":
+                    roomHistory.Structures.Observers.Remove(key);
+                    break;
+                case "portal":
+                    roomHistory.Structures.Portals.Remove(key);
+                    break;
+                case "powerBank":
+                    roomHistory.Structures.PowerBanks.Remove(key);
+                    break;
+                case "powerCreep":
+                    roomHistory.Creeps.PowerCreeps.Remove(key);
+                    break;
+                case "powerSpawn":
+                    roomHistory.Structures.PowerSpawns.Remove(key);
+                    break;
+                case "rampart":
+                    roomHistory.Structures.Ramparts.Remove(key);
+                    break;
+                case "road":
+                    roomHistory.Structures.Roads.Remove(key);
+                    break;
+                case "ruin":
+                    roomHistory.Structures.Ruins.Remove(key);
+                    break;
+                case "source":
+                    roomHistory.Structures.Sources.Remove(key);
+                    break;
+                case "spawn":
+                    roomHistory.Structures.Spawns.Remove(key);
+                    break;
+                case "storage":
+                    roomHistory.Structures.Storages.Remove(key);
+                    break;
+                case "terminal":
+                    roomHistory.Structures.Terminals.Remove(key);
+                    break;
+                case "tombstone":
+                    roomHistory.Structures.Tombstones.Remove(key);
+                    break;
+                case "tower":
+                    roomHistory.Structures.Towers.Remove(key);
+                    break;
+                case "nuke":
+                    roomHistory.Structures.Nukes.Remove(key);
+                    break;
+                default:
+                    break;
+            }
 
             return roomHistory;
         }
     }
-    
+
     public static class ScreepsRoomHistoryComputedHelper
     {
         private static PropertiesList UpdateRecursiveProperties(PropertiesList propertyLists, JObject obj, string basePath = "")
@@ -858,23 +1033,38 @@ namespace UserTrackerShared.Helpers
             return propertyLists;
         }
 
-        public static ScreepsRoomHistory Compute(JObject roomData)
+        public static List<ScreepsRoomHistory> Compute(JObject roomData)
         {
+            var roomHistories = new List<ScreepsRoomHistory>();
             var roomHistory = new ScreepsRoomHistory();
+
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
+
+            roomData.TryGetValue("base", out JToken? jTokenBase);
+            long baseTick = 0;
+            if (jTokenBase != null) baseTick = jTokenBase.Value<long>();
 
             roomData.TryGetValue("ticks", out JToken? jTokenTicks);
             if (jTokenTicks != null)
             {
                 var jTokenTicksValues = jTokenTicks.Values<JToken>();
-                for (int i = 0; i < jTokenTicksValues.Count(); i++)
+                for (int i = 0; i < 100; i++)
                 {
-                    var propertiesListDictionary = new Dictionary<string, PropertiesList>();
-                    var tickObject = jTokenTicksValues.ElementAt(i);
-                    if (tickObject == null) continue;
-                    var tickNumber = tickObject.Path.Substring(tickObject.Path.LastIndexOf('.') + 1);
+                    var serialized = JsonConvert.SerializeObject(roomHistory);
+                    roomHistory = JsonConvert.DeserializeObject<ScreepsRoomHistory>(serialized);
+                    if (roomHistory == null) throw new Exception("Failed to deserialize room history");
 
+                    long tickNumber = baseTick + i;
+                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
+                    if (tickObject == null)
+                    {
+                        roomHistory.Tick = tickNumber;
+                        roomHistories.Add(roomHistory);
+                        continue;
+                    }
+
+                    var propertiesListDictionary = new Dictionary<string, PropertiesList>();
                     foreach (var item in tickObject.Children().Children())
                     {
                         var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
@@ -885,11 +1075,11 @@ namespace UserTrackerShared.Helpers
 
                             var type = propertiesList.StringProperties.GetValueOrDefault("type");
                             if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
-                            FileWriterManager.GenerateFiles(tickNumber, type, obj, propertiesList);
-                            if (i == 0)
-                            {
-                                FileWriterManager.GenerateFileByType(type, obj);
-                            }
+                            //FileWriterManager.GenerateFiles(tickNumber.ToString(), type, obj, propertiesList);
+                            //if (i == 0)
+                            //{
+                            //    FileWriterManager.GenerateFileByType(type, obj);
+                            //}
                         }
                         else
                         {
@@ -913,10 +1103,15 @@ namespace UserTrackerShared.Helpers
                         var propertyLists = propertyList.Value;
                         roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
                     }
+
+                    roomHistory.Tick = Convert.ToInt64(tickNumber);
+                    roomHistories.Add(roomHistory);
                 }
             }
 
-            return roomHistory;
+            //FileWriterManager.GenerateHistoryFile(roomData);
+
+            return roomHistories;
         }
     }
 }

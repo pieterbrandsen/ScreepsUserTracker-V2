@@ -37,10 +37,10 @@ namespace UserTrackerStates
             }
             if (roomData != null)
             {
-                var roomHistory = ScreepsRoomHistoryComputedHelper.Compute(roomData);
+                var roomHistories = ScreepsRoomHistoryComputedHelper.Compute(roomData);
 
-                RoomData = roomHistory;
-                LastRoomData = roomHistory;
+                //RoomData = roomHistory;
+                //LastRoomData = roomHistory;
             }
             else
             {

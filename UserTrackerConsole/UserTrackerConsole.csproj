@@ -22,4 +22,8 @@
     <ProjectReference Include="..\UserTrackerStates\UserTrackerStates.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Objects\Histories\" />
+  </ItemGroup>
+
 </Project>

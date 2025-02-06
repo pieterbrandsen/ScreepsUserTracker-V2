@@ -1,0 +1,66 @@
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace UserTracker.Tests.Helper
+{
+    public static class GetObjectChangesInTick
+    {
+        private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
+
+        private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
+        {
+            switch (token)
+            {
+                case JObject obj:
+                    foreach (var prop in obj.Properties())
+                    {
+                        int initialLen = currentPath.Length;
+                        currentPath.Append(prop.Name).Append('.');
+                        FlattenJson(prop.Value, currentPath, dict);
+                        currentPath.Length = initialLen; // Reset path
+                    }
+                    break;
+
+                case JArray array:
+                    for (int i = 0; i < array.Count; i++)
+                    {
+                        int initialLen = currentPath.Length;
+                        currentPath.Append(i).Append('.');
+                        FlattenJson(array[i], currentPath, dict);
+                        currentPath.Length = initialLen; // Reset path
+                    }
+                    break;
+
+                case JValue jValue:
+                    if (currentPath.Length > 0)
+                        currentPath.Length--; // Remove trailing "."
+                    dict[currentPath.ToString()] = jValue.Value; // Directly use Value
+                    break;
+            }
+        }
+
+        public static Dictionary<string, object> GetById(JToken tick, string id)
+        {
+            var dict = new Dictionary<string, object>();
+            if (tick is JObject jTick && jTick.TryGetValue(id, out var idToken))
+            {
+                FlattenJson(idToken, new StringBuilder(), dict);
+            }
+            return dict;
+        }
+
+        public static Dictionary<string, object> GetById<T>(T obj)
+        {
+            var writer = new JTokenWriter();
+            _serializer.Serialize(writer, obj);
+            var dict = new Dictionary<string, object>();
+            FlattenJson(writer.Token!, new StringBuilder(), dict);
+            return dict;
+        }
+    }
+}
