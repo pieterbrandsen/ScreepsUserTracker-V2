@@ -1,8 +1,6 @@
 ﻿using FluentAssertions;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Buffers;
-using System.Diagnostics;
 using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
@@ -14,76 +12,86 @@ namespace UserTracker.Tests.RoomHistory
         private static long _filesProcessed = 0;
         private static long _changesProcessed = 0;
 
-        private static void AssertHistory(List<ScreepsRoomHistory> histories, JObject jObject)
+        private static void AssertHistory(ScreepsRoomHistory history, JToken jTokenTick)
         {
-            for (int ht = 0; ht < histories.Count; ht++)
+            var ids = history.TypeMap.Keys.ToArray();
+            for (int y = 0; y < ids.Length; y++)
             {
-                var tickHistory = histories[ht];
-                var tickStr = tickHistory.Tick.ToString();
-                var ticks = jObject["ticks"] as JObject;
-                if (ticks == null) continue;
+                var id = ids[y];
+                if (string.IsNullOrEmpty(id)) continue;
 
-                var ids = tickHistory.TypeMap.Keys.ToArray();
-                for (int y = 0; y < ids.Length; y++)
+                var obj = GetObjectFromHistory.GetById(history, id);
+                if (obj == null) continue;
+
+                var tick = jTokenTick as JObject;
+
+                var historyChanges = GetObjectChangesInTick.GetById(obj);
+                var originalChanges = GetObjectChangesInTick.GetById(tick, id);
+
+                var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count, StringComparer.OrdinalIgnoreCase);
+
+                // First loop to create the key variations
+                foreach (var kv in originalChanges)
                 {
-                    var id = ids[y];
-                    if (string.IsNullOrEmpty(id)) continue;
-
-                    var obj = GetObjectFromHistory.GetById(tickHistory, id);
-                    if (obj == null) continue;
-
-                    var tick = ticks[tickStr] as JObject;
-                    if (tick == null) continue;
-
-                    var historyChanges = GetObjectChangesInTick.GetById(obj);
-                    var originalChanges = GetObjectChangesInTick.GetById(tick, id);
-
-                    var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count, StringComparer.OrdinalIgnoreCase);
-                    
-                    // First loop to create the key variations
-                    foreach (var kv in originalChanges)
-                    {
-                        var baseKey = HistoryDictionaryHelper.MapPropertyIfFound(kv.Key);
-                        var variations = new HashSet<string>
+                    var baseKey = HistoryDictionaryHelper.MapPropertyIfFound(kv.Key);
+                    var variations = new HashSet<string>
                         {
                             baseKey,
                             HistoryDictionaryHelper.CapitalizeLetters(baseKey),
                             HistoryDictionaryHelper.CapitalizeLettersExceptLast(baseKey)
                         };
-                        keyVariations[kv.Key] = variations;
-                    }
+                    keyVariations[kv.Key] = variations;
+                }
 
-                    // Second loop to process the changes
-                    foreach (var kv in originalChanges)
+                // Second loop to process the changes
+                foreach (var kv in originalChanges)
+                {
+                    // Get all variations at once
+                    var variations = keyVariations[kv.Key];
+
+                    // Check if any variation exists in historyChanges
+                    var matchedKey = variations.FirstOrDefault(key => historyChanges.ContainsKey(key));
+                    if (matchedKey != null)
                     {
-                        // Get all variations at once
-                        var variations = keyVariations[kv.Key];
-
-                        // Check if any variation exists in historyChanges
-                        var matchedKey = variations.FirstOrDefault(key => historyChanges.ContainsKey(key));
-                        if (matchedKey != null)
+                        if (historyChanges.TryGetValue(matchedKey, out var val))
                         {
-                            if (historyChanges.TryGetValue(matchedKey, out var val))
-                            {
-                                var convertedVal = val != null ? val.ToString() : "null";
-                                var convertedKV = kv.Value != null ? kv.Value.ToString() : "null";
+                            var convertedVal = val != null ? val.ToString() : "null";
+                            var convertedKV = kv.Value != null ? kv.Value.ToString() : "null";
 
-                                // Assuming comparison was necessary (based on your commented-out line)
-                                convertedKV.Should().Be(convertedVal);
-                                _changesProcessed += 1;
-                            }
+                            // Assuming comparison was necessary (based on your commented-out line)
+                            convertedKV.Should().Be(convertedVal);
+                            _changesProcessed += 1;
                         }
                     }
-
-                };
+                }
             }
         }
 
-        private static void ProcessHistory(JObject jObject)
+        private static void ProcessHistory(JObject roomData)
         {
-            var histories = ScreepsRoomHistoryComputedHelper.Compute(jObject);
-            return;
-            AssertHistory(histories, jObject);
+            var roomHistory = new ScreepsRoomHistory();
+            roomData.TryGetValue("timestamp", out JToken? jTokenTime);
+            if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
+
+            roomData.TryGetValue("base", out JToken? jTokenBase);
+            if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
+
+            roomData.TryGetValue("ticks", out JToken? jTokenTicks);
+            if (jTokenTicks != null)
+            {
+                var jTokenTicksValues = jTokenTicks.Values<JToken>();
+                for (int i = 0; i < 100; i++)
+                {
+                    long tickNumber = roomHistory.Base + i;
+                    roomHistory.Tick = tickNumber;
+                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
+                    if (tickObject == null) continue;
+                    roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+
+
+                    AssertHistory(roomHistory, (jTokenTicks as JObject)[roomHistory.Tick.ToString()]);
+                }
+            }
         }
 
         public static void ParseFile(string filePath)

@@ -6,14 +6,7 @@ namespace UserTracker.Tests.Helper
 {
     public class GetObjectFromHistory
     {
-        private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
-        private static JObject ConvertToJObject<T>(T model)
-        {
-            var writer = new JTokenWriter();
-            _serializer.Serialize(writer, model);
-            return (JObject)writer.Token!;
-        }
-        public static JObject GetById(ScreepsRoomHistory roomHistory, string id)
+        public static object GetById(ScreepsRoomHistory roomHistory, string id)
         {
             var type = roomHistory.TypeMap[id];
             switch (type)
@@ -21,160 +14,160 @@ namespace UserTracker.Tests.Helper
                 case "energy":
                     roomHistory.GroundResources.TryGetValue(id, out var objGroundResource);
                     if (objGroundResource != null)
-                        return ConvertToJObject(objGroundResource);
+                        return objGroundResource;
                     break;
                 case "creep":
                     roomHistory.Creeps.OwnedCreeps.TryGetValue(type, out var objOwnedCreep);
                     if (objOwnedCreep != null)
-                        return ConvertToJObject(objOwnedCreep);
-                    roomHistory.Creeps.OwnedCreeps.TryGetValue(type, out var objEnemyCreep);
+                        return objOwnedCreep;
+                    roomHistory.Creeps.EnemyCreeps.TryGetValue(type, out var objEnemyCreep);
                     if (objEnemyCreep != null)
-                        return ConvertToJObject(objEnemyCreep);
-                    roomHistory.Creeps.OwnedCreeps.TryGetValue(type, out var objOtherCreep);
+                        return objEnemyCreep;
+                    roomHistory.Creeps.OtherCreeps.TryGetValue(type, out var objOtherCreep);
                     if (objOtherCreep != null)
-                        return ConvertToJObject(objOtherCreep);
+                        return objOtherCreep;
                     break;
                 case "powerCreep":
                     roomHistory.Creeps.PowerCreeps.TryGetValue(type, out var objPowerCreep);
                     if (objPowerCreep != null)
-                        return ConvertToJObject(objPowerCreep);
+                        return objPowerCreep;
                     break;
                 case "controller":
                     if (roomHistory.Structures.Controller != null && roomHistory.Structures.Controller.Id == id)
-                        return ConvertToJObject(roomHistory.Structures.Controller);
+                        return roomHistory.Structures.Controller;
                     break;
                 case "mineral":
                     if (roomHistory.Structures.Mineral != null && roomHistory.Structures.Mineral.Id == id)
-                        return ConvertToJObject(roomHistory.Structures.Mineral);
+                        return roomHistory.Structures.Mineral;
                     break;
                 case "deposit":
                     if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == id)
-                        return ConvertToJObject(roomHistory.Structures.Deposit);
+                        return roomHistory.Structures.Deposit;
                     break;
                 case "constructedWall":
                     roomHistory.Structures.Walls.TryGetValue(id, out var objWall);
                     if (objWall != null)
-                        return ConvertToJObject(objWall);
+                        return objWall;
                     break;
                 case "constructionSite":
                     roomHistory.Structures.ConstructionSites.TryGetValue(id, out var objConstructionSite);
                     if (objConstructionSite != null)
-                        return ConvertToJObject(objConstructionSite);
+                        return objConstructionSite;
                     break;
                 case "container":
                     roomHistory.Structures.Containers.TryGetValue(id, out var objContainer);
                     if (objContainer != null)
-                        return ConvertToJObject(objContainer);
+                        return objContainer;
                     break;
                 case "extension":
                     roomHistory.Structures.Extensions.TryGetValue(id, out var objExtension);
                     if (objExtension != null)
-                        return ConvertToJObject(objExtension);
+                        return objExtension;
                     break;
                 case "extractor":
                     roomHistory.Structures.Extractors.TryGetValue(id, out var objExtractor);
                     if (objExtractor != null)
-                        return ConvertToJObject(objExtractor);
+                        return objExtractor;
                     break;
                 case "factory":
                     roomHistory.Structures.Factories.TryGetValue(id, out var objFactory);
                     if (objFactory != null)
-                        return ConvertToJObject(objFactory);
+                        return objFactory;
                     break;
                 case "invaderCore":
                     roomHistory.Structures.InvaderCores.TryGetValue(id, out var objInvaderCore);
                     if (objInvaderCore != null)
-                        return ConvertToJObject(objInvaderCore);
+                        return objInvaderCore;
                     break;
                 case "keeperLair":
                     roomHistory.Structures.KeeperLairs.TryGetValue(id, out var objKeeperLair);
                     if (objKeeperLair != null)
-                        return ConvertToJObject(objKeeperLair);
+                        return objKeeperLair;
                     break;
                 case "lab":
                     roomHistory.Structures.Labs.TryGetValue(id, out var objLab);
                     if (objLab != null)
-                        return ConvertToJObject(objLab);
+                        return objLab;
                     break;
                 case "link":
                     roomHistory.Structures.Links.TryGetValue(id, out var objLink);
                     if (objLink != null)
-                        return ConvertToJObject(objLink);
+                        return objLink;
                     break;
                 case "nuker":
                     roomHistory.Structures.Nukers.TryGetValue(id, out var objNuker);
                     if (objNuker != null)
-                        return ConvertToJObject(objNuker);
+                        return objNuker;
                     break;
                 case "observer":
                     roomHistory.Structures.Observers.TryGetValue(id, out var objObserver);
                     if (objObserver != null)
-                        return ConvertToJObject(objObserver);
+                        return objObserver;
                     break;
                 case "portal":
                     roomHistory.Structures.Portals.TryGetValue(id, out var objPortal);
                     if (objPortal != null)
-                        return ConvertToJObject(objPortal);
+                        return objPortal;
                     break;
                 case "powerBank":
                     roomHistory.Structures.PowerBanks.TryGetValue(id, out var objPowerBank);
                     if (objPowerBank != null)
-                        return ConvertToJObject(objPowerBank);
+                        return objPowerBank;
                     break;
                 case "powerSpawn":
                     roomHistory.Structures.PowerSpawns.TryGetValue(id, out var objPowerSpawn);
                     if (objPowerSpawn != null)
-                        return ConvertToJObject(objPowerSpawn);
+                        return objPowerSpawn;
                     break;
                 case "rampart":
                     roomHistory.Structures.Ramparts.TryGetValue(id, out var objRampart);
                     if (objRampart != null)
-                        return ConvertToJObject(objRampart);
+                        return objRampart;
                     break;
                 case "road":
                     roomHistory.Structures.Roads.TryGetValue(id, out var objRoad);
                     if (objRoad != null)
-                        return ConvertToJObject(objRoad);
+                        return objRoad;
                     break;
                 case "ruin":
                     roomHistory.Structures.Ruins.TryGetValue(id, out var objRuin);
                     if (objRuin != null)
-                        return ConvertToJObject(objRuin);
+                        return objRuin;
                     break;
                 case "source":
                     roomHistory.Structures.Sources.TryGetValue(id, out var objSource);
                     if (objSource != null)
-                        return ConvertToJObject(objSource);
+                        return objSource;
                     break;
                 case "spawn":
                     roomHistory.Structures.Spawns.TryGetValue(id, out var objSpawn);
                     if (objSpawn != null)
-                        return ConvertToJObject(objSpawn);
+                        return objSpawn;
                     break;
                 case "storage":
                     roomHistory.Structures.Storages.TryGetValue(id, out var objStorage);
                     if (objStorage != null)
-                        return ConvertToJObject(objStorage);
+                        return objStorage;
                     break;
                 case "terminal":
                     roomHistory.Structures.Terminals.TryGetValue(id, out var objTerminal);
                     if (objTerminal != null)
-                        return ConvertToJObject(objTerminal);
+                        return objTerminal;
                     break;
                 case "tombstone":
                     roomHistory.Structures.Tombstones.TryGetValue(id, out var objTombstone);
                     if (objTombstone != null)
-                        return ConvertToJObject(objTombstone);
+                        return objTombstone;
                     break;
                 case "tower":
                     roomHistory.Structures.Towers.TryGetValue(id, out var objTower);
                     if (objTower != null)
-                        return ConvertToJObject(objTower);
+                        return objTower;
                     break;
                 case "nuke":
                     roomHistory.Structures.Nukes.TryGetValue(id, out var objNuke);
                     if (objNuke != null)
-                        return ConvertToJObject(objNuke);
+                        return objNuke;
                     break;
                 default:
                     throw new ArgumentException($"Unsupported type {type}");

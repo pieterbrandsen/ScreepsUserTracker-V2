@@ -20,7 +20,7 @@ namespace UserTracker.Tests.Helper
                     foreach (var prop in obj.Properties())
                     {
                         int initialLen = currentPath.Length;
-                        currentPath.Append(prop.Name).Append('.');
+                        currentPath.Append($"{prop.Name}.");
                         FlattenJson(prop.Value, currentPath, dict);
                         currentPath.Length = initialLen; // Reset path
                     }
@@ -30,7 +30,7 @@ namespace UserTracker.Tests.Helper
                     for (int i = 0; i < array.Count; i++)
                     {
                         int initialLen = currentPath.Length;
-                        currentPath.Append(i).Append('.');
+                        currentPath.Append($"{i}.");
                         FlattenJson(array[i], currentPath, dict);
                         currentPath.Length = initialLen; // Reset path
                     }

@@ -1033,85 +1033,50 @@ namespace UserTrackerShared.Helpers
             return propertyLists;
         }
 
-        public static List<ScreepsRoomHistory> Compute(JObject roomData)
+        public static ScreepsRoomHistory ComputeTick(JToken tickObject, ScreepsRoomHistory roomHistory)
         {
-            var roomHistories = new List<ScreepsRoomHistory>();
-            var roomHistory = new ScreepsRoomHistory();
-
-            roomData.TryGetValue("timestamp", out JToken? jTokenTime);
-            if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
-
-            roomData.TryGetValue("base", out JToken? jTokenBase);
-            long baseTick = 0;
-            if (jTokenBase != null) baseTick = jTokenBase.Value<long>();
-
-            roomData.TryGetValue("ticks", out JToken? jTokenTicks);
-            if (jTokenTicks != null)
+            var propertiesListDictionary = new Dictionary<string, PropertiesList>();
+            foreach (var item in tickObject.Children().Children())
             {
-                var jTokenTicksValues = jTokenTicks.Values<JToken>();
-                for (int i = 0; i < 100; i++)
+                var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
+                if (item.Children().First() is JObject obj)
                 {
-                    var serialized = JsonConvert.SerializeObject(roomHistory);
-                    roomHistory = JsonConvert.DeserializeObject<ScreepsRoomHistory>(serialized);
-                    if (roomHistory == null) throw new Exception("Failed to deserialize room history");
+                    var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
+                    propertiesListDictionary[key] = propertiesList;
 
-                    long tickNumber = baseTick + i;
-                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
-                    if (tickObject == null)
-                    {
-                        roomHistory.Tick = tickNumber;
-                        roomHistories.Add(roomHistory);
-                        continue;
-                    }
-
-                    var propertiesListDictionary = new Dictionary<string, PropertiesList>();
-                    foreach (var item in tickObject.Children().Children())
-                    {
-                        var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
-                        if (item.Children().First() is JObject obj)
-                        {
-                            var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
-                            propertiesListDictionary[key] = propertiesList;
-
-                            var type = propertiesList.StringProperties.GetValueOrDefault("type");
-                            if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
-                            //FileWriterManager.GenerateFiles(tickNumber.ToString(), type, obj, propertiesList);
-                            //if (i == 0)
-                            //{
-                            //    FileWriterManager.GenerateFileByType(type, obj);
-                            //}
-                        }
-                        else
-                        {
-                            roomHistory = ConvertJObjectToHistory.RemoveFromRoomHistory(key, roomHistory);
-                        }
-                    }
-
-                    if (i == 0)
-                    {
-                        foreach (var propertyList in propertiesListDictionary.Where(x => x.Value.StringProperties.GetValueOrDefault("type") == "controller"))
-                        {
-                            var key = propertyList.Key;
-                            var propertyLists = propertyList.Value;
-                            roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
-                        }
-                    }
-
-                    foreach (var propertyList in propertiesListDictionary)
-                    {
-                        var key = propertyList.Key;
-                        var propertyLists = propertyList.Value;
-                        roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
-                    }
-
-                    roomHistory.Tick = Convert.ToInt64(tickNumber);
-                    roomHistories.Add(roomHistory);
+                    var type = propertiesList.StringProperties.GetValueOrDefault("type");
+                    if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
+                    //FileWriterManager.GenerateFiles(tickNumber.ToString(), type, obj, propertiesList);
+                    //if (i == 0)
+                    //{
+                    //    FileWriterManager.GenerateFileByType(type, obj);
+                    //}
+                }
+                else
+                {
+                    roomHistory = ConvertJObjectToHistory.RemoveFromRoomHistory(key, roomHistory);
                 }
             }
 
-            //FileWriterManager.GenerateHistoryFile(roomData);
+            if (roomHistory.Base == roomHistory.Tick)
+            {
+                foreach (var propertyList in propertiesListDictionary.Where(x => x.Value.StringProperties.GetValueOrDefault("type") == "controller"))
+                {
+                    var key = propertyList.Key;
+                    var propertyLists = propertyList.Value;
+                    roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
+                }
+            }
 
-            return roomHistories;
+            foreach (var propertyList in propertiesListDictionary)
+            {
+                var key = propertyList.Key;
+                var propertyLists = propertyList.Value;
+                roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
+            }
+
+            return roomHistory;
+            //FileWriterManager.GenerateHistoryFile(roomData);
         }
     }
 }

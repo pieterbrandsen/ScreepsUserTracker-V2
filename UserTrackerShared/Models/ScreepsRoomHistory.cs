@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -355,7 +357,7 @@ namespace UserTrackerShared.Models
         public bool NotifyWhenAttacked { get; set; }
         public Store Store { get; set; }
         public Store StoreCapacityResource { get; set; }
-    }   
+    }
     public class StructureTombstone : BaseStructure
     {
         public string Id { get; set; }
@@ -451,7 +453,7 @@ namespace UserTrackerShared.Models
         public Dictionary<string, Effect> Effects { get; set; } = new();
         public long Tick { get; set; }
     }
-    public class StructureExtension : BaseStructure 
+    public class StructureExtension : BaseStructure
     {
         public string Id { get; set; }
         public string Type { get; set; }
@@ -473,7 +475,7 @@ namespace UserTrackerShared.Models
         public long X { get; set; }
         public long Y { get; set; }
         public string User { get; set; }
-        public string Room   { get; set; }
+        public string Room { get; set; }
         public bool NotifyWhenAttacked { get; set; }
         public long Hits { get; set; }
         public long HitsMax { get; set; }
@@ -843,6 +845,7 @@ namespace UserTrackerShared.Models
     public class ScreepsRoomHistory
     {
         public long TimeStamp { get; set; }
+        public long Base { get; set; }
         public long Tick { get; set; }
         public Dictionary<string, GroundResource> GroundResources { get; set; } = new Dictionary<string, GroundResource>();
         public Creeps Creeps { get; set; } = new Creeps();

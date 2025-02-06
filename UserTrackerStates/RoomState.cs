@@ -37,7 +37,26 @@ namespace UserTrackerStates
             }
             if (roomData != null)
             {
-                var roomHistories = ScreepsRoomHistoryComputedHelper.Compute(roomData);
+                var roomHistory = new ScreepsRoomHistory();
+                roomData.TryGetValue("timestamp", out JToken? jTokenTime);
+                if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
+
+                roomData.TryGetValue("base", out JToken? jTokenBase);
+                if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
+
+                roomData.TryGetValue("ticks", out JToken? jTokenTicks);
+                if (jTokenTicks != null)
+                {
+                    var jTokenTicksValues = jTokenTicks.Values<JToken>();
+                    for (int i = 0; i < 100; i++)
+                    {
+                        long tickNumber = roomHistory.Base + i;
+                        roomHistory.Tick = tickNumber;
+                        var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
+                        if (tickObject == null) continue;
+                        roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+                    }
+                }
 
                 //RoomData = roomHistory;
                 //LastRoomData = roomHistory;
