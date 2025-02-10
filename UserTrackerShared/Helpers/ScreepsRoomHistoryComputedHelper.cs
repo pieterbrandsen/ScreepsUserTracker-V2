@@ -1138,7 +1138,7 @@ namespace UserTrackerShared.Helpers
             foreach (var item in tickObject.Children().Children())
             {
                 var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
-                if (item.Children().First() is JObject obj)
+                if (item.Children().Count() > 0 && item is JObject obj)
                 {
                     var propertiesList = UpdateRecursiveProperties(roomHistory.PropertiesListDictionary.ContainsKey(key) ? roomHistory.PropertiesListDictionary[key] : new PropertiesList(), obj);
                     roomHistory.PropertiesListDictionary[key] = propertiesList;

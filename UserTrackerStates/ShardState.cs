@@ -56,7 +56,6 @@ namespace UserTrackerShared.States
 
             for (long i = LastSynceTime; i < syncTime; i += 100)
             {
-                GC.Collect();
                 var mainStopwatch = Stopwatch.StartNew();
 
                 //var getDataTasks = Rooms.Select(room => room.GetRoomData(i));

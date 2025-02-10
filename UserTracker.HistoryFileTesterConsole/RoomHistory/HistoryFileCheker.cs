@@ -84,21 +84,22 @@ namespace UserTracker.Tests.RoomHistory
             roomData.TryGetValue("room", out JToken? jTokenRoom);
             if (jTokenRoom != null) room = jTokenRoom.Value<string>();
 
-            roomData.TryGetValue("ticks", out JToken? jTokenTicks);
-            if (jTokenTicks != null)
+            if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
             {
-                var jTokenTicksValues = jTokenTicks.Values<JToken>();
                 for (int i = 0; i < 100; i++)
                 {
                     long tickNumber = roomHistory.Base + i;
                     roomHistory.Tick = tickNumber;
-                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
-                    if (tickObject == null) continue;
-                    roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
 
-                    changesProcessed += AssertHistory(roomHistory, (jTokenTicks as JObject)[roomHistory.Tick.ToString()], filePath);
-                    var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
-                    if (ConfigSettingsState.InfluxDbEnabled) InfluxDBClientState.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                    if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
+                    {
+                        roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+                        changesProcessed += AssertHistory(roomHistory, tickObject, filePath);
+
+                        var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
+                        if (ConfigSettingsState.InfluxDbEnabled)
+                            InfluxDBClientState.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                    }
                 }
             }
 
