@@ -9,12 +9,14 @@ namespace UserTrackerShared.Helpers
 {
     public static class HistoryConfigSettingsState
     {
+        public static string LoopStrategy { get; set; }
         public static string HistoryFilesLocation { get; set; }
         public static bool InluceGoodFiles { get; set; }
         public static bool IncludeBadFiles { get; set; }
         public static bool IncludeUnknownFiles { get; set; }
 
         public static void Init() {
+            LoopStrategy = ConfigurationManager.AppSettings["LOOP_STRATEGY"] ?? "";
             HistoryFilesLocation = ConfigurationManager.AppSettings["HISTORY_FILES_LOCATION"] ?? "";
             InluceGoodFiles = Convert.ToBoolean(ConfigurationManager.AppSettings["INCLUDE_GOOD_FILES"]);
             IncludeBadFiles = Convert.ToBoolean(ConfigurationManager.AppSettings["INCLUDE_BAD_FILES"]);

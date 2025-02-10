@@ -99,7 +99,7 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
             totalChanges += total;
         }
         File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
-        Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({filesChangesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
+        Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
     }
 }
 
@@ -109,11 +109,10 @@ onSave.AutoReset = true;
 onSave.Enabled = true; ;
 
 
-
 var stopwatch = new Stopwatch();
 stopwatch.Start();
 
-Parallel.ForEach(files, file =>
+void Execute(string file)
 {
     try
     {
@@ -130,7 +129,53 @@ Parallel.ForEach(files, file =>
         linesToBeWrittenBad.Add(file);
         linesToBeWrittenBadErrors.Add(e.Message);
     }
-});
+}
+
+switch (HistoryConfigSettingsState.LoopStrategy)
+{
+    case "for":
+        for (int i = 0; i < files.Count; i++)
+        {
+            Execute(files[i]);
+        }
+        break;
+    case "forEach":
+        foreach (var file in files)
+        {
+            Execute(file);
+        }
+        break;
+    case "paralelFor":
+        Parallel.For(0, files.Count, i => Execute(files[i]));
+        break;
+    case "paralelForEach":
+        Parallel.ForEach(files, Execute);
+        break;
+    case "semaphore":
+        var semaphore = new SemaphoreSlim(1000);
+        var tasks = new List<Task>();
+        foreach (var file in files)
+        {
+            await semaphore.WaitAsync();
+
+            tasks.Add(
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        Execute(file);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                })
+            );
+        }
+        break;
+    default:
+        break;
+}
 
 stopwatch.Stop();
 TimeSpan elapsedTime = stopwatch.Elapsed;
