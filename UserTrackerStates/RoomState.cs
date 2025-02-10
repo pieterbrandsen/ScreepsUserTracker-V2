@@ -45,18 +45,28 @@ namespace UserTrackerStates
                 if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
 
                 roomData.TryGetValue("ticks", out JToken? jTokenTicks);
-                if (jTokenTicks != null)
-                {
-                    var jTokenTicksValues = jTokenTicks.Values<JToken>();
-                    for (int i = 0; i < 100; i++)
-                    {
-                        long tickNumber = roomHistory.Base + i;
-                        roomHistory.Tick = tickNumber;
-                        var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
-                        if (tickObject == null) continue;
-                        roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
-                    }
-                }
+                //if (jTokenTicks != null)
+                //{
+                //    var jTokenTicksValues = jTokenTicks.Values<JToken>();
+                //    for (int i = 0; i < jTokenTicksValues.Count(); i++)
+                //    {
+                //        long tickNumber = roomHistory.Base + i;
+                //        roomHistory.Tick = tickNumber;
+                //        var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
+                //        if (tickObject == null) continue;
+                //        try
+                //        {
+                //            roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+                //        }
+                //        catch (Exception e)
+                //        {
+                //            //throw;
+                //        }
+                //        //InfluxDBClientState.WriteScreepsRoomHistory(Shard, Name, roomHistory);
+                //    }
+                //}
+                FileWriterManager.GenerateHistoryFile(roomData);
+
 
                 //RoomData = roomHistory;
                 //LastRoomData = roomHistory;

@@ -4,16 +4,15 @@ using System.Buffers;
 using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerStates;
 
 namespace UserTracker.Tests.RoomHistory
 {
     public static class HistoryFileChecker
     {
-        private static long _filesProcessed = 0;
-        private static long _changesProcessed = 0;
-
-        private static void AssertHistory(ScreepsRoomHistory history, JToken jTokenTick)
+        private static long AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
         {
+            var changesProcessed = 0;
             var ids = history.TypeMap.Keys.ToArray();
             for (int y = 0; y < ids.Length; y++)
             {
@@ -25,10 +24,10 @@ namespace UserTracker.Tests.RoomHistory
 
                 var tick = jTokenTick as JObject;
 
-                var historyChanges = GetObjectChangesInTick.GetById(obj);
+                var historyChanges = GetObjectChangesInTick.ConvertPropertyListDictionary(history.PropertiesListDictionary[id]);
                 var originalChanges = GetObjectChangesInTick.GetById(tick, id);
 
-                var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count, StringComparer.OrdinalIgnoreCase);
+                var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count);
 
                 // First loop to create the key variations
                 foreach (var kv in originalChanges)
@@ -58,23 +57,32 @@ namespace UserTracker.Tests.RoomHistory
                             var convertedVal = val != null ? val.ToString() : "null";
                             var convertedKV = kv.Value != null ? kv.Value.ToString() : "null";
 
-                            // Assuming comparison was necessary (based on your commented-out line)
-                            convertedKV.Should().Be(convertedVal);
-                            _changesProcessed += 1;
+                            if (!convertedKV.Equals(convertedVal))
+                            {
+                                throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",",variations)} : {convertedKV} vs {convertedVal}");
+                            }
+                            changesProcessed += 1;
                         }
                     }
                 }
             }
+
+            return changesProcessed;
         }
 
-        private static void ProcessHistory(JObject roomData)
+        private static long ProcessHistory(JObject roomData, string filePath)
         {
+            long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
             roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
+
+            var room = "";
+            roomData.TryGetValue("room", out JToken? jTokenRoom);
+            if (jTokenRoom != null) room = jTokenRoom.Value<string>();
 
             roomData.TryGetValue("ticks", out JToken? jTokenTicks);
             if (jTokenTicks != null)
@@ -88,20 +96,20 @@ namespace UserTracker.Tests.RoomHistory
                     if (tickObject == null) continue;
                     roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
 
-
-                    AssertHistory(roomHistory, (jTokenTicks as JObject)[roomHistory.Tick.ToString()]);
+                    changesProcessed += AssertHistory(roomHistory, (jTokenTicks as JObject)[roomHistory.Tick.ToString()], filePath);
+                    var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
+                    InfluxDBClientState.WriteScreepsRoomHistory("testConsole", "test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                 }
             }
+
+            return changesProcessed;
         }
 
-        public static void ParseFile(string filePath)
+        public static long ParseFile(string filePath)
         {
             var json = File.ReadAllText(filePath);
             var jObject = JObject.Parse(json);
-            ProcessHistory(jObject);
-
-            _filesProcessed += 1;
-            Console.WriteLine($"Changes processed {_changesProcessed} in {_filesProcessed}");
+            return ProcessHistory(jObject, filePath);
         }
     }
 }

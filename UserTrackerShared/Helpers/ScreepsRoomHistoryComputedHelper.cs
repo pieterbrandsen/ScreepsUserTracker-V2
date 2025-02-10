@@ -10,7 +10,7 @@ using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Helpers
 {
-    internal class PropertiesList
+    public class PropertiesList
     {
         public Dictionary<string, string> StringProperties { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, long> IntegerProperties { get; set; } = new Dictionary<string, long>();
@@ -18,18 +18,19 @@ namespace UserTrackerShared.Helpers
         public List<string> NullProperties { get; set; } = new List<string>();
     }
 
-    internal static class FileWriterManager
+    public static class FileWriterManager
     {
-        private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Histories";
+        private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\History";
         private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
         private static readonly string TypesDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Types";
+
         private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
         private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();
         private static readonly ConcurrentDictionary<string, JObject> TypeCache = new();
-        private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
-        private static readonly CancellationTokenSource Cts = new();
+
         private static Timer? _backgroundFlushTimer;
-        private static bool _isFlushing;
+        public static bool StopFlushing;
+        public static bool IsFlushing;
 
         static FileWriterManager()
         {
@@ -69,18 +70,33 @@ namespace UserTrackerShared.Helpers
 
         public static void GenerateFileByType(string type, JObject obj)
         {
-            TypeCache.AddOrUpdate(type, _ => obj, (_, existing) =>
-            {
-                var json = JsonConvert.SerializeObject(existing);
-                JObject obj1 = JObject.Parse(json);
+            //TypeCache.AddOrUpdate(type, _ =>
+            //{
+            //    string filePath = Path.Combine(TypesDirectoryPath, $"{type}.json");
+            //    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            //    using (StreamReader reader = new StreamReader(fs))
+            //    {
+            //        string json = reader.ReadToEnd();
+            //        JObject obj1 = JObject.Parse(json);
 
-                obj1.Merge(obj, new JsonMergeSettings
-                {
-                    MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
-                });
+            //        obj1.Merge(obj, new JsonMergeSettings
+            //        {
+            //            MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
+            //        });
+            //        return obj1;
+            //    }
+            //}, (_, existing) =>
+            //{
+            //    var json = JsonConvert.SerializeObject(existing);
+            //    JObject obj1 = JObject.Parse(json);
 
-                return obj1;
-            });
+            //    obj1.Merge(obj, new JsonMergeSettings
+            //    {
+            //        MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
+            //    });
+
+            //    return obj1;
+            //});
         }
 
         public static void GenerateHistoryFile(JObject roomData)
@@ -93,7 +109,9 @@ namespace UserTrackerShared.Helpers
             roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) baseTick = jTokenBase.Value<long>();
 
-            HistoryCache.AddOrUpdate($"{baseTick}.{room}", _ => roomData, (_, existing) =>
+            string filePath = Path.Combine(HistoryDirectoryPath, $"{baseTick}/{room}.json");
+            if (File.Exists(filePath)) return;
+            HistoryCache.AddOrUpdate($"{baseTick}/{room}", _ => roomData, (_, existing) =>
             {
                 return existing;
             });
@@ -112,32 +130,49 @@ namespace UserTrackerShared.Helpers
 
         private static async void OnBackgroundFlushTimer(Object? source, ElapsedEventArgs? e)
         {
-            if (_isFlushing) return;
-            _isFlushing = true;
+            if (IsFlushing || StopFlushing) return;
+            IsFlushing = true;
             try
             {
+                SemaphoreSlim semaphore = new SemaphoreSlim(10000); // Limit concurrent writes to avoid overloading the disk
+
                 IEnumerable<string> typeKeys;
                 lock (TypeCache)
                 {
                     typeKeys = TypeCache.Keys.ToArray();
                 }
 
+                var typeTasks = new List<Task>();
                 foreach (var key in typeKeys)
                 {
-                    try
+                    await semaphore.WaitAsync(); // Throttle writes
+                    typeTasks.Add(Task.Run(async () =>
                     {
-                        var obj = TypeCache.GetValueOrDefault(key);
-                        if (obj == null) continue;
-                        string filePath = Path.Combine(TypesDirectoryPath, $"{key}.json");
+                        try
+                        {
+                            if (TypeCache.TryRemove(key, out JObject obj))
+                            {
+                                if (obj == null) return;
+                                string filePath = Path.Combine(TypesDirectoryPath, $"{key}.json");
 
-                        var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                        await File.WriteAllTextAsync(filePath, json);
-                    }
-                    catch (Exception ex)
-                    {
-                        Screen.AddLog($"Error writing file for type {key}: {ex.Message}");
-                    }
+                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+                                try
+                                {
+                                    await File.WriteAllTextAsync(filePath, json);
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Screen.AddLog($"Error writing file for type {key}: {ex.Message}");
+                        }
+                    }));
                 }
+                await Task.WhenAll(typeTasks);
 
 
                 IEnumerable<string> keyKeys;
@@ -146,49 +181,20 @@ namespace UserTrackerShared.Helpers
                     keyKeys = KeyCache.Keys.ToArray();
                 }
 
+                var keysTasks = new List<Task>();
                 foreach (var key in keyKeys)
                 {
-                    try
-                    {
-                        var obj = KeyCache.GetValueOrDefault(key);
-                        if (obj == null) continue;
-                        string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
-
-                        var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                        await File.WriteAllTextAsync(filePath, json);
-                    }
-                    catch (Exception ex)
-                    {
-                        Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
-                    }
-                }
-
-
-                IEnumerable<string> historyKeys;
-                lock (HistoryCache)
-                {
-                    // Extract keys upfront to minimize lock time
-                    historyKeys = HistoryCache.Keys.ToArray();
-                }
-
-                var tasks = new List<Task>();
-                SemaphoreSlim semaphore = new SemaphoreSlim(100); // Limit concurrent writes to avoid overloading the disk
-
-                foreach (var key in historyKeys)
-                {
-                    tasks.Add(Task.Run(async () =>
+                    await semaphore.WaitAsync(); // Throttle writes
+                    keysTasks.Add(Task.Run(async () =>
                     {
                         try
                         {
-                            if (HistoryCache.TryRemove(key, out JObject obj))
+                            if (KeyCache.TryRemove(key, out JObject obj))
                             {
                                 if (obj == null) return;
-
-                                string filePath = Path.Combine(HistoryDirectoryPath, $"{key}.json");
+                                string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
 
                                 var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-
-                                await semaphore.WaitAsync(); // Throttle writes
                                 try
                                 {
                                     await File.WriteAllTextAsync(filePath, json);
@@ -205,15 +211,61 @@ namespace UserTrackerShared.Helpers
                         }
                     }));
                 }
+                await Task.WhenAll(keysTasks);
 
-                // Wait for all tasks to complete
-                await Task.WhenAll(tasks);
+
+                IEnumerable<string> historyKeys;
+                lock (HistoryCache)
+                {
+                    // Extract keys upfront to minimize lock time
+                    historyKeys = HistoryCache.Keys.ToArray();
+                }
+
+                var historyTasks = new List<Task>();
+                foreach (var key in historyKeys)
+                {
+                    await semaphore.WaitAsync(); // Throttle writes
+                    historyTasks.Add(Task.Run(async () =>
+                    {
+                        try
+                        {
+                            if (HistoryCache.TryRemove(key, out JObject obj))
+                            {
+                                if (obj == null) return;
+                                string[] parts = key.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                string tickDir = Path.Combine(HistoryDirectoryPath, parts[0]);
+                                if (!Directory.Exists(tickDir))
+                                {
+                                    Directory.CreateDirectory(tickDir);
+                                }
+                                string filePath = Path.Combine(HistoryDirectoryPath, $"{key}.json");
+
+                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+
+                                try
+                                {
+                                    await File.WriteAllTextAsync(filePath, json);
+                                }
+                                finally
+                                {
+                                    semaphore.Release();
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
+                        }
+                    }));
+                }
+                await Task.WhenAll(historyTasks);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Unexpected error in BackgroundFlush: {ex.Message}");
             }
-            _isFlushing = false;
+            IsFlushing = false;
         }
     }
     internal static class ConvertJObjectToHistory
@@ -252,7 +304,7 @@ namespace UserTrackerShared.Helpers
 
             return Activator.CreateInstance(type);
         }
-      
+
         private static void SetNestedPropertyValue(ref object rootObj, string propertyPath, object value)
         {
             if (rootObj == null || string.IsNullOrEmpty(propertyPath))
@@ -520,6 +572,11 @@ namespace UserTrackerShared.Helpers
                 }
                 catch (Exception ex)
                 {
+                    //FileWriterManager.StopFlushing = true;
+                    //while (FileWriterManager.IsFlushing)
+                    //{
+                    //    Thread.Sleep(5000);
+                    //}
                     throw new Exception($"Failed to set null property {item}: {ex.Message}");
                 }
             }
@@ -532,6 +589,11 @@ namespace UserTrackerShared.Helpers
                 }
                 catch (Exception ex)
                 {
+                    //FileWriterManager.StopFlushing = true;
+                    //while (FileWriterManager.IsFlushing)
+                    //{
+                    //    Thread.Sleep(5000);
+                    //}
                     throw new Exception($"Failed to set string property {kvp.Key}: {ex.Message}");
                 }
             }
@@ -544,6 +606,11 @@ namespace UserTrackerShared.Helpers
                 }
                 catch (Exception ex)
                 {
+                    //FileWriterManager.StopFlushing = true;
+                    //while (FileWriterManager.IsFlushing)
+                    //{
+                    //    Thread.Sleep(5000);
+                    //}
                     throw new Exception($"Failed to set integer property {kvp.Key}: {ex.Message}");
                 }
             }
@@ -556,6 +623,11 @@ namespace UserTrackerShared.Helpers
                 }
                 catch (Exception ex)
                 {
+                    //FileWriterManager.StopFlushing = true;
+                    //while (FileWriterManager.IsFlushing)
+                    //{
+                    //    Thread.Sleep(5000);
+                    //}
                     throw new Exception($"Failed to set boolean property {kvp.Key}: {ex.Message}");
                 }
             }
@@ -958,6 +1030,7 @@ namespace UserTrackerShared.Helpers
         {
             foreach (var property in obj.Properties())
             {
+                var propertyTypeSet = "";
                 var propertyKey = property.Name;
                 var propertyValue = property.Value;
                 var computedKey = $"{(!string.IsNullOrEmpty(basePath) ? $"{basePath}." : "")}{propertyKey}";
@@ -965,23 +1038,29 @@ namespace UserTrackerShared.Helpers
                 {
                     case JTokenType.String:
                         propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
+                        propertyTypeSet = "string";
                         break;
                     case JTokenType.Integer:
                     case JTokenType.Float:
                         if (propertyKey != "_id")
                         {
                             propertyLists.IntegerProperties[computedKey] = propertyValue.Value<long>();
+                            propertyTypeSet = "integer";
                         }
                         else
                         {
                             propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
+                            propertyTypeSet = "string";
                         }
                         break;
                     case JTokenType.Boolean:
                         propertyLists.BooleanProperties[computedKey] = propertyValue.Value<bool>();
+                        propertyTypeSet = "boolean";
                         break;
                     case JTokenType.Null:
+                        propertyLists.NullProperties.Remove(computedKey);
                         propertyLists.NullProperties.Add(computedKey);
+                        propertyTypeSet = "null";
                         break;
                     case JTokenType.Object:
                         propertyLists = UpdateRecursiveProperties(propertyLists, (JObject)propertyValue, computedKey);
@@ -990,6 +1069,7 @@ namespace UserTrackerShared.Helpers
                         var childArray = (JArray)propertyValue;
                         for (int i = 0; i < childArray.Count; i++)
                         {
+                            var childPropertyTypeSet = "";
                             var computedChildKey = $"{computedKey}.{i}";
                             var childChildItem = childArray[i];
                             if (childChildItem is JObject childChildObj)
@@ -1002,52 +1082,71 @@ namespace UserTrackerShared.Helpers
                                 {
                                     case JTokenType.String:
                                         propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
+                                        childPropertyTypeSet = "string";
                                         break;
                                     case JTokenType.Integer:
                                     case JTokenType.Float:
                                         if (propertyKey != "_id")
                                         {
                                             propertyLists.IntegerProperties[computedChildKey] = childChildItem.Value<long>();
+                                            childPropertyTypeSet = "integer";
                                         }
                                         else
                                         {
                                             propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
+                                            childPropertyTypeSet = "string";
                                         }
                                         break;
                                     case JTokenType.Boolean:
                                         propertyLists.BooleanProperties[computedChildKey] = childChildItem.Value<bool>();
+                                        childPropertyTypeSet = "boolean";
                                         break;
                                     case JTokenType.Null:
+                                        propertyLists.NullProperties.Remove(computedChildKey);
                                         propertyLists.NullProperties.Add(computedChildKey);
+                                        childPropertyTypeSet = "null";
                                         break;
                                     default:
                                         throw new Exception("Unsupported JTokenType");
                                 }
+                                propertyLists = RemoveOtherTypePropertyListings(propertyLists, propertyTypeSet, computedKey);
                             }
                         }
                         break;
                     default:
                         throw new Exception("Unsupported JTokenType");
                 }
+                propertyLists = RemoveOtherTypePropertyListings(propertyLists, propertyTypeSet, computedKey);
             }
+
+
             return propertyLists;
+        }
+
+        private static PropertiesList RemoveOtherTypePropertyListings(PropertiesList propertiesList, string type, string key)
+        {
+            if (string.IsNullOrEmpty(type)) return propertiesList;
+            if (type != "string") propertiesList.StringProperties.Remove(key);
+            if (type != "integer") propertiesList.IntegerProperties.Remove(key);
+            if (type != "boolean") propertiesList.BooleanProperties.Remove(key);
+            if (type != "null") propertiesList.NullProperties.Remove(key);
+            return propertiesList;
         }
 
         public static ScreepsRoomHistory ComputeTick(JToken tickObject, ScreepsRoomHistory roomHistory)
         {
-            var propertiesListDictionary = new Dictionary<string, PropertiesList>();
             foreach (var item in tickObject.Children().Children())
             {
                 var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
                 if (item.Children().First() is JObject obj)
                 {
-                    var propertiesList = UpdateRecursiveProperties(propertiesListDictionary.ContainsKey(key) ? propertiesListDictionary[key] : new PropertiesList(), obj);
-                    propertiesListDictionary[key] = propertiesList;
+                    var propertiesList = UpdateRecursiveProperties(roomHistory.PropertiesListDictionary.ContainsKey(key) ? roomHistory.PropertiesListDictionary[key] : new PropertiesList(), obj);
+                    roomHistory.PropertiesListDictionary[key] = propertiesList;
 
                     var type = propertiesList.StringProperties.GetValueOrDefault("type");
                     if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
-                    //FileWriterManager.GenerateFiles(tickNumber.ToString(), type, obj, propertiesList);
-                    //if (i == 0)
+                    //FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesList);
+                    //if (roomHistory.Base == roomHistory.Tick)
                     //{
                     //    FileWriterManager.GenerateFileByType(type, obj);
                     //}
@@ -1060,23 +1159,24 @@ namespace UserTrackerShared.Helpers
 
             if (roomHistory.Base == roomHistory.Tick)
             {
-                foreach (var propertyList in propertiesListDictionary.Where(x => x.Value.StringProperties.GetValueOrDefault("type") == "controller"))
+                foreach (var propertyList in roomHistory.PropertiesListDictionary.Where(x => x.Value.StringProperties.GetValueOrDefault("type") == "controller"))
                 {
                     var key = propertyList.Key;
+                    if (string.IsNullOrEmpty(key) || key == "undefined") continue;
                     var propertyLists = propertyList.Value;
                     roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
                 }
             }
 
-            foreach (var propertyList in propertiesListDictionary)
+            foreach (var propertyList in roomHistory.PropertiesListDictionary)
             {
                 var key = propertyList.Key;
+                if (string.IsNullOrEmpty(key) || key == "undefined") continue;
                 var propertyLists = propertyList.Value;
                 roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
             }
 
             return roomHistory;
-            //FileWriterManager.GenerateHistoryFile(roomData);
         }
     }
 }

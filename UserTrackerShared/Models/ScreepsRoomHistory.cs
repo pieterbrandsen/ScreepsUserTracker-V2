@@ -5,6 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using UserTrackerShared.Helpers;
 
 namespace UserTrackerShared.Models
 {
@@ -252,6 +253,10 @@ namespace UserTrackerShared.Models
         public string Description { get; set; }
     }
 
+    public class MarketData { 
+        public long NextUpdate { get; set; }
+    }
+
     public class Spawning
     {
         public string Name { get; set; }
@@ -267,14 +272,19 @@ namespace UserTrackerShared.Models
         public string Type { get; set; }
         public string StructureType { get; set; }
     }
-    public class Creep
+    public class BaseCreep
+    {
+        public BodyPart[] Body { get; set; } = [];
+        public Store Store { get; set; }
+        public ActionLog ActionLog { get; set; }
+        public long? _oldFatigue { get; set; }
+    }
+    public class Creep : BaseCreep
     {
         public string Id { get; set; }
         public string Name { get; set; }
         public long X { get; set; }
         public long Y { get; set; }
-        public BodyPart[] Body { get; set; } = [];
-        public Store Store { get; set; }
         public long StoreCapacity { get; set; }
         public string Type { get; set; }
         public string Room { get; set; }
@@ -283,12 +293,10 @@ namespace UserTrackerShared.Models
         public long HitsMax { get; set; }
         public bool Spawning { get; set; }
         public bool NotifyWhenAttacked { get; set; }
-        public ActionLog ActionLog { get; set; }
         public long AgeTime { get; set; }
         public InterRoom InterRoom { get; set; }
         public long fatigue { get; set; }
         public long? _fatigue { get; set; }
-        public long? _oldFatigue { get; set; }
         public long TicksToLive { get; set; }
         public MemoryMove Memory_move { get; set; }
         public bool? _attack { get; set; }
@@ -303,7 +311,7 @@ namespace UserTrackerShared.Models
         public long? _healToApply { get; set; }
         public long? _damageToApply { get; set; }
     }
-    public class PowerCreep
+    public class PowerCreep : BaseCreep
     {
         public string Id { get; set; }
         public string Name { get; set; }
@@ -311,7 +319,6 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
         public long Level { get; set; }
         public long HitsMax { get; set; }
-        public Store Store { get; set; }
         public long StoreCapacity { get; set; }
         public long? SpawnCooldownTime { get; set; }
         public Dictionary<string, Power> Powers { get; set; } = new();
@@ -322,9 +329,7 @@ namespace UserTrackerShared.Models
         public long Y { get; set; }
         public long Hits { get; set; }
         public long AgeTime { get; set; }
-        public ActionLog ActionLog { get; set; }
         public bool NotifyWhenAttacked { get; set; }
-        public long? _oldFatigue { get; set; }
         public long? _fatigue { get; set; }
         public long Fatigue { get; set; }
         public long? DeleteTime { get; set; }
@@ -340,7 +345,6 @@ namespace UserTrackerShared.Models
         public string ResourceType { get; set; }
     }
     #endregion
-
     #region Structures
     public class StructureConstructionSite : BaseStructure
     {
@@ -568,6 +572,7 @@ namespace UserTrackerShared.Models
         public long New_field { get; set; }
         public Store Store { get; set; }
         public Store StoreCapacityResource { get; set; }
+        public bool? AutoSpawn { get; set; }
     }
     public class StructureLink : BaseStructure
     {
@@ -712,6 +717,8 @@ namespace UserTrackerShared.Models
         public Send Send { get; set; }
         public long Updated { get; set; }
         public Dictionary<string, Effect> Effects { get; set; } = new();
+        public bool? Npc { get;set; }
+        public MarketData MarketData { get;set; }
     }
     public class StructureContainer : BaseStructure
     {
@@ -796,7 +803,6 @@ namespace UserTrackerShared.Models
         public string LaunchRoomName { get; set; }
     }
     #endregion
-
     #region Groups
     public class Creeps
     {
@@ -824,6 +830,7 @@ namespace UserTrackerShared.Models
         public Dictionary<string, StructureKeeperLair> KeeperLairs { get; set; } = new Dictionary<string, StructureKeeperLair>();
         public Dictionary<string, StructureLab> Labs { get; set; } = new Dictionary<string, StructureLab>();
         public Dictionary<string, StructureLink> Links { get; set; } = new Dictionary<string, StructureLink>();
+        public Dictionary<string, StructureNuke> Nukes { get; set; } = new Dictionary<string, StructureNuke>();
         public Dictionary<string, StructureNuker> Nukers { get; set; } = new Dictionary<string, StructureNuker>();
         public Dictionary<string, StructureObserver> Observers { get; set; } = new Dictionary<string, StructureObserver>();
         public Dictionary<string, StructurePortal> Portals { get; set; } = new Dictionary<string, StructurePortal>();
@@ -838,19 +845,22 @@ namespace UserTrackerShared.Models
         public Dictionary<string, StructureTerminal> Terminals { get; set; } = new Dictionary<string, StructureTerminal>();
         public Dictionary<string, StructureTombstone> Tombstones { get; set; } = new Dictionary<string, StructureTombstone>();
         public Dictionary<string, StructureTower> Towers { get; set; } = new Dictionary<string, StructureTower>();
-        public Dictionary<string, StructureNuke> Nukes { get; set; } = new Dictionary<string, StructureNuke>();
     }
 
     #endregion
+    
     public class ScreepsRoomHistory
     {
         public long TimeStamp { get; set; }
         public long Base { get; set; }
         public long Tick { get; set; }
+
         public Dictionary<string, GroundResource> GroundResources { get; set; } = new Dictionary<string, GroundResource>();
         public Creeps Creeps { get; set; } = new Creeps();
         public Structures Structures { get; set; } = new Structures();
+
         public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, string> UserMap { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, PropertiesList> PropertiesListDictionary { get; set; } = new Dictionary<string, PropertiesList>();
     }
 }

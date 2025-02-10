@@ -119,12 +119,13 @@ namespace UserTrackerScreepsApi
                 }
                 else
                 {
+                    Debug.WriteLine(response.StatusCode);
                     return (default, response.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                Screen.AddLog($"{proxyUri} {path} - {ex.Message}");
+                //Screen.AddLog($"{proxyUri} {path} - {ex.Message}");
                 Debug.WriteLine(ex.Message);
                 return (default, HttpStatusCode.InternalServerError);
             }

@@ -1,7 +1,9 @@
 ﻿using UserTrackerShared;
 using UserTrackerShared.States;
+using UserTrackerStates;
 
 Screen.Init();
+InfluxDBClientState.Init();
 var gameState = new GameState();
 await gameState.InitAsync();
 

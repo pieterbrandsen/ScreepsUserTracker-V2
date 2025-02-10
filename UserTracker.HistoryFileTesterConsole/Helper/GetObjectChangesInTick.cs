@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UserTrackerShared.Helpers;
 
 namespace UserTracker.Tests.Helper
 {
@@ -19,6 +20,7 @@ namespace UserTracker.Tests.Helper
                 case JObject obj:
                     foreach (var prop in obj.Properties())
                     {
+                        if (prop.Name == "PropertiesListDictionary" || prop.Name == "TypeMap" || prop.Name == "UserMap") continue;
                         int initialLen = currentPath.Length;
                         currentPath.Append($"{prop.Name}.");
                         FlattenJson(prop.Value, currentPath, dict);
@@ -54,12 +56,58 @@ namespace UserTracker.Tests.Helper
             return dict;
         }
 
-        public static Dictionary<string, object> GetById<T>(T obj)
+        public static Dictionary<string, object> ConvertPropertyListDictionary(PropertiesList propertiesList)
         {
-            var writer = new JTokenWriter();
-            _serializer.Serialize(writer, obj);
             var dict = new Dictionary<string, object>();
-            FlattenJson(writer.Token!, new StringBuilder(), dict);
+            foreach (var item in propertiesList.NullProperties)
+            {
+                try
+                {
+                    dict.Add(item, null);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to set null property {item}: {ex.Message}");
+                }
+            }
+
+            foreach (var kvp in propertiesList.StringProperties)
+            {
+                try
+                {
+                    dict.Add(kvp.Key, kvp.Value);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to set string property {kvp.Key}: {ex.Message}");
+                }
+            }
+
+            foreach (var kvp in propertiesList.IntegerProperties)
+            {
+                try
+                {
+                    dict.Add(kvp.Key, kvp.Value);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to set integer property {kvp.Key}: {ex.Message}");
+                }
+            }
+
+            foreach (var kvp in propertiesList.BooleanProperties)
+            {
+                try
+                {
+                    dict.Add(kvp.Key, kvp.Value);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to set boolean property {kvp.Key}: {ex.Message}");
+                }
+            }
+
+
             return dict;
         }
     }
