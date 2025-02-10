@@ -35,7 +35,6 @@ if (!File.Exists(GoodFilesPath))
     File.Create(GoodFilesPath).Close();
 }
 
-
 HashSet<string> goodFilesText = new HashSet<string>(File.ReadLines(GoodFilesPath));
 HashSet<string> badFilesText = new HashSet<string>(File.ReadLines(BadFilesPath));
 
@@ -90,16 +89,21 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 
     lock (totalChangesToBeWritten)
     {
+        long changesProcessedThisSync = 0;
+        long filesChangesProcessedThisSync = 0;
         while (totalChangesToBeWritten.TryTake(out var total))
         {
+            filesChangesProcessedThisSync += 1;
+            changesProcessedThisSync += total;
+
             totalChanges += total;
         }
         File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
-        Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} in {fileProcessedCount} files");
+        Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({filesChangesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
     }
 }
 
-Timer? onSave = new Timer(60 * 1000);
+Timer? onSave = new Timer(30 * 1000);
 onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
 onSave.Enabled = true; ;
@@ -108,7 +112,6 @@ onSave.Enabled = true; ;
 
 var stopwatch = new Stopwatch();
 stopwatch.Start();
-
 
 Parallel.ForEach(files, file =>
 {
