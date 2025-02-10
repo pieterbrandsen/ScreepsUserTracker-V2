@@ -98,7 +98,7 @@ namespace UserTracker.Tests.RoomHistory
 
                     changesProcessed += AssertHistory(roomHistory, (jTokenTicks as JObject)[roomHistory.Tick.ToString()], filePath);
                     var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
-                    InfluxDBClientState.WriteScreepsRoomHistory("testConsole", "test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                    if (ConfigSettingsState.InfluxDbEnabled) InfluxDBClientState.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                 }
             }
 

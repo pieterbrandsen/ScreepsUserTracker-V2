@@ -1,7 +1,9 @@
 ﻿using UserTrackerShared;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.States;
 using UserTrackerStates;
 
+ConfigSettingsState.Init();
 Screen.Init();
 InfluxDBClientState.Init();
 var gameState = new GameState();

@@ -13,7 +13,7 @@ using Xunit;
 
 namespace UserTracker.Tests.States
 {
-    public class GameStateIntegrationTests : IDisposable
+    public class GameStateIntegrationTests
     {
 
         [Fact]
@@ -32,46 +32,6 @@ namespace UserTracker.Tests.States
         }
 
         [Fact]
-        public async Task GetAvailableProxyAsync_ReturnsAvailableProxy()
-        {
-            // Arrange
-            // Ensure ProxyHelper returns valid proxy IPs
-            var proxyIps = new List<string> { "192.168.1.1", "192.168.1.2" };
-            ProxyHelper.Proxies = proxyIps;
-
-            SetConfigurationManager.SetLiveConfig();
-            var gameState = new GameState();
-            await gameState.InitAsync();
-
-            // Act
-            var proxy = await GameState.GetAvailableProxyAsync();
-
-            // Assert
-            Assert.NotNull(proxy);
-            Assert.True(proxy.InUse);
-        }
-
-        [Fact]
-        public async Task GetAvailableProxies_ReturnsAvailableProxies()
-        {
-            // Arrange
-            // Ensure ProxyHelper returns valid proxy IPs
-            var proxyIps = new List<string> { "192.168.1.1", "192.168.1.2" };
-            ProxyHelper.Proxies = proxyIps;
-
-            SetConfigurationManager.SetLiveConfig();
-            var gameState = new GameState();
-            await gameState.InitAsync();
-
-            // Act
-            var proxies = GameState.GetAvailableProxies(2);
-
-            // Assert
-            Assert.Equal(proxyIps.Count, proxies.Count);
-            Assert.All(proxies, p => Assert.True(p.InUse));
-        }
-
-        [Fact]
         public async Task OnSetTimeTimer_UpdatesCurrentLeaderboard()
         {
             // Arrange
@@ -84,11 +44,6 @@ namespace UserTracker.Tests.States
             // Assert
             Assert.NotNull(gameState.CurrentLeaderboard);
             Assert.NotEmpty(gameState.CurrentLeaderboard);
-        }
-
-        public void Dispose()
-        {
-            GameState.ProxyStates.Clear();
         }
     }
 }

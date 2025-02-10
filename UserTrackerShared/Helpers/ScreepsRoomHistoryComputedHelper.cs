@@ -1144,12 +1144,13 @@ namespace UserTrackerShared.Helpers
                     roomHistory.PropertiesListDictionary[key] = propertiesList;
 
                     var type = propertiesList.StringProperties.GetValueOrDefault("type");
-                    if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
-                    //FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesList);
-                    //if (roomHistory.Base == roomHistory.Tick)
-                    //{
-                    //    FileWriterManager.GenerateFileByType(type, obj);
-                    //}
+                    type ??= roomHistory.TypeMap.GetValueOrDefault(key);
+
+                    if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesList);
+                    if (ConfigSettingsState.WriteHistoryTypeProperties && roomHistory.Base == roomHistory.Tick)
+                    {
+                        FileWriterManager.GenerateFileByType(type, obj);
+                    }
                 }
                 else
                 {

@@ -1,78 +1,54 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
 using System.Configuration;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
-using UserTrackerShared;
-using UserTrackerShared.Models.Screen;
 using UserTrackerShared.Models.ScreepsAPI;
+using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace UserTrackerScreepsApi
 {
-    internal static class JSONConvertHelper
+    public static class JSONConvertHelper
     {
         private static readonly JsonSerializer _jsonSerializer = new JsonSerializer();
 
-        public async static Task<T?> DeserializeObject<T>(HttpContent httpContent, string path)
+        public static async Task<string> ReadGzipStream(HttpContent httpContent)
         {
-            try
+            using (Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false))
+            using (GZipStream gzipStream = new GZipStream(responseStream, CompressionMode.Decompress))
+            using (StreamReader reader = new StreamReader(gzipStream))
             {
-                var isGzip = httpContent.Headers.ContentEncoding.Contains("gzip");
-                using var responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
-                using var decompressedStream = isGzip
-                    ? new GZipStream(responseStream, CompressionMode.Decompress)
-                    : responseStream;
-
-                using var streamReader = new StreamReader(decompressedStream, Encoding.UTF8, leaveOpen: true);
-                using var jsonReader = new JsonTextReader(streamReader);
-
-                return _jsonSerializer.Deserialize<T>(jsonReader);
+                return reader.ReadToEnd();
             }
-            catch (Exception ex)
+        }
+        public static async Task<string> ReadStream(HttpContent httpContent)
+        {
+            using (Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false))
+            using (StreamReader reader = new StreamReader(responseStream))
             {
-                _ = Task.Run(() => Screen.AddLog($"{path} - {ex.Message}"));
-                Debug.WriteLine(ex.Message);
-                return default;
+                return reader.ReadToEnd();
             }
         }
     }
     public class ScreepsAPI
     {
+        private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
+        {
+            MaxConnectionsPerServer = 100000
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+
         public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
         public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
-
-        private static bool InUse = false;
 
         private static Uri CombineUrl(string path)
         {
             return new Uri(ScreepsAPIUrl + path);
         }
-        private static readonly ConcurrentDictionary<string, HttpClient> ProxyClients = new();
-
-        private static HttpClient GetHttpClient(Uri? proxyUri)
-        {
-            if (proxyUri == null) return new HttpClient();
-
-            return ProxyClients.GetOrAdd(proxyUri.AbsoluteUri, uri =>
-            {
-                var httpClientHandler = new HttpClientHandler
-                {
-                    Proxy = new WebProxy(uri),
-                    UseProxy = true,
-                };
-
-                var httpClient = new HttpClient(httpClientHandler, disposeHandler: false);
-                httpClient.Timeout = TimeSpan.FromSeconds(10);
-                return httpClient;
-            });
-        }
-
-
         private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, Uri? proxyUri = null)
         {
             if (method == HttpMethod.Post && httpContent == null)
@@ -80,18 +56,8 @@ namespace UserTrackerScreepsApi
                 throw new ArgumentNullException("No HttpContent provided");
             }
 
-            HttpClient client = GetHttpClient(proxyUri);
             try
             {
-                if (path.StartsWith("/api"))
-                {
-                    while (InUse)
-                    {
-                        await Task.Delay(10);
-                    }
-                    InUse = true;
-                }
-
                 var request = new HttpRequestMessage()
                 {
                     RequestUri = CombineUrl(path),
@@ -105,16 +71,14 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Token", ScreepsAPIToken);
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
-                var response = await client.SendAsync(request);
+                var response = await _httpClient.SendAsync(request);
                 //Screen.AddLog($"{path} - {response.StatusCode}");
 
-                if (path.StartsWith("/api"))
-                {
-                    InUse = false;
-                }
                 if (response.IsSuccessStatusCode)
                 {
-                    var result = await JSONConvertHelper.DeserializeObject<T>(response.Content, path);
+                    var isGzip = response.Content.Headers.ContentEncoding.Contains("gzip");
+                    var json = isGzip ? await JSONConvertHelper.ReadGzipStream(response.Content) : await JSONConvertHelper.ReadStream(response.Content);
+                    var result = JsonConvert.DeserializeObject<T>(json);
                     return (result, response.StatusCode);
                 }
                 else
@@ -194,15 +158,7 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
 
-            var (Result, Status) = await ExecuteRequestAsync<string>(HttpMethod.Get, path);
-            var jObject = JObject.Parse(Result);
-            return jObject;
-        }
-        public static async Task<JObject?> GetHistory(string shard, string room, long tick, Uri uri)
-        {
-            var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
-
-            var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path, proxyUri:uri);
+            var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path);
             return Result;
         }
 

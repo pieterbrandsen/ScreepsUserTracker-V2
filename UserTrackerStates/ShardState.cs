@@ -1,6 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using InfluxDB.Client.Api.Domain;
+using Newtonsoft.Json.Linq;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models.ScreepsAPI;
@@ -43,7 +46,7 @@ namespace UserTrackerShared.States
         private static Timer? _setTimeTimer;
         private static bool isSyncing = false;
 
-        private async void StartSync(long time)
+        private void StartSync(long time)
         {
             if (isSyncing) return;
             isSyncing = true;
@@ -53,40 +56,22 @@ namespace UserTrackerShared.States
 
             for (long i = LastSynceTime; i < syncTime; i += 100)
             {
+                GC.Collect();
                 var mainStopwatch = Stopwatch.StartNew();
-                var stopwatches = new ConcurrentBag<Stopwatch>();
 
-                var roomsCount = Rooms.Count;
-                List<Task> updateTasks = new List<Task>();
-
-                var roomsChecked = 0;
-                var roomNamesToBeChecked = Rooms.Select(room => room.Name).ToArray();
-                while (roomsChecked < roomsCount)
+                //var getDataTasks = Rooms.Select(room => room.GetRoomData(i));
+                //var getDataTaskResults = await Task.WhenAll(getDataTasks);
+                //int successes = getDataTaskResults.Count(r => r);
+                int successes = 0;
+                Parallel.ForEach(Rooms, async room =>
                 {
-                    var proxiesAvailable = GameState.GetAvailableProxies(roomNamesToBeChecked.Length);
-                    var checkingRooms = roomNamesToBeChecked.Take(proxiesAvailable.Count).ToArray();
-                    roomNamesToBeChecked = roomNamesToBeChecked.Skip(proxiesAvailable.Count).ToArray();
+                    if (await room.GetRoomData(i)) Interlocked.Increment(ref successes);
+                });
 
-                    for (var j = 0; j < proxiesAvailable.Count; j++)
-                    {
-                        var roomName = checkingRooms[j];
-                        var room = Rooms.First(r => r.Name == roomName);
-                        var proxy = proxiesAvailable[j];
-                        var stopwatch = Stopwatch.StartNew();
-                        stopwatches.Add(stopwatch);
-                        var task = Task.Run(async () =>
-                        {
-                            await room.UpdateRoomData(i, proxy);
-                            stopwatch.Stop();
-                        });
-                        updateTasks.Add(task);
-
-                        roomsChecked++;
-                    }
-                    await Task.Delay(100);
-                }
-                await Task.WhenAll(updateTasks);
-
+                Parallel.ForEach(Rooms, async room =>
+                {
+                    room.HandleRoomData();
+                });
 
 
                 try
@@ -94,8 +79,7 @@ namespace UserTrackerShared.States
                     mainStopwatch.Stop();
                     var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                     var totalMicroSeconds = totalMiliseconds * 1000;
-                    var averageTime = stopwatches.Average(sw => sw.ElapsedMilliseconds);
-                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS, avg time taken {Math.Round(averageTime)}ms");
+                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS");
                 }
                 catch (Exception)
                 {

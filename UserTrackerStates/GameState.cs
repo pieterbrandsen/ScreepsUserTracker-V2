@@ -17,7 +17,6 @@ namespace UserTrackerShared.States
         public string ScreepsAPIPassword = "";
 
         public List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
-        public static ConcurrentBag<ProxyState> ProxyStates = new ConcurrentBag<ProxyState>();
         public List<ShardState> Shards = new List<ShardState>();
 
         private Timer? _onSetLeaderboardTimer;
@@ -29,15 +28,6 @@ namespace UserTrackerShared.States
             ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
             ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
 
-            var proxies = await ProxyHelper.GetProxyIps();
-            lock (ProxyStates)
-            {
-                foreach (var proxy in proxies)
-                {
-                    ProxyStates.Add(new ProxyState(new Uri($"http://{proxy}")));
-                }
-            }
-            
             bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
             if (isPrivateServer)
             {
@@ -62,41 +52,6 @@ namespace UserTrackerShared.States
             _onSetLeaderboardTimer.AutoReset = true;
             _onSetLeaderboardTimer.Enabled = true;
             OnSetTimeTimer(null, null);
-        }
-
-        public static async Task<ProxyState> GetAvailableProxyAsync()
-        {
-            while (true)
-            {
-                foreach (var proxy in ProxyStates)
-                {
-                    if (!proxy.InUse)
-                    {
-                        proxy.SetUsed();
-                        return proxy;
-                    }
-                }
-
-                await Task.Delay(100);
-            }
-        }
-
-        public static List<ProxyState> GetAvailableProxies(int max)
-        {
-            List<ProxyState> proxies = new List<ProxyState>();
-            foreach (var proxy in ProxyStates)
-            {
-                if (!proxy.InUse)
-                {
-                    proxy.SetUsed();
-                    proxies.Add(proxy);
-                    if (proxies.Count >= max)
-                    {
-                        break;
-                    }
-                }
-            }
-            return proxies;
         }
 
         public async Task UpdateLeaderboard()

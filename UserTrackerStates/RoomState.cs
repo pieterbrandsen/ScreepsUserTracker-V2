@@ -15,8 +15,8 @@ namespace UserTrackerStates
     {
         public string Name;
         public string Shard;
-        public ScreepsRoomHistory? RoomData = null;
-        public ScreepsRoomHistory? LastRoomData = null;
+
+        private JObject? _roomData = null;
 
         public RoomState(string name, string shard)
         {
@@ -24,57 +24,50 @@ namespace UserTrackerStates
             Shard = shard;
         }
 
-        public async Task UpdateRoomData(long tick, ProxyState proxy)
+        public async Task<bool> GetRoomData(long tick)
         {
-            JObject? roomData = null;
-            if (proxy == null)
-            {
-                roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
-            }
-            else
-            {
-                roomData = await proxy.GetHistory(Shard, Name, tick);
-            }
-            if (roomData != null)
-            {
-                var roomHistory = new ScreepsRoomHistory();
-                roomData.TryGetValue("timestamp", out JToken? jTokenTime);
-                if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
+            _roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
+            return _roomData != null;
+        }
 
-                roomData.TryGetValue("base", out JToken? jTokenBase);
-                if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
+        public bool HandleRoomData()
+        {
+            if (_roomData == null) return false;
 
-                roomData.TryGetValue("ticks", out JToken? jTokenTicks);
-                //if (jTokenTicks != null)
-                //{
-                //    var jTokenTicksValues = jTokenTicks.Values<JToken>();
-                //    for (int i = 0; i < jTokenTicksValues.Count(); i++)
-                //    {
-                //        long tickNumber = roomHistory.Base + i;
-                //        roomHistory.Tick = tickNumber;
-                //        var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
-                //        if (tickObject == null) continue;
-                //        try
-                //        {
-                //            roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
-                //        }
-                //        catch (Exception e)
-                //        {
-                //            //throw;
-                //        }
-                //        //InfluxDBClientState.WriteScreepsRoomHistory(Shard, Name, roomHistory);
-                //    }
-                //}
-                FileWriterManager.GenerateHistoryFile(roomData);
+            var roomHistory = new ScreepsRoomHistory();
+            _roomData.TryGetValue("timestamp", out JToken? jTokenTime);
+            if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
+            _roomData.TryGetValue("base", out JToken? jTokenBase);
+            if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
 
-                //RoomData = roomHistory;
-                //LastRoomData = roomHistory;
-            }
-            else
+            _roomData.TryGetValue("ticks", out JToken? jTokenTicks);
+            if (jTokenTicks != null)
             {
-                LastRoomData = null;
+                var jTokenTicksValues = jTokenTicks.Values<JToken>();
+                for (int i = 0; i < jTokenTicksValues.Count(); i++)
+                {
+                    long tickNumber = roomHistory.Base + i;
+                    roomHistory.Tick = tickNumber;
+                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
+                    if (tickObject == null) continue;
+                    try
+                    {
+                        roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+                    }
+                    catch (Exception e)
+                    {
+                        //throw;
+                    }
+                    if (ConfigSettingsState.InfluxDbEnabled) {
+                        var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
+                        InfluxDBClientState.WriteScreepsRoomHistory(Shard, Name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                    }
+                }
             }
+
+            if (ConfigSettingsState.WriteHistoryFiles) FileWriterManager.GenerateHistoryFile(_roomData);
+            return true;
         }
     }
 }

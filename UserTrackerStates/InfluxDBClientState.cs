@@ -12,6 +12,7 @@ using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 
 
@@ -26,16 +27,15 @@ namespace UserTrackerStates
         public static void Init()
         {
             // You can generate an API token from the "API Tokens Tab" in the UI
-            var token = ConfigurationManager.AppSettings["INFLUXDB_TOKEN"] ?? "";
-            _influxDBClient = new InfluxDBClient("http://influxdb.pandascreeps.com:8086", token);
+            _influxDBClient = new InfluxDBClient("http://influxdb.pandascreeps.com:8086", ConfigSettingsState.InfluxDbToken);
             _writeAPI = _influxDBClient.GetWriteApi();
         }
 
-        public static void WriteScreepsRoomHistory(string server, string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
+        public static void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
         {
             try
             {
-                var points  = new List<PointData>();
+                var points = new List<PointData>();
                 var flattenedData = new Dictionary<string, object>();
 
                 var writer = new JTokenWriter();
@@ -47,7 +47,7 @@ namespace UserTrackerStates
                     if (kvp.Value is double || kvp.Value is float || kvp.Value is int || kvp.Value is long)
                     {
                         var point = PointData
-                            .Measurement(server)
+                            .Measurement(ConfigSettingsState.InfluxDbServer)
                             .Tag("shard", shard)
                             .Tag("room", room)
                             .Field("tick", tick)
