@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Timers;
 using UserTrackerScreepsApi;
+using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
 using Timer = System.Timers.Timer;
@@ -22,29 +23,36 @@ namespace UserTrackerShared.States
             _setTimeTimer.Elapsed += OnSetTimeTimer;
             _setTimeTimer.AutoReset = true;
             _setTimeTimer.Enabled = true;
-
-            AsyncConstructor();
         }
-        async void AsyncConstructor()
+        public async Task StartAsync()
         {
             var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
-            Users = response.Users;
             foreach (var room in response.Rooms)
             {
                 Rooms.Add(new RoomState(room.Key, Name));
             }
-
-            OnSetTimeTimer(null, null);
+            StartUpdate();
         }
 
         public string Name { get; set; }
         private long LastSynceTime { get; set; }
         public long Time { get; set; }
         public List<RoomState> Rooms { get; set; } = new List<RoomState>();
-        public Dictionary<string, MapStatUser> Users { get; set; } = new Dictionary<string, MapStatUser>();
-
         private static Timer? _setTimeTimer;
-        private static bool isSyncing = false;
+        private bool isSyncing = false;
+
+        public async void StartUpdate()
+        {
+            var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
+            if (timeResponse != null)
+            {
+                if (Time != timeResponse.Time)
+                {
+                    StartSync(timeResponse.Time);
+                }
+                Time = timeResponse.Time;
+            }
+        }
 
         private void StartSync(long time)
         {
@@ -87,22 +95,9 @@ namespace UserTrackerShared.States
             LastSynceTime = syncTime;
             isSyncing = false;
         }
-
-        public async Task StartUpdate()
-        {
-            var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
-            if (timeResponse != null)
-            {
-                if (Time != timeResponse.Time)
-                {
-                    StartSync(timeResponse.Time);
-                }
-                Time = timeResponse.Time;
-            }
-        }
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
-            await StartUpdate();
+            StartUpdate();
         }
     }
 }

@@ -79,6 +79,7 @@ namespace UserTrackerShared.Models
         public long Level { get; set; } = 0;
         public long Progress { get; set; } = 0;
         public long ProgressTotal { get; set; } = 0;
+        public string UserId { get; set; } = "";
     }
     public class StructureMineralDTO : BaseStructureDTO
     {

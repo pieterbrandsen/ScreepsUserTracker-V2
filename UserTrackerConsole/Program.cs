@@ -6,8 +6,7 @@ using UserTrackerStates;
 ConfigSettingsState.Init();
 Screen.Init();
 InfluxDBClientState.Init();
-var gameState = new GameState();
-await gameState.InitAsync();
+await GameState.InitAsync();
 
 //var a = 1;
 //while (true)

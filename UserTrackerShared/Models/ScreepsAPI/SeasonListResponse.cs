@@ -10,16 +10,12 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("season")]
         public string Season { get; set; }
         [JsonProperty("user")]
-        public string User { get; set; }
+        public string UserId { get; set; }
+        public string UserName { get; set; }
         [JsonProperty("score")]
         public string Score { get; set; }
         [JsonProperty("rank")]
         public int Rank { get; set; }
-    }
-    public class SeasonListUser : ScreepsUser
-    {
-        [JsonProperty("gcl")]
-        public long GCL { get; set; }
     }
     public class SeasonListResponse
     {
@@ -30,6 +26,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("list")]
         public List<SeaonListItem> List { get; set; }
         [JsonProperty("users")]
-        public Dictionary<string, SeasonListUser> Users { get; set; }
+        public Dictionary<string, ScreepsUser> Users { get; set; }
     }
 }

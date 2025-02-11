@@ -54,10 +54,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("flip")]
         public bool Flip { get; set; }
     }
-    public class MapStatUser : ScreepsUser
-    {
-    }
-
     public class MapStatsResponse
     {
         [JsonProperty("ok")]
@@ -69,6 +65,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("decorations")]
         public object Decorations { get; set; }
         [JsonProperty("users")]
-        public Dictionary<string, MapStatUser> Users { get; set; } = new Dictionary<string, MapStatUser>();
+        public Dictionary<string, ScreepsUser> Users { get; set; } = new Dictionary<string, ScreepsUser>();
     }
 }

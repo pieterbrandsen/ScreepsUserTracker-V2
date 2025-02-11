@@ -13,6 +13,11 @@ namespace UserTrackerShared.Helpers
         public static string InfluxDbToken { get; set; }
         public static string InfluxDbServer { get; set; }
 
+
+        public static bool LoadAllLeaderboards { get; set; }
+        public static bool StartsShards { get; set; }
+
+
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
         public static bool WriteHistoryTypeProperties { get; set; }
@@ -21,6 +26,10 @@ namespace UserTrackerShared.Helpers
             InfluxDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["INFLUXDB_ENABLED"]);
             InfluxDbToken = ConfigurationManager.AppSettings["INFLUXDB_TOKEN"] ?? "";
             InfluxDbServer = ConfigurationManager.AppSettings["INFLUXDB_SERVER"] ?? "";
+
+            LoadAllLeaderboards = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_ALL_LEADERBOARDS"]);
+            StartsShards = Convert.ToBoolean(ConfigurationManager.AppSettings["START_SHARDS"]);
+
 
             WriteHistoryFiles = Convert.ToBoolean(ConfigurationManager.AppSettings["WRITE_HISTORY_FILES"]);
             WriteHistoryProperties = Convert.ToBoolean(ConfigurationManager.AppSettings["WRITE_HISTORY_PROPERTIES"]);

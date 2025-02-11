@@ -4,11 +4,13 @@ using System.Diagnostics;
 using System.Timers;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.States;
 using UserTrackerStates;
 using Timer = System.Timers.Timer;
 
 ConfigSettingsState.Init();
 HistoryConfigSettingsState.Init();
+await GameState.InitAsync();
 InfluxDBClientState.Init();
 
 
@@ -54,6 +56,7 @@ var files = Directory.EnumerateFiles(HistoryFilesLocations)
 
 Console.WriteLine($"Found {files.Count} files to parse");
 
+bool isWriting = false;
 var totalChangesToBeWritten = new ConcurrentBag<long>();
 var linesToBeWrittenGood = new ConcurrentBag<string>();
 var linesToBeWrittenBad = new ConcurrentBag<string>();
@@ -61,6 +64,9 @@ var linesToBeWrittenBadErrors = new ConcurrentBag<string>();
 
 async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 {
+    if (isWriting) return;
+    isWriting = true;
+
     fileProcessedCount += linesToBeWrittenGood.Count + linesToBeWrittenBad.Count;
     lock (linesToBeWrittenGood)
     {
@@ -101,9 +107,10 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
         File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
         Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
     }
+    isWriting = false;
 }
 
-Timer? onSave = new Timer(30 * 1000);
+Timer? onSave = new Timer(120 * 1000);
 onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
 onSave.Enabled = true; ;

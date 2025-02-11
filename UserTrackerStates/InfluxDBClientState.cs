@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.States;
 
 
 namespace UserTrackerStates
@@ -35,6 +36,15 @@ namespace UserTrackerStates
         {
             try
             {
+                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? "";
+                var username = "";
+                GameState.Users.TryGetValue(userId, out var user);
+                if (user != null)
+                {
+                    username = user.Username;
+                }
+
+
                 var points = new List<PointData>();
                 var flattenedData = new Dictionary<string, object>();
 
@@ -53,6 +63,11 @@ namespace UserTrackerStates
                             .Field("tick", tick)
                             .Field(kvp.Key.ToLower(), Convert.ToInt64(kvp.Value))
                             .Timestamp(timestamp, WritePrecision.Ms);
+
+                        if (!string.IsNullOrEmpty(username))
+                        {
+                            point = point.Tag("user", username);
+                        }
                         points.Add(point);
                     }
                 }

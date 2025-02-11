@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
@@ -34,13 +35,27 @@ namespace UserTrackerScreepsApi
     }
     public class ScreepsAPI
     {
+        private static SemaphoreSlim throttler = new SemaphoreSlim(10);
+
         private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
         {
-            MaxConnectionsPerServer = 100000
+            MaxConnectionsPerServer = 10
         })
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
+        private static async Task<HttpResponseMessage> ThrottledRequest(HttpRequestMessage request)
+        {
+            await throttler.WaitAsync();
+            try
+            {
+                return await _httpClient.SendAsync(request);
+            }
+            finally
+            {
+                throttler.Release();
+            }
+        }
 
         public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
         public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
@@ -71,7 +86,8 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Token", ScreepsAPIToken);
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
-                var response = await _httpClient.SendAsync(request);
+                var isHistoryRequest = path.StartsWith("/room-history");
+                var response = await (isHistoryRequest? _httpClient.SendAsync(request) : ThrottledRequest(request));
                 //Screen.AddLog($"{path} - {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
@@ -143,7 +159,43 @@ namespace UserTrackerScreepsApi
                 offset += limit;
             }
 
-            return leaderboardList;
+            return leaderboardList.OrderBy(s=>s.Rank).ToList();
+        }
+
+        public static async Task<Dictionary<string, List<SeaonListItem>>> GetAllSeasonsLeaderboard(string mode)
+        {
+            var leaderboardsList = new Dictionary<string, List<SeaonListItem>>();
+
+            var lastSeasonEmpty = false;
+            var season = DateTime.Now.ToString("yyyy-MM");
+            while (!lastSeasonEmpty)
+            {
+                var leaderboardList = new List<SeaonListItem>();
+                season = DateTime.Parse(season).AddMonths(-1).ToString("yyyy-MM");
+
+                int offset = 0;
+                int limit = 20;
+                while (true)
+                {
+                    var listResponse = await GetCurrentSeasonLeaderboard(mode, season, offset, limit);
+                    if (listResponse == null || listResponse.List.Count == 0) break;
+                    leaderboardList.AddRange(listResponse.List);
+
+                    offset += limit;
+                }
+
+                if (leaderboardList.Count == 0)
+                {
+                    lastSeasonEmpty = true;
+                }
+                else
+                {
+                    leaderboardsList[season] = leaderboardList;
+                }
+            }
+
+
+            return leaderboardsList;
         }
 
         public static async Task<SeasonListResponse?> GetLeaderboardsOfUser(string mode, string username)
@@ -152,6 +204,14 @@ namespace UserTrackerScreepsApi
 
             var (Result, Status) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
+        }
+
+        public static async Task<ScreepsUser?> GetUser(string userId)
+        {
+            var path = $"/api/user/find?id={userId}";
+
+            var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);
+            return Status == HttpStatusCode.OK && Result.Ok == 1 ? Result.User : null;
         }
 
         public static async Task<JObject?> GetHistory(string shard, string room, long tick)

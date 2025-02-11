@@ -3,25 +3,27 @@ using System.Configuration;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
 {
-    public class GameState
+    public static class GameState
     {
-        public string ScreepsAPIUrl = "";
-        public string ScreepsAPIToken = "";
-        public string ScreepsAPIUsername = "";
-        public string ScreepsAPIPassword = "";
+        public static string ScreepsAPIUrl = "";
+        public static string ScreepsAPIToken = "";
+        public static string ScreepsAPIUsername = "";
+        public static string ScreepsAPIPassword = "";
 
-        public List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
-        public List<ShardState> Shards = new List<ShardState>();
+        public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
+        public static List<ShardState> Shards = new List<ShardState>();
+        public static Dictionary<string, ScreepsUser> Users= new ();
 
-        private Timer? _onSetLeaderboardTimer;
+        private static Timer? _onSetLeaderboardTimer;
 
-        public async Task InitAsync()
+        public static async Task InitAsync()
         {
             ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
             ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
@@ -47,25 +49,66 @@ namespace UserTrackerShared.States
                 }
             }
 
+            await UpdateCurrentLeaderboard();
+            await GetAllUsers();
+
+            if (ConfigSettingsState.StartsShards)
+            {
+            foreach (var shard in Shards)
+            {
+                await shard.StartAsync();
+            }
+            }
+
+
             _onSetLeaderboardTimer = new Timer(300000);
             _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
             _onSetLeaderboardTimer.AutoReset = true;
             _onSetLeaderboardTimer.Enabled = true;
-            OnSetTimeTimer(null, null);
         }
 
-        public async Task UpdateLeaderboard()
+        public static async Task UpdateCurrentLeaderboard()
         {
             var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
             if (currentLeaderboardResponse != null)
             {
                 CurrentLeaderboard = currentLeaderboardResponse;
+                foreach (var leaderboardSpot in CurrentLeaderboard)
+                {
+                    if (Users.ContainsKey(leaderboardSpot.UserId)) continue;
+                    var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
+                    if (userResponse != null) {
+                        Users[leaderboardSpot.UserId] = userResponse;
+                        leaderboardSpot.UserName = userResponse.Username;
+                    }
+                }
             }
         }
 
-        private async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        public static async Task GetAllUsers()
         {
-            await UpdateLeaderboard();
+            var LeaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard("world");
+            if (LeaderboardsResponse != null)
+            {
+                foreach (var leaderboardKVP in LeaderboardsResponse)
+                {
+                    foreach (var leaderboardSpot in leaderboardKVP.Value)
+                    {
+                        if (Users.ContainsKey(leaderboardSpot.UserId)) continue;
+                        var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
+                        if (userResponse != null)
+                        {
+                            Users[leaderboardSpot.UserId] = userResponse;
+                            leaderboardSpot.UserName = userResponse.Username;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        {
+            await UpdateCurrentLeaderboard();
         }
     }
 }

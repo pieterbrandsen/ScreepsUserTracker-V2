@@ -14,6 +14,10 @@ namespace UserTrackerShared.Models
         public string Id { get; set; }
         [JsonProperty("username")]
         public string Username { get; set; }
+        [JsonProperty("gcl")]
+        public long GCL { get; set; }
+        [JsonProperty("power")]
+        public long Power { get; set; }
         [JsonProperty("badge")]
         public MapStatUserBadge Badge { get; set; }
     }
