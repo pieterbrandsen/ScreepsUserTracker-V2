@@ -74,9 +74,10 @@ namespace UserTracker.Tests.RoomHistory
         {
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
+            var roomHistoryDTO = new ScreepsRoomHistoryDTO();
+
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
-
             roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
 
@@ -96,7 +97,7 @@ namespace UserTracker.Tests.RoomHistory
                         roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
                         changesProcessed += AssertHistory(roomHistory, tickObject, filePath);
 
-                        var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
+                        roomHistoryDTO.Update(roomHistory);
                         if (ConfigSettingsState.InfluxDbEnabled)
                             InfluxDBClientState.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                     }

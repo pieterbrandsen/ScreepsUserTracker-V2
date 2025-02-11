@@ -48,6 +48,7 @@ namespace UserTrackerShared.Models
         public OutlflowActionDTO Repair { get; set; } = new OutlflowActionDTO(); 
         public OutlflowActionDTO Build { get; set; } = new OutlflowActionDTO();
         public OutlflowActionDTO UpgradeController { get; set; } = new OutlflowActionDTO();
+        public GenericActionDTO Move { get; set; } = new GenericActionDTO();
         public GenericActionDTO Say { get; set; } = new GenericActionDTO();
         public GenericActionDTO ReserveController { get; set; } = new GenericActionDTO();
         public GenericActionDTO Produce { get; set; } = new GenericActionDTO();
@@ -57,7 +58,6 @@ namespace UserTrackerShared.Models
         public GenericActionDTO ReverseReaction { get; set; } = new GenericActionDTO();
         public GenericActionDTO Spawned { get; set; } = new GenericActionDTO();
         public GenericActionDTO Power { get; set; } = new GenericActionDTO();
-        public GenericActionDTO Move { get; set; } = new GenericActionDTO();
     }
     public class CreepDTO
     {
@@ -274,7 +274,7 @@ namespace UserTrackerShared.Models
             Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures);
         }
 
-        public ScreepsRoomHistoryDTO(ScreepsRoomHistory his)
+        public void Update(ScreepsRoomHistory his)
         {
             ProcessGroundResources(his);
             ProcessCreeps(his);

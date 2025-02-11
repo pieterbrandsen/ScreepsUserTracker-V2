@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using UserTrackerShared.Models;
+﻿using UserTrackerShared.Models;
 
 namespace UserTrackerShared.Helpers
 {
@@ -34,7 +33,7 @@ namespace UserTrackerShared.Helpers
                 structuresDTO.ConstructionSite.Count += 1;
                 structuresDTO.ConstructionSite.Progress += constructionSite.Value.Progress;
                 structuresDTO.ConstructionSite.ProgressTotal += constructionSite.Value.ProgressTotal;
-                
+
                 var typeBeingBuild = constructionSite.Value.StructureType;
                 var current = structuresDTO.ConstructionSite.TypesBuilding.ContainsKey(typeBeingBuild) ? structuresDTO.ConstructionSite.TypesBuilding[typeBeingBuild] : 0;
                 structuresDTO.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1;
@@ -196,7 +195,7 @@ namespace UserTrackerShared.Helpers
             {
                 creepsDTO.Count += 1;
                 var body = ConvertBody(creep.Body);
-                var actionLog = ConvertActiongLog(creep.ActionLog, body);
+                var actionLog = ConvertActiongLog(creep.ActionLog, body, ComputeExtraIntentPower(creep.Body, body));
 
                 foreach (var bodyPart in body)
                 {
@@ -283,6 +282,7 @@ namespace UserTrackerShared.Helpers
                 }
                 #endregion
                 #region Generic
+                creepsDTO.ActionLog.Move.Count += creep._oldFatigue == 0 ? 1 : 0;
                 if (actionLog.Say != null)
                 {
                     creepsDTO.ActionLog.Say.Count += actionLog.Say.Count;
@@ -336,7 +336,144 @@ namespace UserTrackerShared.Helpers
             }
             return bodyDict;
         }
-        public static ActionLogDTO ConvertActiongLog(ActionLog actionLog, Dictionary<string, long> body)
+        public static Dictionary<string, double> ComputeExtraIntentPower(BodyPart[] body, Dictionary<string, long> countByPart)
+        {
+            long moveCount = countByPart.ContainsKey("move") ? countByPart["move"] : 0;
+            long workCount = countByPart.ContainsKey("work") ? countByPart["work"] : 0;
+            long carryCount = countByPart.ContainsKey("carry") ? countByPart["carry"] : 0;
+            long attackCount = countByPart.ContainsKey("attack") ? countByPart["attack"] : 0;
+            long rangedAttackCount = countByPart.ContainsKey("ranged_attack") ? countByPart["ranged_attack"] : 0;
+            long toughCount = countByPart.ContainsKey("tough") ? countByPart["tough"] : 0;
+            long healCount = countByPart.ContainsKey("heal") ? countByPart["heal"] : 0;
+            long claimCount = countByPart.ContainsKey("claim") ? countByPart["claim"] : 0;
+
+            var intentMap = new Dictionary<string, double>()
+            {
+                {"harvest", 0 },
+                {"build", 0 },
+                {"repair",0 },
+                {"dismantle", 0 },
+                {"upgradeController",0 },
+                {"attack",0 },
+                {"rangedAttack",0},
+                {"rangedMassAttack",0 },
+                {"heal",0 },
+                {"rangedHeal",0 },
+            };
+
+            var bodyDict = new Dictionary<string, long>();
+            foreach (var bodyPart in body)
+            {
+                if (bodyPart.Hits == 0) continue;
+                switch (bodyPart.Type)
+                {
+                    case "work":
+                        switch (bodyPart.Boost)
+                        {
+                            case "UO":
+                                intentMap["harvest"] += 2;
+                                break;
+                            case "UHO2":
+                                intentMap["harvest"] += 4;
+                                break;
+                            case "XUHO2":
+                                intentMap["harvest"] += 6;
+                                break;
+                            case "LH":
+                                intentMap["build"] += 0.5;
+                                intentMap["repair"] += 0.5;
+                                break;
+                                case "LH2O":
+                                intentMap["build"] += 0.8;
+                                intentMap["repair"] += 0.8;
+                                break;
+                            case "XLH2O":
+                                intentMap["build"] += 1;
+                                intentMap["repair"] += 1;
+                                break;
+                            case "ZH":
+                                intentMap["dismantle"] += 0.5;
+                                break;
+                            case "ZH2O":
+                                intentMap["dismantle"] += 2;
+                                break;
+                            case "XZH2O":
+                                intentMap["dismantle"] += 3;
+                                break;
+                            case "GH":
+                                intentMap["upgradeController"] += 0.5;
+                                break;
+                            case "GH2O":
+                                intentMap["upgradeController"] += 0.8;
+                                break;
+                            case "XGH2O":
+                                intentMap["upgradeController"] += 1;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case "attack":
+                        switch (bodyPart.Boost)
+                        {
+                            case "UH":
+                                intentMap["attack"] += 30;
+                                break;
+                            case "UH2O":
+                                intentMap["attack"] += 60;
+                                break;
+                            case "XUH2O":
+                                intentMap["attack"] += 90;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case "ranged_attack":
+                        switch (bodyPart.Boost)
+                        {
+                            case "KO":
+                                intentMap["rangedAttack"] += 10;
+                                intentMap["rangedMassAttack"] += 10;
+                                break;
+                            case "KHO2":
+                                intentMap["rangedAttack"] += 20;
+                                intentMap["rangedMassAttack"] += 20;
+                                break;
+                            case "XKHO2":
+                                intentMap["rangedAttack"] += 30;
+                                intentMap["rangedMassAttack"] += 30;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case "heal":
+                        switch (bodyPart.Boost)
+                        {
+                            case "LO":
+                                intentMap["heal"] += 12;
+                                intentMap["rangedHeal"] += 4;
+                                break;
+                            case "LHO2":
+                                intentMap["heal"] += 24;
+                                intentMap["rangedHeal"] += 8;
+                                break;
+                            case "XLHO2":
+                                intentMap["heal"] += 36;
+                                intentMap["rangedHeal"] += 12;
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return intentMap;
+        }
+        public static ActionLogDTO ConvertActiongLog(ActionLog actionLog, Dictionary<string, long> body, Dictionary<string, double> intentPowerMap)
         {
             if (actionLog == null)
                 return new ActionLogDTO();
@@ -358,7 +495,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.Attacked = new DamageActionDTO
                 {
                     Count = 1,
-                    Damage = attackCount * 30
+                    Damage = Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap["attack"] * 30))
                 };
             }
             if (actionLog.Attack != null)
@@ -366,7 +503,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.Attack = new DamageActionDTO
                 {
                     Count = 1,
-                    Damage = attackCount * 30
+                    Damage = Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap["attack"] * 30))
                 };
             }
             if (actionLog.RangedAttack != null)
@@ -374,7 +511,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.RangedAttack = new DamageActionDTO
                 {
                     Count = 1,
-                    Damage = attackCount * 10
+                    Damage = Convert.ToInt64(Math.Round(attackCount * 10 + intentPowerMap["rangedAttack"] * 10))
                 };
             }
             if (actionLog.RangedMassAttack != null)
@@ -382,7 +519,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.RangedMassAttack = new DamageActionDTO
                 {
                     Count = 1,
-                    Damage = attackCount * 4
+                    Damage = Convert.ToInt64(Math.Round(attackCount * 4 + intentPowerMap["rangedMassAttack"] * 4))
                 };
             }
             #endregion
@@ -392,7 +529,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.Heal = new HealActionDTO
                 {
                     Count = 1,
-                    Heal = healCount * 12
+                    Heal = Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap["heal"] * 12))
                 };
             }
             if (actionLog.Healed != null)
@@ -400,7 +537,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.Healed = new HealActionDTO
                 {
                     Count = 1,
-                    Heal = healCount * 12
+                    Heal = Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap["heal"] * 12))
                 };
             }
             if (actionLog.RangedHeal != null)
@@ -408,7 +545,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.RangedHeal = new HealActionDTO
                 {
                     Count = 1,
-                    Heal = healCount * 4
+                    Heal = Convert.ToInt64(Math.Round(healCount * 4 + intentPowerMap["rangedHeal"] * 4))
                 };
             }
             #endregion
@@ -418,7 +555,7 @@ namespace UserTrackerShared.Helpers
                 convertedActionLog.Harvest = new InflowActionDTO
                 {
                     Count = 1,
-                    Inflow = workCount * 2
+                    Inflow = Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap["harvest"] * 2))
                 };
             }
             #endregion
@@ -429,7 +566,7 @@ namespace UserTrackerShared.Helpers
                 {
                     Count = 1,
                     Outlflow = workCount * 1,
-                    Effect = workCount * 100
+                    Effect = Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap["repair"] * 100))
                 };
             }
             if (actionLog.Build != null)
@@ -438,7 +575,7 @@ namespace UserTrackerShared.Helpers
                 {
                     Count = 1,
                     Outlflow = workCount * 1,
-                    Effect = workCount * 5
+                    Effect = Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap["build"] * 5))
                 };
             }
             if (actionLog.UpgradeController != null)
@@ -447,7 +584,7 @@ namespace UserTrackerShared.Helpers
                 {
                     Count = 1,
                     Outlflow = workCount * 1,
-                    Effect = workCount * 1
+                    Effect = Convert.ToInt64(Math.Round(workCount + intentPowerMap["upgradeController"]))
                 };
             }
             #endregion

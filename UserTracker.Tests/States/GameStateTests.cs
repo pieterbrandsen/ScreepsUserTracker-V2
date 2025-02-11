@@ -23,12 +23,11 @@ namespace UserTracker.Tests.States
             SetConfigurationManager.SetPrivateConfig();
 
             // Act
-            var gameState = new GameState();
-            await gameState.InitAsync();
+            await GameState.InitAsync();
 
             // Assert
-            Assert.NotNull(gameState.Shards);
-            Assert.Single(gameState.Shards); // Only one shard for private server
+            Assert.NotNull(GameState.Shards);
+            Assert.Single(GameState.Shards); // Only one shard for private server
         }
 
         [Fact]
@@ -38,12 +37,11 @@ namespace UserTracker.Tests.States
             SetConfigurationManager.SetLiveConfig();
 
             // Act
-            var gameState = new GameState();
-            await gameState.UpdateLeaderboard();
+            await GameState.UpdateCurrentLeaderboard();
 
             // Assert
-            Assert.NotNull(gameState.CurrentLeaderboard);
-            Assert.NotEmpty(gameState.CurrentLeaderboard);
+            Assert.NotNull(GameState.CurrentLeaderboard);
+            Assert.NotEmpty(GameState.CurrentLeaderboard);
         }
     }
 }
