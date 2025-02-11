@@ -861,6 +861,6 @@ namespace UserTrackerShared.Models
 
         public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, string> UserMap { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, PropertiesList> PropertiesListDictionary { get; set; } = new Dictionary<string, PropertiesList>();
+        public Dictionary<string, Dictionary<string, object>> PropertiesListDictionary { get; set; } = new Dictionary<string, Dictionary<string, object>>();
     }
 }

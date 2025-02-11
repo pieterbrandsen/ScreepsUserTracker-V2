@@ -54,7 +54,7 @@ var files = Directory.EnumerateFiles(HistoryFilesLocations)
     .ToList();
 
 
-Console.WriteLine($"Found {files.Count} files to parse");
+Console.WriteLine($"Found {files.Count} files to parse, started at {DateTime.Now.ToShortTimeString()}");
 
 bool isWriting = false;
 var totalChangesToBeWritten = new ConcurrentBag<long>();
@@ -66,6 +66,9 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 {
     if (isWriting) return;
     isWriting = true;
+    var writeStopwatch = new Stopwatch();
+    writeStopwatch.Start();
+
 
     fileProcessedCount += linesToBeWrittenGood.Count + linesToBeWrittenBad.Count;
     lock (linesToBeWrittenGood)
@@ -76,6 +79,8 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
             writer.WriteLine(file);
         }
     }
+    var goodWriteTime = writeStopwatch.Elapsed;
+
     lock (linesToBeWrittenBad)
     {
         using StreamWriter writer = new StreamWriter(BadFilesPath, true);
@@ -84,6 +89,8 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
             writer.WriteLine(file);
         }
     }
+    var badWriteTime = writeStopwatch.Elapsed;
+
     lock (linesToBeWrittenBadErrors)
     {
         using StreamWriter writer = new StreamWriter(BadFilesErrorsPath, true);
@@ -92,6 +99,7 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
             writer.WriteLine(error);
         }
     }
+    var badErrorWriteTime = writeStopwatch.Elapsed;
 
     lock (totalChangesToBeWritten)
     {
@@ -105,6 +113,11 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
             totalChanges += total;
         }
         File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
+        var totalWriteTime = writeStopwatch.Elapsed;
+
+        writeStopwatch.Stop();
+        Console.WriteLine();
+        Console.WriteLine($"Write times: Good {goodWriteTime.TotalMilliseconds} ms, Bad {badWriteTime.TotalMilliseconds} ms, Bad Errors {badErrorWriteTime.TotalMilliseconds} ms, TotalLines {totalWriteTime.TotalMilliseconds} ms");
         Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
     }
     isWriting = false;
@@ -113,7 +126,7 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 Timer? onSave = new Timer(120 * 1000);
 onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
-onSave.Enabled = true; ;
+onSave.Enabled = true;
 
 
 var stopwatch = new Stopwatch();
@@ -134,7 +147,7 @@ void Execute(string file)
     catch (Exception e)
     {
         linesToBeWrittenBad.Add(file);
-        linesToBeWrittenBadErrors.Add(e.Message);
+        linesToBeWrittenBadErrors.Add(e.Message + Environment.NewLine + e.StackTrace);
     }
 }
 

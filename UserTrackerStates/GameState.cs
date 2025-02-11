@@ -54,10 +54,10 @@ namespace UserTrackerShared.States
 
             if (ConfigSettingsState.StartsShards)
             {
-            foreach (var shard in Shards)
-            {
-                await shard.StartAsync();
-            }
+                foreach (var shard in Shards)
+                {
+                    await shard.StartAsync();
+                }
             }
 
 

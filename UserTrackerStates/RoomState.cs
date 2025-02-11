@@ -54,7 +54,7 @@ namespace UserTrackerStates
                     if (tickObject == null) continue;
                     try
                     {
-                        roomHistory = ScreepsRoomHistoryComputedHelper.ComputeTick(tickObject, roomHistory);
+                        roomHistory = ScreespRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                     }
                     catch (Exception e)
                     {

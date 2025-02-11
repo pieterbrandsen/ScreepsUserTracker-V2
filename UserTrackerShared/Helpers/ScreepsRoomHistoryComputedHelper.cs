@@ -4,20 +4,13 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 using System.Timers;
 using UserTrackerShared.Models;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Helpers
 {
-    public class PropertiesList
-    {
-        public Dictionary<string, string> StringProperties { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, long> IntegerProperties { get; set; } = new Dictionary<string, long>();
-        public Dictionary<string, bool> BooleanProperties { get; set; } = new Dictionary<string, bool>();
-        public List<string> NullProperties { get; set; } = new List<string>();
-    }
-
     public static class FileWriterManager
     {
         private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\History";
@@ -44,26 +37,11 @@ namespace UserTrackerShared.Helpers
             _backgroundFlushTimer.Enabled = true;
         }
 
-        public static void GenerateFiles(string tick, string type, JObject obj, PropertiesList propertiesList)
+        public static void GenerateFiles(string tick, string type, JObject obj, Dictionary<string, object> propertiesDict)
         {
-            foreach (var prop in propertiesList.NullProperties)
+            foreach (var propertyKVP in propertiesDict)
             {
-                var key = $"{type}.{prop}.null";
-                UpdateCache(tick, key, obj);
-            }
-            foreach (var prop in propertiesList.BooleanProperties)
-            {
-                var key = $"{type}.{prop.Key}.bool";
-                UpdateCache(tick, key, obj);
-            }
-            foreach (var prop in propertiesList.StringProperties)
-            {
-                var key = $"{type}.{prop.Key}.string";
-                UpdateCache(tick, key, obj);
-            }
-            foreach (var prop in propertiesList.IntegerProperties)
-            {
-                var key = $"{type}.{prop.Key}.int";
+                var key = $"{type}.{propertyKVP.Key}.{propertyKVP.Value.GetType()}";
                 UpdateCache(tick, key, obj);
             }
         }
@@ -268,7 +246,7 @@ namespace UserTrackerShared.Helpers
             IsFlushing = false;
         }
     }
-    internal static class ConvertJObjectToHistory
+    public static class ScreepsClassUpdater
     {
         private static readonly Dictionary<string, string> PropertyNameMapping = new()
         {
@@ -276,24 +254,10 @@ namespace UserTrackerShared.Helpers
             { "_updated", "Updated" },
             { "effect", "EffectType" }
         };
-
-        private static readonly HashSet<Type> NonInstantiableTypes = new()
-        {
-            typeof(string),
-            typeof(Uri),
-            typeof(DateTime),
-            typeof(Guid),
-            typeof(TimeSpan)
-        };
         private static string CapitalizeFirstLetter(string input)
         {
             if (string.IsNullOrEmpty(input)) return input;
             return char.ToUpper(input[0]) + input.Substring(1);
-        }
-        private static string DeCapitalizeFirstLetter(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return input;
-            return char.ToLower(input[0]) + input.Substring(1);
         }
         private static object GetDefaultValue(Type type)
         {
@@ -390,7 +354,7 @@ namespace UserTrackerShared.Helpers
                     obj = newArray;
                 }
             }
-            else if (obj is System.Collections.IList list)
+            else if (obj is IList list)
             {
                 // Ensure the list is large enough
                 while (numericKey >= list.Count)
@@ -398,7 +362,7 @@ namespace UserTrackerShared.Helpers
                     list.Add(GetDefaultValue(list.GetType().GetGenericArguments()[0]));
                 }
             }
-            else if (obj is System.Collections.IDictionary dict)
+            else if (obj is IDictionary dict)
             {
                 string stringKey = numericKey.ToString();
                 if (!dict.Contains(stringKey))
@@ -420,11 +384,11 @@ namespace UserTrackerShared.Helpers
                 {
                     return ((Array)obj).GetValue(numericKey);
                 }
-                else if (obj is System.Collections.IList list)
+                else if (obj is IList list)
                 {
                     return list[numericKey];
                 }
-                else if (obj is System.Collections.IDictionary dict)
+                else if (obj is IDictionary dict)
                 {
                     string stringKey = numericKey.ToString();
                     return dict[stringKey];
@@ -450,7 +414,7 @@ namespace UserTrackerShared.Helpers
 
             var childObj = propInfo.GetValue(obj);
 
-            if (childObj == null && !NonInstantiableTypes.Contains(propInfo.PropertyType))
+            if (childObj == null && propInfo.PropertyType != typeof(string))
             {
                 childObj = GetDefaultValue(propInfo.PropertyType);
                 propInfo.SetValue(obj, childObj);
@@ -469,8 +433,7 @@ namespace UserTrackerShared.Helpers
 
                 var objType = obj.GetType();
                 PropertyInfo propInfo = objType.GetProperty(property, BindingFlags.Public | BindingFlags.Instance)
-                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance)
-                                      ?? objType.GetProperty(DeCapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
+                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
 
                 if (propInfo == null)
                 {
@@ -483,7 +446,7 @@ namespace UserTrackerShared.Helpers
                 }
 
                 if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
-                    !NonInstantiableTypes.Contains(propInfo.PropertyType))
+                    propInfo.PropertyType != typeof(string))
                 {
                     propInfo.SetValue(obj, GetDefaultValue(propInfo.PropertyType));
                 }
@@ -520,8 +483,7 @@ namespace UserTrackerShared.Helpers
                 var a = string.Join(", ", objType.GetProperties().Select(p => p.Name));
 
                 PropertyInfo propInfo = objType.GetProperty(property, BindingFlags.Public | BindingFlags.Instance)
-                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance)
-                                      ?? objType.GetProperty(DeCapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
+                                      ?? objType.GetProperty(CapitalizeFirstLetter(property), BindingFlags.Public | BindingFlags.Instance);
 
                 if (propInfo == null)
                 {
@@ -534,7 +496,7 @@ namespace UserTrackerShared.Helpers
                 }
 
                 if (propInfo.PropertyType.IsClass && propInfo.GetValue(obj) == null &&
-                    !NonInstantiableTypes.Contains(propInfo.PropertyType))
+                    propInfo.PropertyType != typeof(string))
                 {
                     propInfo.SetValue(obj, GetDefaultValue(propInfo.PropertyType));
                 }
@@ -561,84 +523,30 @@ namespace UserTrackerShared.Helpers
                 }
             }
         }
-
-        private static void SetAllNestedPropertyValues(object obj, PropertiesList propertyLists)
+        public static void SetAllNestedPropertyValues(object obj, Dictionary<string,object> propertyLists)
         {
-            foreach (var item in propertyLists.NullProperties)
+            foreach (var itemKVP in propertyLists)
             {
                 try
                 {
-                    SetNestedPropertyValue(ref obj, item, null); // Set null for properties in NullProperties
+                    SetNestedPropertyValue(ref obj, itemKVP.Key, itemKVP.Value);
                 }
                 catch (Exception ex)
                 {
-                    //FileWriterManager.StopFlushing = true;
-                    //while (FileWriterManager.IsFlushing)
-                    //{
-                    //    Thread.Sleep(5000);
-                    //}
-                    throw new Exception($"Failed to set null property {item}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertyLists.StringProperties)
-            {
-                try
-                {
-                    SetNestedPropertyValue(ref obj, kvp.Key, kvp.Value); // Set string values
-                }
-                catch (Exception ex)
-                {
-                    //FileWriterManager.StopFlushing = true;
-                    //while (FileWriterManager.IsFlushing)
-                    //{
-                    //    Thread.Sleep(5000);
-                    //}
-                    throw new Exception($"Failed to set string property {kvp.Key}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertyLists.IntegerProperties)
-            {
-                try
-                {
-                    SetNestedPropertyValue(ref obj, kvp.Key, kvp.Value); // Set integer values
-                }
-                catch (Exception ex)
-                {
-                    //FileWriterManager.StopFlushing = true;
-                    //while (FileWriterManager.IsFlushing)
-                    //{
-                    //    Thread.Sleep(5000);
-                    //}
-                    throw new Exception($"Failed to set integer property {kvp.Key}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertyLists.BooleanProperties)
-            {
-                try
-                {
-                    SetNestedPropertyValue(ref obj, kvp.Key, kvp.Value); // Set boolean values
-                }
-                catch (Exception ex)
-                {
-                    //FileWriterManager.StopFlushing = true;
-                    //while (FileWriterManager.IsFlushing)
-                    //{
-                    //    Thread.Sleep(5000);
-                    //}
-                    throw new Exception($"Failed to set boolean property {kvp.Key}: {ex.Message}");
+                    throw new Exception($"Failed to set property {itemKVP.Key} with {itemKVP.Value}: {ex.Message}");
                 }
             }
         }
-
-        public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, PropertiesList propertyLists)
+    }
+    public static class ScreespRoomHistoryHelper
+    {
+        public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, Dictionary<string, object> propertiesDict)
         {
-            var type = propertyLists.StringProperties.GetValueOrDefault("type");
+            var type = propertiesDict.GetValueOrDefault("type") as string;
             if (type == null) type = roomHistory.TypeMap.GetValueOrDefault(key);
             else roomHistory.TypeMap.TryAdd(key, type);
-            var user = propertyLists.StringProperties.GetValueOrDefault("user");
+
+            var user = propertiesDict.GetValueOrDefault("user") as string;
             if (user == null) user = roomHistory.UserMap.GetValueOrDefault(key);
             else roomHistory.UserMap.TryAdd(key, user);
 
@@ -650,7 +558,7 @@ namespace UserTrackerShared.Helpers
                         wall = new StructureWall();
                         roomHistory.Structures.Walls[key] = wall;
                     }
-                    SetAllNestedPropertyValues(wall, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(wall, propertiesDict);
                     break;
                 case "constructionSite":
                     if (!roomHistory.Structures.ConstructionSites.TryGetValue(key, out var constructionSite))
@@ -658,7 +566,7 @@ namespace UserTrackerShared.Helpers
                         constructionSite = new StructureConstructionSite();
                         roomHistory.Structures.ConstructionSites[key] = constructionSite;
                     }
-                    SetAllNestedPropertyValues(constructionSite, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(constructionSite, propertiesDict);
                     break;
                 case "container":
                     if (!roomHistory.Structures.Containers.TryGetValue(key, out var container))
@@ -666,11 +574,11 @@ namespace UserTrackerShared.Helpers
                         container = new StructureContainer();
                         roomHistory.Structures.Containers[key] = container;
                     }
-                    SetAllNestedPropertyValues(container, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(container, propertiesDict);
                     break;
                 case "controller":
                     var controller = roomHistory.Structures.Controller ?? new StructureController();
-                    SetAllNestedPropertyValues(controller, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(controller, propertiesDict);
                     roomHistory.Structures.Controller = controller;
                     break;
                 case "creep":
@@ -701,11 +609,11 @@ namespace UserTrackerShared.Helpers
                             roomHistory.Creeps.OtherCreeps[key] = creep;
                         }
                     }
-                    SetAllNestedPropertyValues(creep, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(creep, propertiesDict);
                     break;
                 case "deposit":
                     var deposit = roomHistory.Structures.Deposit ?? new StructureDepsoit();
-                    SetAllNestedPropertyValues(deposit, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(deposit, propertiesDict);
                     roomHistory.Structures.Deposit = deposit;
                     break;
                 case "energy":
@@ -714,7 +622,7 @@ namespace UserTrackerShared.Helpers
                         resource = new GroundResource();
                         roomHistory.GroundResources[key] = resource;
                     }
-                    SetAllNestedPropertyValues(resource, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(resource, propertiesDict);
                     break;
                 case "extension":
                     if (!roomHistory.Structures.Extensions.TryGetValue(key, out var extension))
@@ -722,7 +630,7 @@ namespace UserTrackerShared.Helpers
                         extension = new StructureExtension();
                         roomHistory.Structures.Extensions[key] = extension;
                     }
-                    SetAllNestedPropertyValues(extension, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(extension, propertiesDict);
                     break;
                 case "extractor":
                     if (!roomHistory.Structures.Extractors.TryGetValue(key, out var extractor))
@@ -730,7 +638,7 @@ namespace UserTrackerShared.Helpers
                         extractor = new StructureExtractor();
                         roomHistory.Structures.Extractors[key] = extractor;
                     }
-                    SetAllNestedPropertyValues(extractor, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(extractor, propertiesDict);
                     break;
                 case "factory":
                     if (!roomHistory.Structures.Factories.TryGetValue(key, out var factory))
@@ -738,7 +646,7 @@ namespace UserTrackerShared.Helpers
                         factory = new StructureFactory();
                         roomHistory.Structures.Factories[key] = factory;
                     }
-                    SetAllNestedPropertyValues(factory, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(factory, propertiesDict);
                     break;
                 case "invaderCore":
                     if (!roomHistory.Structures.InvaderCores.TryGetValue(key, out var invaderCore))
@@ -746,7 +654,7 @@ namespace UserTrackerShared.Helpers
                         invaderCore = new StructureInvaderCore();
                         roomHistory.Structures.InvaderCores[key] = invaderCore;
                     }
-                    SetAllNestedPropertyValues(invaderCore, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(invaderCore, propertiesDict);
                     break;
                 case "keeperLair":
                     if (!roomHistory.Structures.KeeperLairs.TryGetValue(key, out var keeperLair))
@@ -754,7 +662,7 @@ namespace UserTrackerShared.Helpers
                         keeperLair = new StructureKeeperLair();
                         roomHistory.Structures.KeeperLairs[key] = keeperLair;
                     }
-                    SetAllNestedPropertyValues(keeperLair, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(keeperLair, propertiesDict);
                     break;
                 case "lab":
                     if (!roomHistory.Structures.Labs.TryGetValue(key, out var lab))
@@ -762,7 +670,7 @@ namespace UserTrackerShared.Helpers
                         lab = new StructureLab();
                         roomHistory.Structures.Labs[key] = lab;
                     }
-                    SetAllNestedPropertyValues(lab, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(lab, propertiesDict);
                     break;
                 case "link":
                     if (!roomHistory.Structures.Links.TryGetValue(key, out var link))
@@ -770,11 +678,11 @@ namespace UserTrackerShared.Helpers
                         link = new StructureLink();
                         roomHistory.Structures.Links[key] = link;
                     }
-                    SetAllNestedPropertyValues(link, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(link, propertiesDict);
                     break;
                 case "mineral":
                     var mineral = roomHistory.Structures.Mineral ?? new StructureMineral();
-                    SetAllNestedPropertyValues(mineral, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(mineral, propertiesDict);
                     roomHistory.Structures.Mineral = mineral;
                     break;
                 case "nuker":
@@ -783,7 +691,7 @@ namespace UserTrackerShared.Helpers
                         nuker = new StructureNuker();
                         roomHistory.Structures.Nukers[key] = nuker;
                     }
-                    SetAllNestedPropertyValues(nuker, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(nuker, propertiesDict);
                     break;
                 case "observer":
                     if (!roomHistory.Structures.Observers.TryGetValue(key, out var observer))
@@ -791,7 +699,7 @@ namespace UserTrackerShared.Helpers
                         observer = new StructureObserver();
                         roomHistory.Structures.Observers[key] = observer;
                     }
-                    SetAllNestedPropertyValues(observer, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(observer, propertiesDict);
                     break;
                 case "portal":
                     if (!roomHistory.Structures.Portals.TryGetValue(key, out var portal))
@@ -799,7 +707,7 @@ namespace UserTrackerShared.Helpers
                         portal = new StructurePortal();
                         roomHistory.Structures.Portals[key] = portal;
                     }
-                    SetAllNestedPropertyValues(portal, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(portal, propertiesDict);
                     break;
                 case "powerBank":
                     if (!roomHistory.Structures.PowerBanks.TryGetValue(key, out var powerBank))
@@ -807,7 +715,7 @@ namespace UserTrackerShared.Helpers
                         powerBank = new StructurePowerBank();
                         roomHistory.Structures.PowerBanks[key] = powerBank;
                     }
-                    SetAllNestedPropertyValues(powerBank, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(powerBank, propertiesDict);
                     break;
                 case "powerCreep":
                     if (!roomHistory.Creeps.PowerCreeps.TryGetValue(key, out var powerCreep))
@@ -815,7 +723,7 @@ namespace UserTrackerShared.Helpers
                         powerCreep = new PowerCreep();
                         roomHistory.Creeps.PowerCreeps[key] = powerCreep;
                     }
-                    SetAllNestedPropertyValues(powerCreep, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(powerCreep, propertiesDict);
                     break;
                 case "powerSpawn":
                     if (!roomHistory.Structures.PowerSpawns.TryGetValue(key, out var powerSpawn))
@@ -823,7 +731,7 @@ namespace UserTrackerShared.Helpers
                         powerSpawn = new StructurePowerSpawn();
                         roomHistory.Structures.PowerSpawns[key] = powerSpawn;
                     }
-                    SetAllNestedPropertyValues(powerSpawn, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(powerSpawn, propertiesDict);
                     break;
                 case "rampart":
                     if (!roomHistory.Structures.Ramparts.TryGetValue(key, out var rampart))
@@ -831,7 +739,7 @@ namespace UserTrackerShared.Helpers
                         rampart = new StructureRampart();
                         roomHistory.Structures.Ramparts[key] = rampart;
                     }
-                    SetAllNestedPropertyValues(rampart, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(rampart, propertiesDict);
                     break;
                 case "road":
                     if (!roomHistory.Structures.Roads.TryGetValue(key, out var road))
@@ -839,7 +747,7 @@ namespace UserTrackerShared.Helpers
                         road = new StructureRoad();
                         roomHistory.Structures.Roads[key] = road;
                     }
-                    SetAllNestedPropertyValues(road, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(road, propertiesDict);
                     break;
                 case "ruin":
                     if (!roomHistory.Structures.Ruins.TryGetValue(key, out var ruin))
@@ -847,7 +755,7 @@ namespace UserTrackerShared.Helpers
                         ruin = new StructureRuin();
                         roomHistory.Structures.Ruins[key] = ruin;
                     }
-                    SetAllNestedPropertyValues(ruin, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(ruin, propertiesDict);
                     break;
                 case "source":
                     if (!roomHistory.Structures.Sources.TryGetValue(key, out var source))
@@ -855,7 +763,7 @@ namespace UserTrackerShared.Helpers
                         source = new StructureSource();
                         roomHistory.Structures.Sources[key] = source;
                     }
-                    SetAllNestedPropertyValues(source, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(source, propertiesDict);
                     break;
                 case "spawn":
                     if (!roomHistory.Structures.Spawns.TryGetValue(key, out var spawn))
@@ -863,7 +771,7 @@ namespace UserTrackerShared.Helpers
                         spawn = new StructureSpawn();
                         roomHistory.Structures.Spawns[key] = spawn;
                     }
-                    SetAllNestedPropertyValues(spawn, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(spawn, propertiesDict);
                     break;
                 case "storage":
                     if (!roomHistory.Structures.Storages.TryGetValue(key, out var storage))
@@ -871,7 +779,7 @@ namespace UserTrackerShared.Helpers
                         storage = new StructureStorage();
                         roomHistory.Structures.Storages[key] = storage;
                     }
-                    SetAllNestedPropertyValues(storage, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(storage, propertiesDict);
                     break;
                 case "terminal":
                     if (!roomHistory.Structures.Terminals.TryGetValue(key, out var terminal))
@@ -879,7 +787,7 @@ namespace UserTrackerShared.Helpers
                         terminal = new StructureTerminal();
                         roomHistory.Structures.Terminals[key] = terminal;
                     }
-                    SetAllNestedPropertyValues(terminal, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(terminal, propertiesDict);
                     break;
                 case "tombstone":
                     if (!roomHistory.Structures.Tombstones.TryGetValue(key, out var tombstone))
@@ -887,7 +795,7 @@ namespace UserTrackerShared.Helpers
                         tombstone = new StructureTombstone();
                         roomHistory.Structures.Tombstones[key] = tombstone;
                     }
-                    SetAllNestedPropertyValues(tombstone, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(tombstone, propertiesDict);
                     break;
                 case "tower":
                     if (!roomHistory.Structures.Towers.TryGetValue(key, out var tower))
@@ -895,7 +803,7 @@ namespace UserTrackerShared.Helpers
                         tower = new StructureTower();
                         roomHistory.Structures.Towers[key] = tower;
                     }
-                    SetAllNestedPropertyValues(tower, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(tower, propertiesDict);
                     break;
                 case "nuke":
                     if (!roomHistory.Structures.Nukes.TryGetValue(key, out var nuke))
@@ -903,7 +811,7 @@ namespace UserTrackerShared.Helpers
                         nuke = new StructureNuke();
                         roomHistory.Structures.Nukes[key] = nuke;
                     }
-                    SetAllNestedPropertyValues(nuke, propertyLists);
+                    ScreepsClassUpdater.SetAllNestedPropertyValues(nuke, propertiesDict);
                     break;
                 default:
                     Debug.WriteLine(type);
@@ -1022,131 +930,54 @@ namespace UserTrackerShared.Helpers
 
             return roomHistory;
         }
-    }
-
-    public static class ScreepsRoomHistoryComputedHelper
-    {
-        private static PropertiesList UpdateRecursiveProperties(PropertiesList propertyLists, JObject obj, string basePath = "")
+        private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
         {
-            foreach (var property in obj.Properties())
+            switch (token)
             {
-                var propertyTypeSet = "";
-                var propertyKey = property.Name;
-                var propertyValue = property.Value;
-                var computedKey = $"{(!string.IsNullOrEmpty(basePath) ? $"{basePath}." : "")}{propertyKey}";
-                switch (propertyValue.Type)
-                {
-                    case JTokenType.String:
-                        propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
-                        propertyTypeSet = "string";
-                        break;
-                    case JTokenType.Integer:
-                    case JTokenType.Float:
-                        if (propertyKey != "_id")
-                        {
-                            propertyLists.IntegerProperties[computedKey] = propertyValue.Value<long>();
-                            propertyTypeSet = "integer";
-                        }
-                        else
-                        {
-                            propertyLists.StringProperties[computedKey] = propertyValue.Value<string>() ?? "";
-                            propertyTypeSet = "string";
-                        }
-                        break;
-                    case JTokenType.Boolean:
-                        propertyLists.BooleanProperties[computedKey] = propertyValue.Value<bool>();
-                        propertyTypeSet = "boolean";
-                        break;
-                    case JTokenType.Null:
-                        propertyLists.NullProperties.Remove(computedKey);
-                        propertyLists.NullProperties.Add(computedKey);
-                        propertyTypeSet = "null";
-                        break;
-                    case JTokenType.Object:
-                        propertyLists = UpdateRecursiveProperties(propertyLists, (JObject)propertyValue, computedKey);
-                        break;
-                    case JTokenType.Array:
-                        var childArray = (JArray)propertyValue;
-                        for (int i = 0; i < childArray.Count; i++)
-                        {
-                            var childPropertyTypeSet = "";
-                            var computedChildKey = $"{computedKey}.{i}";
-                            var childChildItem = childArray[i];
-                            if (childChildItem is JObject childChildObj)
-                            {
-                                propertyLists = UpdateRecursiveProperties(propertyLists, childChildObj, computedChildKey);
-                            }
-                            else
-                            {
-                                switch (childChildItem.Type)
-                                {
-                                    case JTokenType.String:
-                                        propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
-                                        childPropertyTypeSet = "string";
-                                        break;
-                                    case JTokenType.Integer:
-                                    case JTokenType.Float:
-                                        if (propertyKey != "_id")
-                                        {
-                                            propertyLists.IntegerProperties[computedChildKey] = childChildItem.Value<long>();
-                                            childPropertyTypeSet = "integer";
-                                        }
-                                        else
-                                        {
-                                            propertyLists.StringProperties[computedChildKey] = childChildItem.Value<string>() ?? "";
-                                            childPropertyTypeSet = "string";
-                                        }
-                                        break;
-                                    case JTokenType.Boolean:
-                                        propertyLists.BooleanProperties[computedChildKey] = childChildItem.Value<bool>();
-                                        childPropertyTypeSet = "boolean";
-                                        break;
-                                    case JTokenType.Null:
-                                        propertyLists.NullProperties.Remove(computedChildKey);
-                                        propertyLists.NullProperties.Add(computedChildKey);
-                                        childPropertyTypeSet = "null";
-                                        break;
-                                    default:
-                                        throw new Exception("Unsupported JTokenType");
-                                }
-                                propertyLists = RemoveOtherTypePropertyListings(propertyLists, propertyTypeSet, computedKey);
-                            }
-                        }
-                        break;
-                    default:
-                        throw new Exception("Unsupported JTokenType");
-                }
-                propertyLists = RemoveOtherTypePropertyListings(propertyLists, propertyTypeSet, computedKey);
+                case JObject obj:
+                    foreach (var prop in obj.Properties())
+                    {
+                        if (prop.Name == "PropertiesListDictionary" || prop.Name == "TypeMap" || prop.Name == "UserMap") continue;
+                        int initialLen = currentPath.Length;
+                        currentPath.Append($"{prop.Name}.");
+                        FlattenJson(prop.Value, currentPath, dict);
+                        currentPath.Length = initialLen; // Reset path
+                    }
+                    break;
+
+                case JArray array:
+                    for (int i = 0; i < array.Count; i++)
+                    {
+                        int initialLen = currentPath.Length;
+                        currentPath.Append($"{i}.");
+                        FlattenJson(array[i], currentPath, dict);
+                        currentPath.Length = initialLen; // Reset path
+                    }
+                    break;
+
+                case JValue jValue:
+                    if (currentPath.Length > 0)
+                        currentPath.Length--; // Remove trailing "."
+                    dict[currentPath.ToString()] = jValue.Value; // Directly use Value
+                    break;
             }
-
-
-            return propertyLists;
         }
-
-        private static PropertiesList RemoveOtherTypePropertyListings(PropertiesList propertiesList, string type, string key)
-        {
-            if (string.IsNullOrEmpty(type)) return propertiesList;
-            if (type != "string") propertiesList.StringProperties.Remove(key);
-            if (type != "integer") propertiesList.IntegerProperties.Remove(key);
-            if (type != "boolean") propertiesList.BooleanProperties.Remove(key);
-            if (type != "null") propertiesList.NullProperties.Remove(key);
-            return propertiesList;
-        }
-
         public static ScreepsRoomHistory ComputeTick(JToken tickObject, ScreepsRoomHistory roomHistory)
         {
+            roomHistory.PropertiesListDictionary = new Dictionary<string, Dictionary<string, object>>();
             foreach (var item in tickObject.Children().Children())
             {
                 var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
                 if (item.Children().Count() > 0 && item is JObject obj)
                 {
-                    var propertiesList = UpdateRecursiveProperties(roomHistory.PropertiesListDictionary.ContainsKey(key) ? roomHistory.PropertiesListDictionary[key] : new PropertiesList(), obj);
-                    roomHistory.PropertiesListDictionary[key] = propertiesList;
+                    var propertiesDict = new Dictionary<string, object>();
+                    FlattenJson(obj, new StringBuilder(), propertiesDict);
+                    propertiesDict = propertiesDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
+                    roomHistory.PropertiesListDictionary[key] = propertiesDict;
 
-                    var type = propertiesList.StringProperties.GetValueOrDefault("type");
+                    var type = propertiesDict.GetValueOrDefault("type") as string;
                     type ??= roomHistory.TypeMap.GetValueOrDefault(key);
-
-                    if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesList);
+                    if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesDict);
                     if (ConfigSettingsState.WriteHistoryTypeProperties && roomHistory.Base == roomHistory.Tick)
                     {
                         FileWriterManager.GenerateFileByType(type, obj);
@@ -1154,18 +985,18 @@ namespace UserTrackerShared.Helpers
                 }
                 else
                 {
-                    roomHistory = ConvertJObjectToHistory.RemoveFromRoomHistory(key, roomHistory);
+                    roomHistory = RemoveFromRoomHistory(key, roomHistory);
                 }
             }
 
             if (roomHistory.Base == roomHistory.Tick)
             {
-                foreach (var propertyList in roomHistory.PropertiesListDictionary.Where(x => x.Value.StringProperties.GetValueOrDefault("type") == "controller"))
+                foreach (var propertyList in roomHistory.PropertiesListDictionary.Where(x => (x.Value.GetValueOrDefault("type") as string ??"") == "controller"))
                 {
                     var key = propertyList.Key;
                     if (string.IsNullOrEmpty(key) || key == "undefined") continue;
                     var propertyLists = propertyList.Value;
-                    roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
+                    roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
                 }
             }
 
@@ -1174,7 +1005,7 @@ namespace UserTrackerShared.Helpers
                 var key = propertyList.Key;
                 if (string.IsNullOrEmpty(key) || key == "undefined") continue;
                 var propertyLists = propertyList.Value;
-                roomHistory = ConvertJObjectToHistory.UpdateRoomHistory(key, roomHistory, propertyLists);
+                roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
             }
 
             return roomHistory;

@@ -11,8 +11,6 @@ namespace UserTracker.Tests.Helper
 {
     public static class GetObjectChangesInTick
     {
-        private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
-
         private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
         {
             switch (token)
@@ -53,61 +51,6 @@ namespace UserTracker.Tests.Helper
             {
                 FlattenJson(idToken, new StringBuilder(), dict);
             }
-            return dict;
-        }
-
-        public static Dictionary<string, object> ConvertPropertyListDictionary(PropertiesList propertiesList)
-        {
-            var dict = new Dictionary<string, object>();
-            foreach (var item in propertiesList.NullProperties)
-            {
-                try
-                {
-                    dict.Add(item, null);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to set null property {item}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertiesList.StringProperties)
-            {
-                try
-                {
-                    dict.Add(kvp.Key, kvp.Value);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to set string property {kvp.Key}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertiesList.IntegerProperties)
-            {
-                try
-                {
-                    dict.Add(kvp.Key, kvp.Value);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to set integer property {kvp.Key}: {ex.Message}");
-                }
-            }
-
-            foreach (var kvp in propertiesList.BooleanProperties)
-            {
-                try
-                {
-                    dict.Add(kvp.Key, kvp.Value);
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Failed to set boolean property {kvp.Key}: {ex.Message}");
-                }
-            }
-
-
             return dict;
         }
     }

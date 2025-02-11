@@ -35,7 +35,7 @@ namespace UserTrackerScreepsApi
     }
     public class ScreepsAPI
     {
-        private static SemaphoreSlim throttler = new SemaphoreSlim(10);
+        private static SemaphoreSlim throttler = new SemaphoreSlim(1);
 
         private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
         {
