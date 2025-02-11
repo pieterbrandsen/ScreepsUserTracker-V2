@@ -35,6 +35,7 @@ namespace UserTrackerStates
             if (_roomData == null) return false;
 
             var roomHistory = new ScreepsRoomHistory();
+            var roomHistoryDTO = new ScreepsRoomHistoryDTO();
             _roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
@@ -60,7 +61,7 @@ namespace UserTrackerStates
                         //throw;
                     }
                     if (ConfigSettingsState.InfluxDbEnabled) {
-                        var roomHistoryDTO = new ScreepsRoomHistoryDTO(roomHistory);
+                        roomHistoryDTO.Update(roomHistory);
                         InfluxDBClientState.WriteScreepsRoomHistory(Shard, Name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                     }
                 }

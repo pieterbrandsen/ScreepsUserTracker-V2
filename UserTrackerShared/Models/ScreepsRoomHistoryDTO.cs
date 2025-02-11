@@ -276,6 +276,10 @@ namespace UserTrackerShared.Models
 
         public void Update(ScreepsRoomHistory his)
         {
+            TimeStamp = his.TimeStamp;
+            Base = his.Base;
+            Tick = his.Tick;
+
             ProcessGroundResources(his);
             ProcessCreeps(his);
             ProcessStructures(his);
