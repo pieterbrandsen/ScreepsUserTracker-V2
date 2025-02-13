@@ -48,13 +48,13 @@ namespace UserTrackerShared.States
             {
                 if (Time != timeResponse.Time)
                 {
-                    StartSync(timeResponse.Time);
+                    await StartSync(timeResponse.Time);
                 }
                 Time = timeResponse.Time;
             }
         }
 
-        private void StartSync(long time)
+        private async Task StartSync(long time)
         {
             if (isSyncing) return;
             isSyncing = true;
@@ -70,16 +70,27 @@ namespace UserTrackerShared.States
                 //var getDataTaskResults = await Task.WhenAll(getDataTasks);
                 //int successes = getDataTaskResults.Count(r => r);
                 int successes = 0;
-                Parallel.ForEach(Rooms, async room =>
+                var semaphore = new SemaphoreSlim(1000);
+                var tasks = new List<Task>();
+                foreach (var room in Rooms)
                 {
-                    if (await room.GetRoomData(i)) Interlocked.Increment(ref successes);
-                });
+                    await semaphore.WaitAsync();
 
-                Parallel.ForEach(Rooms, async room =>
-                {
-                    room.HandleRoomData();
-                });
-
+                    tasks.Add(
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                if (await room.GetAndHandleRoomData(i)) Interlocked.Increment(ref successes);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        })
+                    );
+                }
+                await Task.WhenAll(tasks);
 
                 try
                 {

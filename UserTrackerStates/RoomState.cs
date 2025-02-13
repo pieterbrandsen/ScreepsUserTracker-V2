@@ -16,33 +16,26 @@ namespace UserTrackerStates
         public string Name;
         public string Shard;
 
-        private JObject? _roomData = null;
-
         public RoomState(string name, string shard)
         {
             Name = name;
             Shard = shard;
         }
 
-        public async Task<bool> GetRoomData(long tick)
+        public async Task<bool> GetAndHandleRoomData(long tick)
         {
-            _roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
-            return _roomData != null;
-        }
-
-        public bool HandleRoomData()
-        {
-            if (_roomData == null) return false;
+            var roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
+            if (roomData == null) return false;
 
             var roomHistory = new ScreepsRoomHistory();
             var roomHistoryDTO = new ScreepsRoomHistoryDTO();
-            _roomData.TryGetValue("timestamp", out JToken? jTokenTime);
+            roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
-            _roomData.TryGetValue("base", out JToken? jTokenBase);
+            roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
 
-            _roomData.TryGetValue("ticks", out JToken? jTokenTicks);
+            roomData.TryGetValue("ticks", out JToken? jTokenTicks);
             if (jTokenTicks != null)
             {
                 var jTokenTicksValues = jTokenTicks.Values<JToken>();
@@ -67,7 +60,7 @@ namespace UserTrackerStates
                 }
             }
 
-            if (ConfigSettingsState.WriteHistoryFiles) FileWriterManager.GenerateHistoryFile(_roomData);
+            if (ConfigSettingsState.WriteHistoryFiles) FileWriterManager.GenerateHistoryFile(roomData);
             return true;
         }
     }
