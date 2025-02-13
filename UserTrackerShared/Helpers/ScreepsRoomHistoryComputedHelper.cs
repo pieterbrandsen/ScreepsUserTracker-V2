@@ -15,11 +15,9 @@ namespace UserTrackerShared.Helpers
     {
         private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\History";
         private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
-        private static readonly string TypesDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Types";
 
         private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
         private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();
-        private static readonly ConcurrentDictionary<string, JObject> TypeCache = new();
 
         private static Timer? _backgroundFlushTimer;
         public static bool StopFlushing;
@@ -27,9 +25,8 @@ namespace UserTrackerShared.Helpers
 
         static FileWriterManager()
         {
-            // Ensure directories exist
+            Directory.CreateDirectory(HistoryDirectoryPath);
             Directory.CreateDirectory(KeysDirectoryPath);
-            Directory.CreateDirectory(TypesDirectoryPath);
 
             _backgroundFlushTimer = new Timer(10 * 1000);
             _backgroundFlushTimer.Elapsed += OnBackgroundFlushTimer;
@@ -44,37 +41,6 @@ namespace UserTrackerShared.Helpers
                 var key = $"{type}.{propertyKVP.Key}.{propertyKVP.Value.GetType()}";
                 UpdateCache(tick, key, obj);
             }
-        }
-
-        public static void GenerateFileByType(string type, JObject obj)
-        {
-            //TypeCache.AddOrUpdate(type, _ =>
-            //{
-            //    string filePath = Path.Combine(TypesDirectoryPath, $"{type}.json");
-            //    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
-            //    using (StreamReader reader = new StreamReader(fs))
-            //    {
-            //        string json = reader.ReadToEnd();
-            //        JObject obj1 = JObject.Parse(json);
-
-            //        obj1.Merge(obj, new JsonMergeSettings
-            //        {
-            //            MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
-            //        });
-            //        return obj1;
-            //    }
-            //}, (_, existing) =>
-            //{
-            //    var json = JsonConvert.SerializeObject(existing);
-            //    JObject obj1 = JObject.Parse(json);
-
-            //    obj1.Merge(obj, new JsonMergeSettings
-            //    {
-            //        MergeArrayHandling = MergeArrayHandling.Union // Prevents duplicate array values
-            //    });
-
-            //    return obj1;
-            //});
         }
 
         public static void GenerateHistoryFile(JObject roomData)
@@ -113,45 +79,6 @@ namespace UserTrackerShared.Helpers
             try
             {
                 SemaphoreSlim semaphore = new SemaphoreSlim(10000); // Limit concurrent writes to avoid overloading the disk
-
-                IEnumerable<string> typeKeys;
-                lock (TypeCache)
-                {
-                    typeKeys = TypeCache.Keys.ToArray();
-                }
-
-                var typeTasks = new List<Task>();
-                foreach (var key in typeKeys)
-                {
-                    await semaphore.WaitAsync(); // Throttle writes
-                    typeTasks.Add(Task.Run(async () =>
-                    {
-                        try
-                        {
-                            if (TypeCache.TryRemove(key, out JObject obj))
-                            {
-                                if (obj == null) return;
-                                string filePath = Path.Combine(TypesDirectoryPath, $"{key}.json");
-
-                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                                try
-                                {
-                                    await File.WriteAllTextAsync(filePath, json);
-                                }
-                                finally
-                                {
-                                    semaphore.Release();
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Screen.AddLog($"Error writing file for type {key}: {ex.Message}");
-                        }
-                    }));
-                }
-                await Task.WhenAll(typeTasks);
-
 
                 IEnumerable<string> keyKeys;
                 lock (KeyCache)
@@ -523,12 +450,13 @@ namespace UserTrackerShared.Helpers
                 }
             }
         }
-        public static void SetAllNestedPropertyValues(object obj, Dictionary<string,object> propertyLists)
+        public static void SetAllNestedPropertyValues(object obj, Dictionary<string, object> propertyLists)
         {
             foreach (var itemKVP in propertyLists)
             {
                 try
                 {
+                    if (itemKVP.Key.StartsWith("effects")) continue;
                     SetNestedPropertyValue(ref obj, itemKVP.Key, itemKVP.Value);
                 }
                 catch (Exception ex)
@@ -821,6 +749,167 @@ namespace UserTrackerShared.Helpers
             return roomHistory;
         }
 
+        public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, JObject obj)
+        {
+            obj.TryGetValue("type", out JToken? typeToken);
+            var type = typeToken?.Value<string>() ?? "";
+
+            obj.TryGetValue("user", out JToken? userToken);
+            var user = userToken?.Value<string>();
+
+            roomHistory.TypeMap.TryAdd(key, type);
+            if (user != null) roomHistory.UserMap.TryAdd(key, user);
+
+            switch (type)
+            {
+                case "constructedWall":
+                    var wall = obj.ToObject<StructureWall>();
+                    roomHistory.Structures.Walls[key] = wall;
+                    break;
+                case "constructionSite":
+                    var constructionSite = obj.ToObject<StructureConstructionSite>();
+                    roomHistory.Structures.ConstructionSites[key] = constructionSite;
+                    break;
+                case "container":
+                    var container = obj.ToObject<StructureContainer>();
+                    roomHistory.Structures.Containers[key] = container;
+                    break;
+                case "controller":
+                    var controller = obj.ToObject<StructureController>();
+                    roomHistory.Structures.Controller = controller;
+                    break;
+                case "creep":
+                    var hasController = roomHistory.Structures.Controller != null;
+                    var isOwnCreep = hasController && roomHistory.Structures.Controller?.User == user;
+                    Creep creep;
+                    if (hasController && isOwnCreep)
+                    {
+                        creep = obj.ToObject<Creep>();
+                        roomHistory.Creeps.OwnedCreeps[key] = creep;
+                    }
+                    else if (hasController && !isOwnCreep)
+                    {
+                        creep = obj.ToObject<Creep>();
+                        roomHistory.Creeps.EnemyCreeps[key] = creep;
+                    }
+                    else
+                    {
+                        creep = obj.ToObject<Creep>();
+                        roomHistory.Creeps.OtherCreeps[key] = creep;
+                    }
+                    break;
+                case "deposit":
+                    var deposit = obj.ToObject<StructureDepsoit>();
+                    roomHistory.Structures.Deposit = deposit;
+                    break;
+                case "energy":
+                    var resource = obj.ToObject<GroundResource>();
+                    roomHistory.GroundResources[key] = resource;
+                    break;
+                case "extension":
+                    var extension = obj.ToObject<StructureExtension>();
+                    roomHistory.Structures.Extensions[key] = extension;
+                    break;
+                case "extractor":
+                    var extractor = obj.ToObject<StructureExtractor>();
+                    roomHistory.Structures.Extractors[key] = extractor;
+                    break;
+                case "factory":
+                    var factory = obj.ToObject<StructureFactory>();
+                    roomHistory.Structures.Factories[key] = factory;
+                    break;
+                case "invaderCore":
+                    var invaderCore = obj.ToObject<StructureInvaderCore>();
+                    roomHistory.Structures.InvaderCores[key] = invaderCore;
+                    break;
+                case "keeperLair":
+                    var keeperLair = obj.ToObject<StructureKeeperLair>();
+                    roomHistory.Structures.KeeperLairs[key] = keeperLair;
+                    break;
+                case "lab":
+                    var lab = obj.ToObject<StructureLab>();
+                    roomHistory.Structures.Labs[key] = lab;
+                    break;
+                case "link":
+                    var link = obj.ToObject<StructureLink>();
+                    roomHistory.Structures.Links[key] = link;
+                    break;
+                case "mineral":
+                    var mineral = obj.ToObject<StructureMineral>();
+                    roomHistory.Structures.Mineral = mineral;
+                    break;
+                case "nuker":
+                    var nuker = obj.ToObject<StructureNuker>();
+                    roomHistory.Structures.Nukers[key] = nuker;
+                    break;
+                case "observer":
+                    var observer = obj.ToObject<StructureObserver>();
+                    roomHistory.Structures.Observers[key] = observer;
+                    break;
+                case "portal":
+                    var portal = obj.ToObject<StructurePortal>();
+                    roomHistory.Structures.Portals[key] = portal;
+                    break;
+                case "powerBank":
+                    var powerBank = obj.ToObject<StructurePowerBank>();
+                    roomHistory.Structures.PowerBanks[key] = powerBank;
+                    break;
+                case "powerCreep":
+                    var powerCreep = obj.ToObject<PowerCreep>();
+                    roomHistory.Creeps.PowerCreeps[key] = powerCreep;
+                    break;
+                case "powerSpawn":
+                    var powerSpawn = obj.ToObject<StructurePowerSpawn>();
+                    roomHistory.Structures.PowerSpawns[key] = powerSpawn;
+                    break;
+                case "rampart":
+                    var rampart = obj.ToObject<StructureRampart>();
+                    roomHistory.Structures.Ramparts[key] = rampart;
+                    break;
+                case "road":
+                    var road = obj.ToObject<StructureRoad>();
+                    roomHistory.Structures.Roads[key] = road;
+                    break;
+                case "ruin":
+                    var ruin = obj.ToObject<StructureRuin>();
+                    roomHistory.Structures.Ruins[key] = ruin;
+                    break;
+                case "source":
+                    var source = obj.ToObject<StructureSource>();
+                    roomHistory.Structures.Sources[key] = source;
+                    break;
+                case "spawn":
+                    var spawn = obj.ToObject<StructureSpawn>();
+                    roomHistory.Structures.Spawns[key] = spawn;
+                    break;
+                case "storage":
+                    var storage = obj.ToObject<StructureStorage>();
+                    roomHistory.Structures.Storages[key] = storage;
+                    break;
+                case "terminal":
+                    var terminal = obj.ToObject<StructureTerminal>();
+                    roomHistory.Structures.Terminals[key] = terminal;
+                    break;
+                case "tombstone":
+                    var tombstone = obj.ToObject<StructureTombstone>();
+                    roomHistory.Structures.Tombstones[key] = tombstone;
+                    break;
+                case "tower":
+                    var tower = obj.ToObject<StructureTower>();
+                    roomHistory.Structures.Towers[key] = tower;
+                    break;
+                case "nuke":
+                    var nuke = obj.ToObject<StructureNuke>();
+                    roomHistory.Structures.Nukes[key] = nuke;
+                    break;
+                default:
+                    Debug.WriteLine(type);
+                    throw new Exception("Unknown type");
+            }
+
+            return roomHistory;
+        }
+
         public static ScreepsRoomHistory RemoveFromRoomHistory(string key, ScreepsRoomHistory roomHistory)
         {
             var type = roomHistory.TypeMap.GetValueOrDefault(key);
@@ -928,6 +1017,8 @@ namespace UserTrackerShared.Helpers
                     break;
             }
 
+            roomHistory.UserMap.Remove(key);
+            roomHistory.TypeMap.Remove(key);
             return roomHistory;
         }
         private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
@@ -937,7 +1028,6 @@ namespace UserTrackerShared.Helpers
                 case JObject obj:
                     foreach (var prop in obj.Properties())
                     {
-                        if (prop.Name == "PropertiesListDictionary" || prop.Name == "TypeMap" || prop.Name == "UserMap") continue;
                         int initialLen = currentPath.Length;
                         currentPath.Append($"{prop.Name}.");
                         FlattenJson(prop.Value, currentPath, dict);
@@ -962,50 +1052,84 @@ namespace UserTrackerShared.Helpers
                     break;
             }
         }
+        public static ReadOnlySpan<char> GetLastPathSegment(ReadOnlySpan<char> path)
+        {
+            int len = path.Length;
+            for (int i = len - 1; i >= 0; i--)
+            {
+                if (path[i] == '.')
+                    return path.Slice(i + 1); // No allocation, just a slice reference
+            }
+            return path; // If no dot is found, return the full string
+        }
         public static ScreepsRoomHistory ComputeTick(JToken tickObject, ScreepsRoomHistory roomHistory)
         {
+            var objDictionary = new Dictionary<string, JObject>();
+            var propertiesControllerDict = new Dictionary<string, object>();
             roomHistory.PropertiesListDictionary = new Dictionary<string, Dictionary<string, object>>();
-            foreach (var item in tickObject.Children().Children())
-            {
-                var key = item.Path.Substring(item.Path.LastIndexOf('.') + 1);
-                if (item.Children().Count() > 0 && item is JObject obj)
-                {
-                    var propertiesDict = new Dictionary<string, object>();
-                    FlattenJson(obj, new StringBuilder(), propertiesDict);
-                    propertiesDict = propertiesDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value);
-                    roomHistory.PropertiesListDictionary[key] = propertiesDict;
 
-                    var type = propertiesDict.GetValueOrDefault("type") as string;
-                    type ??= roomHistory.TypeMap.GetValueOrDefault(key);
-                    if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesDict);
-                    if (ConfigSettingsState.WriteHistoryTypeProperties && roomHistory.Base == roomHistory.Tick)
+            // Avoid unnecessary ToList() allocation
+            var tickObjects = tickObject.Children().SelectMany(c => c.Children());
+
+            foreach (var tickObj in tickObjects)
+            {
+                var id = GetLastPathSegment(tickObj.Path).ToString();
+                if (tickObj.HasValues && tickObj is JObject obj)
+                {
+                    if (roomHistory.TypeMap.TryGetValue(id, out var type))
                     {
-                        FileWriterManager.GenerateFileByType(type, obj);
+                        type ??= "unknown";
+                        if (!roomHistory.PropertiesListDictionary.TryGetValue(id, out var propertiesDict))
+                        {
+                            propertiesDict = new Dictionary<string, object>();
+                            roomHistory.PropertiesListDictionary[id] = propertiesDict;
+                        }
+                        FlattenJson(obj, new StringBuilder(), propertiesDict);
+
+                        if (ConfigSettingsState.WriteHistoryProperties)
+                        {
+                            FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesDict);
+                        }
+                    }
+                    else
+                    {
+                        type = obj.GetValue("type")?.Value<string>() ?? "unknown";
+                        objDictionary[id] = obj;
+
+                        if (type == "controller" && roomHistory.Structures.Controller == null)
+                        {
+                            FlattenJson(obj, new StringBuilder(), propertiesControllerDict);
+                        }
+                        else if (ConfigSettingsState.WriteHistoryProperties || ConfigSettingsState.RunningHistoryTested)
+                        {
+                            var propertiesDict = new Dictionary<string, object>();
+                            FlattenJson(obj, new StringBuilder(), propertiesDict);
+                            if (ConfigSettingsState.WriteHistoryProperties)
+                                FileWriterManager.GenerateFiles(roomHistory.Tick.ToString(), type, obj, propertiesDict);
+                        }
                     }
                 }
                 else
                 {
-                    roomHistory = RemoveFromRoomHistory(key, roomHistory);
+                    roomHistory = RemoveFromRoomHistory(id, roomHistory);
                 }
             }
 
-            if (roomHistory.Base == roomHistory.Tick)
+            if (propertiesControllerDict.Count > 0)
             {
-                foreach (var propertyList in roomHistory.PropertiesListDictionary.Where(x => (x.Value.GetValueOrDefault("type") as string ??"") == "controller"))
+                roomHistory = UpdateRoomHistory(propertiesControllerDict["_id"].ToString(), roomHistory, propertiesControllerDict);
+            }
+
+            foreach (var (key, propertyLists) in roomHistory.PropertiesListDictionary)
+            {
+                if (!string.IsNullOrEmpty(key) && key != "undefined")
                 {
-                    var key = propertyList.Key;
-                    if (string.IsNullOrEmpty(key) || key == "undefined") continue;
-                    var propertyLists = propertyList.Value;
                     roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
                 }
             }
-
-            foreach (var propertyList in roomHistory.PropertiesListDictionary)
+            foreach (var (key, obj) in objDictionary)
             {
-                var key = propertyList.Key;
-                if (string.IsNullOrEmpty(key) || key == "undefined") continue;
-                var propertyLists = propertyList.Value;
-                roomHistory = UpdateRoomHistory(key, roomHistory, propertyLists);
+                roomHistory = UpdateRoomHistory(key, roomHistory, obj);
             }
 
             return roomHistory;

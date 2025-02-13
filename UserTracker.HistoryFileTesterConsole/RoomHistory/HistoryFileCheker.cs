@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Buffers;
 using UserTracker.Tests.Helper;
@@ -108,9 +109,11 @@ namespace UserTracker.Tests.RoomHistory
 
         public static long ParseFile(string filePath)
         {
-            var json = File.ReadAllText(filePath);
-            var jObject = JObject.Parse(json);
-            return ProcessHistory(jObject, filePath);
+            using (var reader = new StreamReader(filePath))
+            using (var jsonReader = new JsonTextReader(reader))
+            {
+                return ProcessHistory(JObject.Load(jsonReader), filePath);
+            }
         }
     }
 }

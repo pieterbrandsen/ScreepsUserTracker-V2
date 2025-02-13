@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using UserTrackerShared.Helpers;
 
 namespace UserTrackerShared.Models
@@ -14,26 +8,51 @@ namespace UserTrackerShared.Models
     {
         public long Count { get; set; } = 0;
         public long Damage { get; set; } = 0;
+        public void Clear()
+        {
+            Count = 0;
+            Damage = 0;
+        }
     }
     public class HealActionDTO
     {
         public long Count { get; set; } = 0;
         public long Heal { get; set; } = 0;
+        public void Clear()
+        {
+            Count = 0;
+            Heal = 0;
+        }
     }
     public class InflowActionDTO
     {
         public long Count { get; set; } = 0;
         public long Inflow { get; set; } = 0;
+        public void Clear()
+        {
+            Count = 0;
+            Inflow = 0;
+        }
     }
     public class OutlflowActionDTO
     {
         public long Count { get; set; } = 0;
         public long Outlflow { get; set; } = 0;
         public long Effect { get; set; } = 0;
+        public void Clear()
+        {
+            Count = 0;
+            Outlflow = 0;
+            Effect = 0;
+        }
     }
     public class GenericActionDTO
     {
         public long Count { get; set; } = 0;
+        public void Clear()
+        {
+            Count = 0;
+        }
     }
     public class ActionLogDTO
     {
@@ -43,9 +62,9 @@ namespace UserTrackerShared.Models
         public DamageActionDTO RangedMassAttack { get; set; } = new DamageActionDTO();
         public HealActionDTO RangedHeal { get; set; } = new HealActionDTO();
         public HealActionDTO Healed { get; set; } = new HealActionDTO();
-        public HealActionDTO Heal { get; set; } = new HealActionDTO(); 
-        public InflowActionDTO Harvest { get; set; } = new InflowActionDTO(); 
-        public OutlflowActionDTO Repair { get; set; } = new OutlflowActionDTO(); 
+        public HealActionDTO Heal { get; set; } = new HealActionDTO();
+        public InflowActionDTO Harvest { get; set; } = new InflowActionDTO();
+        public OutlflowActionDTO Repair { get; set; } = new OutlflowActionDTO();
         public OutlflowActionDTO Build { get; set; } = new OutlflowActionDTO();
         public OutlflowActionDTO UpgradeController { get; set; } = new OutlflowActionDTO();
         public GenericActionDTO Move { get; set; } = new GenericActionDTO();
@@ -58,19 +77,78 @@ namespace UserTrackerShared.Models
         public GenericActionDTO ReverseReaction { get; set; } = new GenericActionDTO();
         public GenericActionDTO Spawned { get; set; } = new GenericActionDTO();
         public GenericActionDTO Power { get; set; } = new GenericActionDTO();
+        public void Clear()
+        {
+            Attacked.Clear();
+            Attack.Clear();
+            RangedAttack.Clear();
+            RangedMassAttack.Clear();
+            RangedHeal.Clear();
+            Healed.Clear();
+            Heal.Clear();
+            Harvest.Clear();
+            Repair.Clear();
+            Build.Clear();
+            UpgradeController.Clear();
+            Move.Clear();
+            Say.Clear();
+            ReserveController.Clear();
+            Produce.Clear();
+            TransferEnergy.Clear();
+            AttackController.Clear();
+            RunReaction.Clear();
+            ReverseReaction.Clear();
+            Spawned.Clear();
+            Power.Clear();
+        }
     }
+    public class CountByPartDTO
+    {
+        public long Move { get; set; } = 0;
+        public long Work { get; set; } = 0;
+        public long Carry { get; set; } = 0;
+        public long Attack { get; set; } = 0;
+        public long RangedAttack { get; set; } = 0;
+        public long Tough { get; set; } = 0;
+        public long Heal { get; set; } = 0;
+        public long Claim { get; set; } = 0;
+        public void Clear()
+        {
+            Move = 0;
+            Work = 0;
+            Carry = 0;
+            Attack = 0;
+            RangedAttack = 0;
+            Tough = 0;
+            Heal = 0;
+            Claim = 0;
+        }
+    }
+
     public class CreepDTO
     {
         public long Count { get; set; } = 0;
-        public Dictionary<string,long> Store = new Dictionary<string,long>();
-        public Dictionary<string, long> BodyParts = new Dictionary<string, long>();
+        public Store Store = new Store();
+        public CountByPartDTO BodyParts = new CountByPartDTO();
         public ActionLogDTO ActionLog { get; set; } = new ActionLogDTO();
+
+        public void Clear()
+        {
+            Count = 0;
+            Store.Clear();
+            BodyParts.Clear();
+            ActionLog.Clear();
+        }
     }
     public class BaseStructureDTO
     {
         public long Count { get; set; } = 0;
-        public Dictionary<string, long> Store = new Dictionary<string, long>();
         public ActionLogDTO ActionLog { get; set; } = new ActionLogDTO();
+        public void Clear()
+        {
+            Count = 0;
+            ActionLog.Clear();
+        }
     }
     #endregion
     #region Structures DTO
@@ -80,121 +158,233 @@ namespace UserTrackerShared.Models
         public long Progress { get; set; } = 0;
         public long ProgressTotal { get; set; } = 0;
         public string UserId { get; set; } = "";
+        public new void Clear()
+        {
+            Level = 0;
+            Progress = 0;
+            ProgressTotal = 0;
+            UserId = "";
+            base.Clear();
+        }
     }
     public class StructureMineralDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureDepositDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureWallDTO : BaseStructureDTO
     {
         public long Hits { get; set; } = 0;
+        public new void Clear()
+        {
+            Hits = 0;
+            base.Clear();
+        }
     }
     public class StructureConstructionSiteDTO : BaseStructureDTO
     {
         public long Progress { get; set; } = 0;
         public long ProgressTotal { get; set; } = 0;
         public Dictionary<string, long> TypesBuilding { get; set; } = new Dictionary<string, long>();
+        public new void Clear()
+        {
+            Progress = 0;
+            ProgressTotal = 0;
+            TypesBuilding.Clear();
+            base.Clear();
+        }
     }
     public class StructureContainerDTO : BaseStructureDTO
     {
-        public Dictionary<string, long> Store = new Dictionary<string, long>();
+        public Store Store = new Store();
+        public new void Clear()
+        {
+            Store.Clear();
+            base.Clear();
+        }
     }
     public class StructureExtensionDTO : BaseStructureDTO
     {
         public long Energy { get; set; } = 0;
         public long EnergyCapacity { get; set; } = 0;
+        public new void Clear()
+        {
+            Energy = 0;
+            EnergyCapacity = 0;
+            base.Clear();
+        }
     }
     public class StructureExtractorDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureFactoryDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureInvaderCoreDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureKeeperLairDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureLabDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureLinkDTO : BaseStructureDTO
     {
         public long Energy { get; set; } = 0;
         public long EnergyCapacity { get; set; } = 0;
+        public new void Clear()
+        {
+            Energy = 0;
+            EnergyCapacity = 0;
+            base.Clear();
+        }
     }
     public class StructureObserverDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructurePortalDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructurePowerBankDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructurePowerSpawnDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureRampartDTO : BaseStructureDTO
     {
         public long Hits { get; set; } = 0;
+        public new void Clear()
+        {
+            Hits = 0;
+            base.Clear();
+        }
     }
     public class StructureRoadDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureRuinDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureSourceDTO : BaseStructureDTO
     {
         public long Energy { get; set; } = 0;
         public long EnergyCapacity { get; set; } = 0;
+        public new void Clear()
+        {
+            Energy = 0;
+            EnergyCapacity = 0;
+            base.Clear();
+        }
     }
     public class StructureSpawnDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureStorageDTO : BaseStructureDTO
     {
-        public Dictionary<string, long> Store = new Dictionary<string, long>();
+        public Store Store = new Store();
+        public new void Clear()
+        {
+            base.Clear();
+        }
 
     }
     public class StructureTerminalDTO : BaseStructureDTO
     {
-        public Dictionary<string, long> Store = new Dictionary<string, long>();
+        public Store Store = new Store();
+        public new void Clear()
+        {
+            base.Clear();
+        }
 
     }
     public class StructureTombstoneDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureTowerDTO : BaseStructureDTO
     {
         public long Energy { get; set; } = 0;
+        public void Clear()
+        {
+            Energy = 0;
+            base.Clear();
+        }
     }
     public class StructureNukerDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     public class StructureNukeDTO : BaseStructureDTO
     {
-
+        public new void Clear()
+        {
+            base.Clear();
+        }
     }
     #endregion
     #region Groups DTO
@@ -204,6 +394,14 @@ namespace UserTrackerShared.Models
         public CreepDTO EnemyCreeps { get; set; } = new CreepDTO();
         public CreepDTO OtherCreeps { get; set; } = new CreepDTO();
         public CreepDTO PowerCreeps { get; set; } = new CreepDTO();
+
+        public void Clear()
+        {
+            OwnedCreeps.Clear();
+            EnemyCreeps.Clear();
+            OtherCreeps.Clear();
+            PowerCreeps.Clear();
+        }
     }
     public class StructuresDTO
     {
@@ -236,6 +434,37 @@ namespace UserTrackerShared.Models
         public StructureTowerDTO Tower { get; set; } = new StructureTowerDTO();
         public StructureNukerDTO Nuker { get; set; } = new StructureNukerDTO();
         public StructureNukeDTO Nuke { get; set; } = new StructureNukeDTO();
+        public void Clear()
+        {
+            Controller.Clear();
+            Mineral.Clear();
+            Deposit.Clear();
+            Wall.Clear();
+            ConstructionSite.Clear();
+            Container.Clear();
+            Extension.Clear();
+            Extractor.Clear();
+            Factory.Clear();
+            InvaderCore.Clear();
+            KeeperLair.Clear();
+            Lab.Clear();
+            Link.Clear();
+            Observer.Clear();
+            Portal.Clear();
+            PowerBank.Clear();
+            PowerSpawn.Clear();
+            Rampart.Clear();
+            Road.Clear();
+            Ruin.Clear();
+            Source.Clear();
+            Spawn.Clear();
+            Storage.Clear();
+            Terminal.Clear();
+            Tombstone.Clear();
+            Tower.Clear();
+            Nuker.Clear();
+            Nuke.Clear();
+        }
     }
     #endregion
     public class ScreepsRoomHistoryDTO
@@ -262,16 +491,16 @@ namespace UserTrackerShared.Models
         }
         private void ProcessCreeps(ScreepsRoomHistory his)
         {
-            Creeps.OwnedCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>());
-            Creeps.EnemyCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.EnemyCreeps.Values.ToList<BaseCreep>());
-            Creeps.OtherCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OtherCreeps.Values.ToList<BaseCreep>());
-           
-            Creeps.PowerCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>());
+            Creeps.OwnedCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
+            Creeps.EnemyCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.EnemyCreeps.Values.ToList<BaseCreep>(), Creeps.EnemyCreeps);
+            Creeps.OtherCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OtherCreeps.Values.ToList<BaseCreep>(), Creeps.OtherCreeps);
+
+            Creeps.PowerCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
         }
 
         private void ProcessStructures(ScreepsRoomHistory his)
         {
-            Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures);
+            Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures, Structures);
         }
 
         public void Update(ScreepsRoomHistory his)
@@ -280,9 +509,16 @@ namespace UserTrackerShared.Models
             Base = his.Base;
             Tick = his.Tick;
 
+            ClearAll(); ;
             ProcessGroundResources(his);
             ProcessCreeps(his);
             ProcessStructures(his);
+        }
+        private void ClearAll()
+        {
+            GroundResources.Clear();
+            Creeps.Clear();
+            Structures.Clear();
         }
 
         public long TimeStamp { get; set; }

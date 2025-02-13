@@ -18,7 +18,6 @@ namespace UserTracker.Tests.Helper
                 case JObject obj:
                     foreach (var prop in obj.Properties())
                     {
-                        if (prop.Name == "PropertiesListDictionary" || prop.Name == "TypeMap" || prop.Name == "UserMap") continue;
                         int initialLen = currentPath.Length;
                         currentPath.Append($"{prop.Name}.");
                         FlattenJson(prop.Value, currentPath, dict);

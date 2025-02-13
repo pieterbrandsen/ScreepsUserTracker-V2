@@ -4,14 +4,12 @@ using System.Diagnostics;
 using System.Timers;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared.Helpers;
-using UserTrackerShared.States;
-using UserTrackerStates;
 using Timer = System.Timers.Timer;
 
 ConfigSettingsState.Init();
 HistoryConfigSettingsState.Init();
-await GameState.InitAsync();
-InfluxDBClientState.Init();
+//await GameState.InitAsync();
+//InfluxDBClientState.Init();
 
 
 string HistoryFilesLocations = @$"{HistoryConfigSettingsState.HistoryFilesLocation}";
@@ -48,13 +46,14 @@ var files = Directory.EnumerateFiles(HistoryFilesLocations)
     .Concat(Directory.GetDirectories(HistoryFilesLocations)
         .SelectMany(subdir => Directory.EnumerateFiles(subdir)))
     .OrderBy(File.GetCreationTimeUtc)
-    .Where(file => goodFilesText.Contains(file) == HistoryConfigSettingsState.InluceGoodFiles)
-    .Where(file => badFilesText.Contains(file) == HistoryConfigSettingsState.IncludeBadFiles)
-    .Where(file => (goodFilesText.Contains(file) && badFilesText.Contains(file)) != HistoryConfigSettingsState.IncludeUnknownFiles)
+    .Where(file =>
+    goodFilesText.Contains(file) == HistoryConfigSettingsState.InluceGoodFiles
+    || badFilesText.Contains(file) == HistoryConfigSettingsState.IncludeBadFiles
+    || (goodFilesText.Contains(file) && badFilesText.Contains(file)) != HistoryConfigSettingsState.IncludeUnknownFiles)
     .ToList();
 
 
-Console.WriteLine($"Found {files.Count} files to parse, started at {DateTime.Now.ToShortTimeString()}");
+Console.WriteLine($"Found {files.Count} files to parse, started at {DateTime.Now.ToLongTimeString()}");
 
 bool isWriting = false;
 var totalChangesToBeWritten = new ConcurrentBag<long>();
@@ -64,66 +63,54 @@ var linesToBeWrittenBadErrors = new ConcurrentBag<string>();
 
 async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 {
-    if (isWriting) return;
+    if (isWriting || totalChangesToBeWritten.Count < 50) return;
     isWriting = true;
     var writeStopwatch = new Stopwatch();
     writeStopwatch.Start();
 
 
     fileProcessedCount += linesToBeWrittenGood.Count + linesToBeWrittenBad.Count;
-    lock (linesToBeWrittenGood)
+    using StreamWriter goodWriter = new StreamWriter(GoodFilesPath, true);
+    while (linesToBeWrittenGood.TryTake(out var file))
     {
-        using StreamWriter writer = new StreamWriter(GoodFilesPath, true);
-        while (linesToBeWrittenGood.TryTake(out var file))
-        {
-            writer.WriteLine(file);
-        }
+        goodWriter.WriteLine(file);
     }
     var goodWriteTime = writeStopwatch.Elapsed;
 
-    lock (linesToBeWrittenBad)
+    using StreamWriter badWriter = new StreamWriter(BadFilesPath, true);
+    while (linesToBeWrittenBad.TryTake(out var file))
     {
-        using StreamWriter writer = new StreamWriter(BadFilesPath, true);
-        while (linesToBeWrittenBad.TryTake(out var file))
-        {
-            writer.WriteLine(file);
-        }
+        badWriter.WriteLine(file);
     }
     var badWriteTime = writeStopwatch.Elapsed;
 
-    lock (linesToBeWrittenBadErrors)
+    using StreamWriter badErrorsWriter = new StreamWriter(BadFilesErrorsPath, true);
+    while (linesToBeWrittenBadErrors.TryTake(out var error))
     {
-        using StreamWriter writer = new StreamWriter(BadFilesErrorsPath, true);
-        while (linesToBeWrittenBadErrors.TryTake(out var error))
-        {
-            writer.WriteLine(error);
-        }
+        badErrorsWriter.WriteLine(error);
     }
     var badErrorWriteTime = writeStopwatch.Elapsed;
 
-    lock (totalChangesToBeWritten)
+    long changesProcessedThisSync = 0;
+    long filesChangesProcessedThisSync = 0;
+    while (totalChangesToBeWritten.TryTake(out var total))
     {
-        long changesProcessedThisSync = 0;
-        long filesChangesProcessedThisSync = 0;
-        while (totalChangesToBeWritten.TryTake(out var total))
-        {
-            filesChangesProcessedThisSync += 1;
-            changesProcessedThisSync += total;
+        filesChangesProcessedThisSync += 1;
+        changesProcessedThisSync += total;
 
-            totalChanges += total;
-        }
-        File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
-        var totalWriteTime = writeStopwatch.Elapsed;
-
-        writeStopwatch.Stop();
-        Console.WriteLine();
-        Console.WriteLine($"Write times: Good {goodWriteTime.TotalMilliseconds} ms, Bad {badWriteTime.TotalMilliseconds} ms, Bad Errors {badErrorWriteTime.TotalMilliseconds} ms, TotalLines {totalWriteTime.TotalMilliseconds} ms");
-        Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
+        totalChanges += total;
     }
+    File.WriteAllText(TotalChangesTextPath, Convert.ToString(totalChanges));
+    var totalWriteTime = writeStopwatch.Elapsed;
+
+    writeStopwatch.Stop();
+    Console.WriteLine();
+    Console.WriteLine($"Write times: Good {goodWriteTime.TotalMilliseconds} ms, Bad {badWriteTime.TotalMilliseconds - goodWriteTime.TotalMilliseconds} ms, Bad Errors {badErrorWriteTime.TotalMilliseconds - badWriteTime.TotalMilliseconds} ms, TotalLines {totalWriteTime.TotalMilliseconds - badErrorWriteTime.TotalMilliseconds} ms at {DateTime.Now.ToLongTimeString()}");
+    Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
     isWriting = false;
 }
 
-Timer? onSave = new Timer(120 * 1000);
+Timer? onSave = new Timer(10 * 1000);
 onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
 onSave.Enabled = true;
@@ -138,7 +125,7 @@ void Execute(string file)
     {
         var changesProcessed = HistoryFileChecker.ParseFile(file);
         totalChangesToBeWritten.Add(changesProcessed);
-        linesToBeWrittenGood.Add(file);
+        //linesToBeWrittenGood.Add(file);
     }
     catch (JsonReaderException e)
     {
@@ -169,7 +156,7 @@ switch (HistoryConfigSettingsState.LoopStrategy)
         Parallel.For(0, files.Count, i => Execute(files[i]));
         break;
     case "paralelForEach":
-        Parallel.ForEach(files, Execute);
+        //Parallel.ForEach(files, Execute);
         break;
     case "semaphore":
         var semaphore = new SemaphoreSlim(1000);
@@ -192,6 +179,7 @@ switch (HistoryConfigSettingsState.LoopStrategy)
                 })
             );
         }
+        await Task.WhenAll(tasks);
         break;
     default:
         break;
