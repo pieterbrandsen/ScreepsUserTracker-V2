@@ -17,7 +17,8 @@ namespace UserTrackerShared.Helpers
         public static string InfluxDbServer { get; set; }
 
 
-        public static bool LoadAllLeaderboards { get; set; }
+        public static bool GetAllUsers { get; set; }
+        public static bool LoadSeasonalLeaderboard { get; set; }
         public static bool StartsShards { get; set; }
 
 
@@ -33,7 +34,8 @@ namespace UserTrackerShared.Helpers
             InfluxDbServer = ConfigurationManager.AppSettings["INFLUXDB_SERVER"] ?? "";
 
 
-            LoadAllLeaderboards = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_ALL_LEADERBOARDS"]);
+            GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
+            LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);
             StartsShards = Convert.ToBoolean(ConfigurationManager.AppSettings["START_SHARDS"]);
 
 

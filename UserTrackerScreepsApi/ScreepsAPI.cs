@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using UserTrackerShared;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
@@ -33,13 +34,13 @@ namespace UserTrackerScreepsApi
             }
         }
     }
-    public class ScreepsAPI
+    public static class ScreepsAPI
     {
         private static SemaphoreSlim throttler = new SemaphoreSlim(1);
 
         private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
         {
-            MaxConnectionsPerServer = 10
+            MaxConnectionsPerServer = 10000000
         })
         {
             Timeout = TimeSpan.FromSeconds(30)
@@ -49,7 +50,16 @@ namespace UserTrackerScreepsApi
             await throttler.WaitAsync();
             try
             {
-                return await _httpClient.SendAsync(request);
+                var retriesLeft = 5;
+                HttpResponseMessage response = null;
+                while (retriesLeft > 0)
+                {
+                    await Task.Delay(100);
+                    response = await _httpClient.SendAsync(request);
+                    if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500) return response;
+                    retriesLeft -= 1;
+                }
+                return response; 
             }
             finally
             {
@@ -87,7 +97,7 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
                 var isHistoryRequest = path.StartsWith("/room-history");
-                var response = await (isHistoryRequest? _httpClient.SendAsync(request) : ThrottledRequest(request));
+                var response = await (isHistoryRequest ? _httpClient.SendAsync(request) : ThrottledRequest(request));
                 //Screen.AddLog($"{path} - {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
@@ -159,7 +169,7 @@ namespace UserTrackerScreepsApi
                 offset += limit;
             }
 
-            return leaderboardList.OrderBy(s=>s.Rank).ToList();
+            return leaderboardList.OrderBy(s => s.Rank).ToList();
         }
 
         public static async Task<Dictionary<string, List<SeaonListItem>>> GetAllSeasonsLeaderboard(string mode)

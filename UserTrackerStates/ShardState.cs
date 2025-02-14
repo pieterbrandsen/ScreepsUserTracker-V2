@@ -97,7 +97,7 @@ namespace UserTrackerShared.States
                     mainStopwatch.Stop();
                     var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                     var totalMicroSeconds = totalMiliseconds * 1000;
-                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS");
+                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}");
                 }
                 catch (Exception)
                 {

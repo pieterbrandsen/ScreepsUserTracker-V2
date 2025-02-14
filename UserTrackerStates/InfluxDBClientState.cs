@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics.Metrics;
-using System.Linq;
-using System.Net.Sockets;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using InfluxDB.Client;
+﻿using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text;
+using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.States;
@@ -32,7 +25,7 @@ namespace UserTrackerStates
             _writeAPI = _influxDBClient.GetWriteApi();
         }
 
-        public static void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
         {
             try
             {
@@ -42,6 +35,14 @@ namespace UserTrackerStates
                 if (user != null)
                 {
                     username = user.Username;
+                }
+                else if (!string.IsNullOrEmpty(userId))
+                {
+                    var apiUser = ScreepsAPI.GetUser(userId).GetAwaiter().GetResult();
+                    if (apiUser != null)
+                    {
+                        GameState.Users.Add(userId, apiUser);
+                    }
                 }
 
 
@@ -60,9 +61,14 @@ namespace UserTrackerStates
                             .Measurement(ConfigSettingsState.InfluxDbServer)
                             .Tag("shard", shard)
                             .Tag("room", room)
-                            .Field("tick", tick)
                             .Field(kvp.Key.ToLower(), Convert.ToInt64(kvp.Value))
+                            .Field("tick", tick)
                             .Timestamp(timestamp, WritePrecision.Ms);
+
+                        if (!string.IsNullOrEmpty(username))
+                        {
+                            point = point.Tag("user", username);
+                        }
 
                         if (!string.IsNullOrEmpty(username))
                         {
@@ -78,6 +84,8 @@ namespace UserTrackerStates
             {
                 throw;
             }
+
+            await Task.CompletedTask;
         }
 
         private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)

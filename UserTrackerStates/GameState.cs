@@ -49,8 +49,8 @@ namespace UserTrackerShared.States
                 }
             }
 
-            await UpdateCurrentLeaderboard();
-            await GetAllUsers();
+            if (ConfigSettingsState.LoadSeasonalLeaderboard) await UpdateCurrentLeaderboard();
+            if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
 
             if (ConfigSettingsState.StartsShards)
             {
