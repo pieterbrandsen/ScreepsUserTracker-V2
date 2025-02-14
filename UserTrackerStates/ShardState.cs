@@ -91,11 +91,19 @@ namespace UserTrackerShared.States
                     );
                 }
                 await Task.WhenAll(tasks);
+                mainStopwatch.Stop();
+                var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
 
+                InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
+                {
+                    Shard = Name,
+                    TicksBehind = LastSynceTime - syncTime,
+                    TimeTakenMs = totalMiliseconds,
+                    TotalRooms = Rooms.Count,
+                    SuccessCount = successes
+                });
                 try
                 {
-                    mainStopwatch.Stop();
-                    var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                     var totalMicroSeconds = totalMiliseconds * 1000;
                     Screen.AddLog($"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}");
                 }

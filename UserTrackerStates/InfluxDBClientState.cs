@@ -12,6 +12,15 @@ using UserTrackerShared.States;
 
 namespace UserTrackerStates
 {
+    public class PerformanceClassDTO
+    {
+        public string Shard { get; set; }
+        public long TicksBehind { get; set; }
+        public long TimeTakenMs { get; set; }
+        public int TotalRooms { get; set; }
+        public int SuccessCount { get; set; }
+        public int FailedCount => TotalRooms - SuccessCount;
+    }
     public static class InfluxDBClientState
     {
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
@@ -86,6 +95,28 @@ namespace UserTrackerStates
             }
 
             await Task.CompletedTask;
+        }
+
+        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        {
+            try
+            {
+                var point = PointData
+                            .Measurement(ConfigSettingsState.InfluxDbServer)
+                            .Tag("shard", performanceClassDTO.Shard)
+                            .Field("TicksBehind", performanceClassDTO.TicksBehind)
+                            .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
+                            .Field("TotalRooms", performanceClassDTO.TotalRooms)
+                            .Field("SuccessCount", performanceClassDTO.SuccessCount)
+                            .Field("FailedCount", performanceClassDTO.FailedCount)
+                            .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
+
+                _writeAPI.WritePoint(point, bucket: "history_performance", org: "screeps");
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
