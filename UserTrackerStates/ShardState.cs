@@ -97,7 +97,7 @@ namespace UserTrackerShared.States
                 InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
-                    TicksBehind = syncTime - LastSynceTime,
+                    TicksBehind = syncTime - i,
                     TimeTakenMs = totalMiliseconds,
                     TotalRooms = Rooms.Count,
                     SuccessCount = successes
