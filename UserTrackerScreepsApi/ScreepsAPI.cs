@@ -38,9 +38,16 @@ namespace UserTrackerScreepsApi
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static SemaphoreSlim throttler = new SemaphoreSlim(1);
 
-        private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
+        private static HttpClient _normalHttpClient = new HttpClient(new HttpClientHandler
         {
-            MaxConnectionsPerServer = 10000000
+            MaxConnectionsPerServer = 1
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
+        private static HttpClient _filesHttpClient = new HttpClient(new HttpClientHandler
+        {
+            MaxConnectionsPerServer = 100000
         })
         {
             Timeout = TimeSpan.FromSeconds(30)
@@ -55,7 +62,7 @@ namespace UserTrackerScreepsApi
                 while (retriesLeft > 0)
                 {
                     await Task.Delay(100);
-                    response = await _httpClient.SendAsync(request);
+                    response = await _normalHttpClient.SendAsync(request);
                     if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500) return response;
                     retriesLeft -= 1;
                 }
@@ -97,7 +104,7 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
                 var isHistoryRequest = path.StartsWith("/room-history");
-                var response = await (isHistoryRequest ? _httpClient.SendAsync(request) : ThrottledRequest(request));
+                var response = await (isHistoryRequest ? _filesHttpClient.SendAsync(request) : ThrottledRequest(request));
                 _logger.Information($"{path} - {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
