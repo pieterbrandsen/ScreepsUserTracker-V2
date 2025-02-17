@@ -17,6 +17,7 @@ namespace UserTrackerShared.States
     public class ShardState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+        private bool _initialized;
 
         public ShardState(string Name)
         {
@@ -32,9 +33,10 @@ namespace UserTrackerShared.States
             var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
-                Rooms.Add(new RoomState(room.Key, Name));
+                Rooms.Add(room.Key);
             }
-            
+
+            _initialized = true;
             _logger.Warning($"Loaded Shard {Name} with rooms {response.Rooms.Count}");
             StartUpdate();
         }
@@ -42,7 +44,7 @@ namespace UserTrackerShared.States
         public string Name { get; set; }
         private long LastSynceTime { get; set; }
         public long Time { get; set; }
-        public List<RoomState> Rooms { get; set; } = new List<RoomState>();
+        public List<string> Rooms { get; set; } = new List<string>();
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
 
@@ -61,7 +63,7 @@ namespace UserTrackerShared.States
 
         private async Task StartSync(long time)
         {
-            if (isSyncing) return;
+            if (isSyncing || !_initialized) return;
             isSyncing = true;
 
             var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((time - 500) / 100)) * 100);
@@ -87,7 +89,7 @@ namespace UserTrackerShared.States
                         {
                             try
                             {
-                                if (await room.GetAndHandleRoomData(i)) Interlocked.Increment(ref successes);
+                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref successes);
                             }
                             catch (Exception e)
                             {

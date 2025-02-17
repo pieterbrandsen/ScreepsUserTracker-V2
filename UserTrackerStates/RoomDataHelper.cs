@@ -4,29 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using UserTrackerScreepsApi;
-using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
-using UserTrackerShared.States;
+using UserTrackerStates;
 
-namespace UserTrackerStates
+namespace UserTrackerShared.Helpers
 {
-    public class RoomState
+    public static class RoomDataHelper
     {
-        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
-
-        public string Name;
-        public string Shard;
-
-        public RoomState(string name, string shard)
+        public static async Task<bool> GetAndHandleRoomData(string shard, string name, long tick)
         {
-            Name = name;
-            Shard = shard;
-        }
-
-        public async Task<bool> GetAndHandleRoomData(long tick)
-        {
-            var roomData = await ScreepsAPI.GetHistory(Shard, Name, tick);
+            var roomData = await ScreepsAPI.GetHistory(shard, name, tick);
             if (roomData == null) return false;
 
             var roomHistory = new ScreepsRoomHistory();
@@ -55,9 +44,10 @@ namespace UserTrackerStates
                     {
                         //throw;
                     }
-                    if (ConfigSettingsState.InfluxDbEnabled) {
+                    if (ConfigSettingsState.InfluxDbEnabled)
+                    {
                         roomHistoryDTO.Update(roomHistory);
-                        InfluxDBClientState.WriteScreepsRoomHistory(Shard, Name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                        InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                     }
                 }
             }
