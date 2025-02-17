@@ -65,9 +65,9 @@ namespace UserTrackerShared.States
             isSyncing = true;
 
             var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((time - 500) / 100)) * 100);
-            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
             if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 100;
 
+            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
             for (long i = LastSynceTime; i < syncTime; i += 100)
             {
                 var mainStopwatch = Stopwatch.StartNew();
