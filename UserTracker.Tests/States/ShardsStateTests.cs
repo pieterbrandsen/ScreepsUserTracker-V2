@@ -18,7 +18,7 @@ namespace UserTracker.Tests.States
             
             // Act
             var shardState = new ShardState("shardName");
-            await shardState.StartUpdate();
+            shardState.StartUpdate();
 
             // Assert
             Assert.Equal("shardName", shardState.Name);
@@ -33,7 +33,7 @@ namespace UserTracker.Tests.States
 
             // Act
             var shardState = new ShardState("shardName");
-            await shardState.StartUpdate();
+            shardState.StartUpdate();
 
             // Assert
             Assert.True(shardState.Time > 0); // Check if time is updated correctly
