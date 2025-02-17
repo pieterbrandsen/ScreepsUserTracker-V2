@@ -115,7 +115,9 @@ namespace UserTrackerShared.States
                 try
                 {
                     var totalMicroSeconds = totalMiliseconds * 1000;
-                    Screen.AddLog($"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}");
+                    var performanceLogMessage = $"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}"''
+                    _logger.Information(performanceLogMessage);
+                    Screen.AddLog(performanceLogMessage);
                 }
                 catch (Exception)
                 {
