@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using UserTrackerShared;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
@@ -14,8 +15,6 @@ namespace UserTrackerScreepsApi
 {
     public static class JSONConvertHelper
     {
-        private static readonly JsonSerializer _jsonSerializer = new JsonSerializer();
-
         public static async Task<string> ReadGzipStream(HttpContent httpContent)
         {
             using (Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false))
@@ -36,6 +35,7 @@ namespace UserTrackerScreepsApi
     }
     public static class ScreepsAPI
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static SemaphoreSlim throttler = new SemaphoreSlim(1);
 
         private static HttpClient _httpClient = new HttpClient(new HttpClientHandler
@@ -98,7 +98,7 @@ namespace UserTrackerScreepsApi
 
                 var isHistoryRequest = path.StartsWith("/room-history");
                 var response = await (isHistoryRequest ? _httpClient.SendAsync(request) : ThrottledRequest(request));
-                //Screen.AddLog($"{path} - {response.StatusCode}");
+                _logger.Information($"{path} - {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -115,8 +115,7 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                //Screen.AddLog($"{proxyUri} {path} - {ex.Message}");
-                Debug.WriteLine(ex.Message);
+                _logger.Error(ex, $"{proxyUri} {path} - {ex.Message}");
                 return (default, HttpStatusCode.InternalServerError);
             }
         }

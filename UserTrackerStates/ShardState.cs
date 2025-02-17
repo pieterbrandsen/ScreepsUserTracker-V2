@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Timers;
 using UserTrackerScreepsApi;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
@@ -15,6 +16,8 @@ namespace UserTrackerShared.States
 {
     public class ShardState
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+
         public ShardState(string Name)
         {
             this.Name = Name;
@@ -31,6 +34,8 @@ namespace UserTrackerShared.States
             {
                 Rooms.Add(new RoomState(room.Key, Name));
             }
+            
+            _logger.Warning($"Loaded Shard {Name} with rooms {response.Rooms.Count}");
             StartUpdate();
         }
 
@@ -60,6 +65,7 @@ namespace UserTrackerShared.States
             isSyncing = true;
 
             var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((time - 500) / 100)) * 100);
+            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
             if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 100;
 
             for (long i = LastSynceTime; i < syncTime; i += 100)
@@ -82,6 +88,10 @@ namespace UserTrackerShared.States
                             try
                             {
                                 if (await room.GetAndHandleRoomData(i)) Interlocked.Increment(ref successes);
+                            }
+                            catch (Exception e)
+                            {
+                                _logger.Error(e, "");
                             }
                             finally
                             {

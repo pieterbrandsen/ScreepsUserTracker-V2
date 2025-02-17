@@ -23,6 +23,8 @@ namespace UserTrackerStates
     }
     public static class InfluxDBClientState
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
+
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static InfluxDBClient _influxDBClient;
         private static WriteApi _writeAPI;
@@ -78,15 +80,11 @@ namespace UserTrackerStates
                         {
                             point = point.Tag("user", username);
                         }
-
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            point = point.Tag("user", username);
-                        }
                         points.Add(point);
                     }
                 }
 
+                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
                 _writeAPI.WritePoints(points, bucket: "history", org: "screeps");
             }
             catch (Exception e)

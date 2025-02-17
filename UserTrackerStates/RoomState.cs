@@ -13,6 +13,8 @@ namespace UserTrackerStates
 {
     public class RoomState
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+
         public string Name;
         public string Shard;
 

@@ -20,6 +20,7 @@ namespace UserTrackerShared.Helpers
         public static bool GetAllUsers { get; set; }
         public static bool LoadSeasonalLeaderboard { get; set; }
         public static bool StartsShards { get; set; }
+        public static string LogsFolder { get; set; }
 
 
         public static bool WriteHistoryFiles { get; set; }
@@ -37,6 +38,8 @@ namespace UserTrackerShared.Helpers
             GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
             LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);
             StartsShards = Convert.ToBoolean(ConfigurationManager.AppSettings["START_SHARDS"]);
+            LogsFolder = ConfigurationManager.AppSettings["LOGS_FOLDER"] ?? "";
+            if (LogsFolder == "") throw new Exception("No logs folder provided");
 
 
             WriteHistoryFiles = Convert.ToBoolean(ConfigurationManager.AppSettings["WRITE_HISTORY_FILES"]);

@@ -12,6 +12,8 @@ namespace UserTrackerShared.States
 {
     public static class GameState
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+
         public static string ScreepsAPIUrl = "";
         public static string ScreepsAPIToken = "";
         public static string ScreepsAPIUsername = "";
@@ -70,8 +72,10 @@ namespace UserTrackerShared.States
         public static async Task UpdateCurrentLeaderboard()
         {
             var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
+
             if (currentLeaderboardResponse != null)
             {
+                _logger.Information("Started updating current leaderboard");
                 CurrentLeaderboard = currentLeaderboardResponse;
                 foreach (var leaderboardSpot in CurrentLeaderboard)
                 {
@@ -82,6 +86,10 @@ namespace UserTrackerShared.States
                         leaderboardSpot.UserName = userResponse.Username;
                     }
                 }
+            }
+            else
+            {
+                _logger.Information("Failed to do api to update current leaderboard");
             }
         }
 
