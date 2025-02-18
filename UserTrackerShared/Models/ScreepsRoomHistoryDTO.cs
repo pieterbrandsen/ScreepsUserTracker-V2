@@ -37,12 +37,12 @@ namespace UserTrackerShared.Models
     public class OutlflowActionDTO
     {
         public long Count { get; set; } = 0;
-        public long Outlflow { get; set; } = 0;
+        public long Outflow { get; set; } = 0;
         public long Effect { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
-            Outlflow = 0;
+            Outflow = 0;
             Effect = 0;
         }
     }
