@@ -47,7 +47,7 @@ namespace UserTrackerShared.Helpers
                     if (ConfigSettingsState.InfluxDbEnabled)
                     {
                         roomHistoryDTO.Update(roomHistory);
-                        InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                        await InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                     }
                 }
             }

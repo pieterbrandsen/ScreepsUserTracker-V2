@@ -1,14 +1,7 @@
-﻿using InfluxDB.Client.Api.Domain;
-using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Diagnostics;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
-using UserTrackerShared.Models;
-using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
 using Timer = System.Timers.Timer;
 
@@ -106,7 +99,7 @@ namespace UserTrackerShared.States
                 mainStopwatch.Stop();
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
 
-                InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
+                await InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
                     TicksBehind = syncTime - i,

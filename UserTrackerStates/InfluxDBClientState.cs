@@ -1,11 +1,9 @@
-﻿using InfluxDB.Client;
-using InfluxDB.Client.Api.Domain;
-using InfluxDB.Client.Writes;
-using InfluxDB3.Client;
+﻿using InfluxDB3.Client;
 using InfluxDB3.Client.Write;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
@@ -29,14 +27,15 @@ namespace UserTrackerStates
 
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static InfluxDBClient _client;
+        private static InfluxDBClient _clientPerformance;
 
         public static void Init()
         {
             string host = "http://influxdb:8181";
             string token = ConfigSettingsState.InfluxDbToken;
-            string database = "db0";
 
-            _client = new InfluxDBClient(host, token: token, database: database);
+            _client = new InfluxDBClient(host, token: token, database: "history");
+            _clientPerformance = new InfluxDBClient(host, token: token, database: "history_performance");
         }
 
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
@@ -95,21 +94,21 @@ namespace UserTrackerStates
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static async Task WritePerformanceData(PerformanceClassDTO performanceClassDTO)
         {
             try
             {
                 var point = PointData
                             .Measurement(ConfigSettingsState.InfluxDbServer)
-                            .Tag("shard", performanceClassDTO.Shard)
-                            .Field("TicksBehind", performanceClassDTO.TicksBehind)
-                            .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
-                            .Field("TotalRooms", performanceClassDTO.TotalRooms)
-                            .Field("SuccessCount", performanceClassDTO.SuccessCount)
-                            .Field("FailedCount", performanceClassDTO.FailedCount)
-                            .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
+                            .SetTag("shard", performanceClassDTO.Shard)
+                            .SetField("TicksBehind", performanceClassDTO.TicksBehind)
+                            .SetField("TimeTakenMs", performanceClassDTO.TimeTakenMs)
+                            .SetField("TotalRooms", performanceClassDTO.TotalRooms)
+                            .SetField("SuccessCount", performanceClassDTO.SuccessCount)
+                            .SetField("FailedCount", performanceClassDTO.FailedCount)
+                            .SetTimestamp(DateTime.UtcNow);
 
-                _writeAPI.WritePoint(point, bucket: "history_performance", org: "screeps");
+                await _clientPerformance.WritePointAsync(point);
             }
             catch (Exception e)
             {
