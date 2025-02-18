@@ -1,6 +1,8 @@
 ﻿using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
+using InfluxDB3.Client;
+using InfluxDB3.Client.Write;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
@@ -26,14 +28,15 @@ namespace UserTrackerStates
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
 
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
-        private static InfluxDBClient _influxDBClient;
-        private static WriteApi _writeAPI;
+        private static InfluxDBClient _client;
 
         public static void Init()
         {
-            // You can generate an API token from the "API Tokens Tab" in the UI
-            _influxDBClient = new InfluxDBClient("http://influxdb.pandascreeps.com:8086", ConfigSettingsState.InfluxDbToken);
-            _writeAPI = _influxDBClient.GetWriteApi();
+            string host = "http://influxdb:8181";
+            string token = ConfigSettingsState.InfluxDbToken;
+            string database = "db0";
+
+            _client = new InfluxDBClient(host, token: token, database: database);
         }
 
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
@@ -68,31 +71,28 @@ namespace UserTrackerStates
                 {
                     if (kvp.Value is double || kvp.Value is float || kvp.Value is int || kvp.Value is long)
                     {
-                        var point = PointData
-                            .Measurement(ConfigSettingsState.InfluxDbServer)
-                            .Tag("shard", shard)
-                            .Tag("room", room)
-                            .Field(kvp.Key.ToLower(), Convert.ToInt64(kvp.Value))
-                            .Field("tick", tick)
-                            .Timestamp(timestamp, WritePrecision.Ms);
+                        var point = PointData.Measurement(ConfigSettingsState.InfluxDbServer)
+                            .SetTag("shard", shard)
+                            .SetTag("room", room)
+                            .SetField(kvp.Key.ToLower(), Convert.ToInt64(kvp.Value))
+                            .SetField("tick", tick)
+                            .SetTimestamp(timestamp, WritePrecision.Ms);
 
                         if (!string.IsNullOrEmpty(username))
                         {
-                            point = point.Tag("user", username);
+                            point = point.SetTag("user", username);
                         }
                         points.Add(point);
                     }
                 }
 
                 _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
-                _writeAPI.WritePoints(points, bucket: "history", org: "screeps");
+                await _client.WritePointsAsync(points);
             }
             catch (Exception e)
             {
                 throw;
             }
-
-            await Task.CompletedTask;
         }
 
         public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
