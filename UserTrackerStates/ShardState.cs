@@ -44,7 +44,6 @@ namespace UserTrackerShared.States
         private bool isSyncing = false;
         private int _successes = 0;
 
-
         public async void StartUpdate()
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
@@ -53,7 +52,7 @@ namespace UserTrackerShared.States
                 if (Time != timeResponse.Time)
                 {
                     Time = timeResponse.Time;
-                    await StartSync();
+                    StartSync();
                 }
             }
         }
@@ -64,7 +63,7 @@ namespace UserTrackerShared.States
             return syncTime;
         }
 
-        private async Task StartSync()
+        private async void StartSync()
         {
             if (isSyncing || !_initialized) return;
             isSyncing = true;
@@ -78,9 +77,10 @@ namespace UserTrackerShared.States
                 _successes = 0;
                 var mainStopwatch = Stopwatch.StartNew();
 
-                await Parallel.ForEachAsync(Rooms, new ParallelOptions { MaxDegreeOfParallelism = 100000 }, async (room, ct) =>
+                var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+                await Parallel.ForEachAsync(Rooms, parallelOptions, async (room, ct) =>
                 {
-                    if(await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
+                    if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
                 });
                 mainStopwatch.Stop();
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;

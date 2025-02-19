@@ -1,10 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models;
 using UserTrackerStates;
@@ -26,28 +20,28 @@ namespace UserTrackerShared.Helpers
             roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
 
-            roomData.TryGetValue("ticks", out JToken? jTokenTicks);
-            if (jTokenTicks != null)
+            if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
             {
-                var jTokenTicksValues = jTokenTicks.Values<JToken>();
-                for (int i = 0; i < jTokenTicksValues.Count(); i++)
+                for (int i = 0; i < 100; i++)
                 {
                     long tickNumber = roomHistory.Base + i;
                     roomHistory.Tick = tickNumber;
-                    var tickObject = jTokenTicksValues.FirstOrDefault(t => t.Path.EndsWith($".{tickNumber}"));
-                    if (tickObject == null) continue;
-                    try
+
+                    if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                     {
-                        roomHistory = ScreespRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
-                    }
-                    catch (Exception e)
-                    {
-                        //throw;
-                    }
-                    if (ConfigSettingsState.InfluxDbEnabled)
-                    {
-                        roomHistoryDTO.Update(roomHistory);
-                        await InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                        try
+                        {
+                            roomHistory = ScreespRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
+                        }
+                        catch (Exception e)
+                        {
+                            //throw;
+                        }
+                        if (ConfigSettingsState.InfluxDbEnabled)
+                        {
+                            roomHistoryDTO.Update(roomHistory);
+                            await InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                        }
                     }
                 }
             }
