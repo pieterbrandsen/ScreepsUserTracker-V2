@@ -40,6 +40,7 @@ namespace UserTrackerShared.States
         public List<string> Rooms { get; set; } = new List<string>();
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
+        private int _successes = 0;
 
 
         public async void StartUpdate()
@@ -66,26 +67,16 @@ namespace UserTrackerShared.States
             _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
             for (long i = LastSynceTime; i < syncTime; i += 100)
             {
-                var successes = 0;
+                _successes = 0;
                 var mainStopwatch = Stopwatch.StartNew();
 
-                //var getDataTasks = Rooms.Select(room => room.GetRoomData(i));
-                //var getDataTaskResults = await Task.WhenAll(getDataTasks);
-                //int successes = getDataTaskResults.Count(r => r);
-                await Parallel.ForEachAsync(Rooms, async (room, _) =>
+                var tasks = new List<Task>();
+
+                foreach (var room in Rooms)
                 {
-                    try
-                    {
-                        if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i))
-                        {
-                            Interlocked.Increment(ref successes);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.Error(e, "Error processing room data");
-                    }
-                });
+                    tasks.Add(HandleRoomDataAsync(room, i));
+                }
+                await Task.WhenAll(tasks);
                 mainStopwatch.Stop();
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
 
@@ -95,12 +86,12 @@ namespace UserTrackerShared.States
                     TicksBehind = syncTime - i,
                     TimeTakenMs = totalMiliseconds,
                     TotalRooms = Rooms.Count,
-                    SuccessCount = successes
+                    SuccessCount = _successes
                 });
                 try
                 {
                     var totalMicroSeconds = totalMiliseconds * 1000;
-                    var performanceLogMessage = $"timeT {totalMiliseconds}, roomsT {successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
+                    var performanceLogMessage = $"timeT {totalMiliseconds}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
                     _logger.Information(performanceLogMessage);
                     Screen.AddLog(performanceLogMessage);
                 }
@@ -114,6 +105,20 @@ namespace UserTrackerShared.States
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
             StartUpdate();
+        }
+        async Task HandleRoomDataAsync(string room, long tick)
+        {
+            try
+            {
+                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, tick))
+                {
+                    Interlocked.Increment(ref _successes); // Increment on success
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Error processing room data");
+            }
         }
     }
 }
