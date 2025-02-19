@@ -16,22 +16,14 @@ namespace UserTrackerScreepsApi
 {
     public static class JSONConvertHelper
     {
-        public static async ValueTask<string> ReadGzipStreamAsync(HttpContent httpContent)
+        public static async Task<T?> ReadAndConvertStream<T>(HttpContent httpContent)
         {
-            await using var responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
-            await using var bufferedStream = new BufferedStream(responseStream, 8192);
-            using var gzipStream = new GZipStream(bufferedStream, CompressionMode.Decompress);
-            using var reader = new StreamReader(gzipStream);
+            using Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
+            using StreamReader reader = new StreamReader(responseStream);
+            using JsonTextReader jsonReader = new JsonTextReader(reader);
 
-            return await reader.ReadToEndAsync().ConfigureAwait(false);
-        }
-        public static async Task<string> ReadStream(HttpContent httpContent)
-        {
-            using (Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false))
-            using (StreamReader reader = new StreamReader(responseStream))
-            {
-                return reader.ReadToEnd();
-            }
+            JsonSerializer serializer = new JsonSerializer();
+            return serializer.Deserialize<T>(jsonReader);
         }
     }
     public static class ScreepsAPI
@@ -113,9 +105,7 @@ namespace UserTrackerScreepsApi
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var isGzip = response.Content.Headers.ContentEncoding.Contains("gzip");
-                    var json = isGzip ? await JSONConvertHelper.ReadGzipStreamAsync(response.Content) : await JSONConvertHelper.ReadStream(response.Content);
-                    var result = JsonConvert.DeserializeObject<T>(json);
+                    var result = await JSONConvertHelper.ReadAndConvertStream<T>(response.Content);
                     return (result, response.StatusCode);
                 }
                 else
