@@ -35,8 +35,9 @@ namespace UserTrackerShared.Helpers
                         }
                         catch (Exception e)
                         {
-                            //throw;
+                            _logger.Error(e, $"Error processing tick {tickNumber} for room {name}");
                         }
+                        
                         if (ConfigSettingsState.InfluxDbEnabled)
                         {
                             roomHistoryDTO.Update(roomHistory);
