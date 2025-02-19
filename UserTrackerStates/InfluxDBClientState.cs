@@ -58,14 +58,14 @@ namespace UserTrackerStates
                     }
                 }
 
-
-                var points = new List<PointData>();
+                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
+                
                 var flattenedData = new Dictionary<string, object>();
-
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, screepsRoomHistory);
                 FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
+                var points = new List<PointData>();
                 foreach (var kvp in flattenedData)
                 {
                     if (kvp.Value is double || kvp.Value is float || kvp.Value is int || kvp.Value is long)
@@ -73,24 +73,32 @@ namespace UserTrackerStates
                         var point = PointData.Measurement(ConfigSettingsState.InfluxDbServer)
                             .SetTag("shard", shard)
                             .SetTag("room", room)
-                            .SetField(kvp.Key.ToLower(), Convert.ToInt64(kvp.Value))
+                            .SetField(kvp.Key, Convert.ToInt64(kvp.Value))
                             .SetField("tick", tick)
-                            .SetTimestamp(timestamp, WritePrecision.Ms);
+                            .SetTimestamp(timestamp);
 
                         if (!string.IsNullOrEmpty(username))
                         {
                             point = point.SetTag("user", username);
                         }
                         points.Add(point);
+
+                         if (points.Count >= 100)
+                        {
+                            await _client.WritePointsAsync(points, headers:new Dictionary<string, string>(){ { "Content-Encoding", "gzip" }});
+                            points.Clear(); // Clear the batch after uploading
+                        }
                     }
                 }
 
-                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
-                await _client.WritePointsAsync(points);
+                if (points.Count > 0)
+                {
+                    await _client.WritePointsAsync(points, headers:new Dictionary<string, string>(){ { "Content-Encoding", "gzip" }});
+                }
             }
             catch (Exception e)
             {
-                throw;
+                _logger.Error(e, $"Error uploading {shard}/{room}/{tick}");
             }
         }
 
@@ -112,7 +120,7 @@ namespace UserTrackerStates
             }
             catch (Exception e)
             {
-                throw;
+                _logger.Error(e, $"Error uploading performance data");
             }
         }
 
@@ -143,7 +151,7 @@ namespace UserTrackerStates
                 case JValue jValue:
                     if (currentPath.Length > 0)
                         currentPath.Length--; // Remove trailing "."
-                    dict[currentPath.ToString()] = jValue.Value;
+                    dict[currentPath.ToString().ToLower()] = jValue.Value;
                     break;
             }
         }
