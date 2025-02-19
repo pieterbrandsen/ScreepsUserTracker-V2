@@ -41,6 +41,7 @@ namespace UserTrackerShared.States
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
 
+
         public async void StartUpdate()
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
@@ -65,37 +66,26 @@ namespace UserTrackerShared.States
             _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
             for (long i = LastSynceTime; i < syncTime; i += 100)
             {
+                var successes = 0;
                 var mainStopwatch = Stopwatch.StartNew();
 
                 //var getDataTasks = Rooms.Select(room => room.GetRoomData(i));
                 //var getDataTaskResults = await Task.WhenAll(getDataTasks);
                 //int successes = getDataTaskResults.Count(r => r);
-                int successes = 0;
-                var semaphore = new SemaphoreSlim(1000);
-                var tasks = new List<Task>();
-                foreach (var room in Rooms)
+                await Parallel.ForEachAsync(Rooms, async (room, _) =>
                 {
-                    await semaphore.WaitAsync();
-
-                    tasks.Add(
-                        Task.Run(async () =>
+                    try
+                    {
+                        if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i))
                         {
-                            try
-                            {
-                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref successes);
-                            }
-                            catch (Exception e)
-                            {
-                                _logger.Error(e, "");
-                            }
-                            finally
-                            {
-                                semaphore.Release();
-                            }
-                        })
-                    );
-                }
-                await Task.WhenAll(tasks);
+                            Interlocked.Increment(ref successes);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.Error(e, "Error processing room data");
+                    }
+                });
                 mainStopwatch.Stop();
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
 

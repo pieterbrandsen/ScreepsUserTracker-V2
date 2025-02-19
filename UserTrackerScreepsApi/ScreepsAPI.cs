@@ -45,13 +45,7 @@ namespace UserTrackerScreepsApi
         {
             Timeout = TimeSpan.FromSeconds(30)
         };
-        private static HttpClient _filesHttpClient = new HttpClient(new HttpClientHandler
-        {
-            MaxConnectionsPerServer = 100000
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
+        private static HttpClient _filesHttpClient = new HttpClient();
         private static async Task<HttpResponseMessage> ThrottledRequest(HttpRequestMessage request)
         {
             await throttler.WaitAsync();
