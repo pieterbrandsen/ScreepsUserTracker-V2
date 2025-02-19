@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
@@ -15,14 +16,14 @@ namespace UserTrackerScreepsApi
 {
     public static class JSONConvertHelper
     {
-        public static async Task<string> ReadGzipStream(HttpContent httpContent)
+        public static async ValueTask<string> ReadGzipStreamAsync(HttpContent httpContent)
         {
-            using (Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false))
-            using (GZipStream gzipStream = new GZipStream(responseStream, CompressionMode.Decompress))
-            using (StreamReader reader = new StreamReader(gzipStream))
-            {
-                return reader.ReadToEnd();
-            }
+            await using var responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
+            await using var bufferedStream = new BufferedStream(responseStream, 8192);
+            using var gzipStream = new GZipStream(bufferedStream, CompressionMode.Decompress);
+            using var reader = new StreamReader(gzipStream);
+
+            return await reader.ReadToEndAsync().ConfigureAwait(false);
         }
         public static async Task<string> ReadStream(HttpContent httpContent)
         {
@@ -38,14 +39,15 @@ namespace UserTrackerScreepsApi
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static SemaphoreSlim throttler = new SemaphoreSlim(1);
 
-        private static HttpClient _normalHttpClient = new HttpClient(new HttpClientHandler
+        private static HttpClient _normalHttpClient = new HttpClient();
+
+        private static HttpClient _filesHttpClient = new(new SocketsHttpHandler
         {
-            MaxConnectionsPerServer = 1
-        })
-        {
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        private static HttpClient _filesHttpClient = new HttpClient();
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout = TimeSpan.FromSeconds(30),
+            MaxConnectionsPerServer = 10000,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+        });
         private static async Task<HttpResponseMessage> ThrottledRequest(HttpRequestMessage request)
         {
             await throttler.WaitAsync();
@@ -98,13 +100,21 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
                 var isHistoryRequest = path.StartsWith("/room-history");
-                var response = await (isHistoryRequest ? _filesHttpClient.SendAsync(request) : ThrottledRequest(request));
+                HttpResponseMessage response = null;
+                if (isHistoryRequest)
+                {
+                    response = await _filesHttpClient.SendAsync(request);
+                }
+                else
+                {
+                    response = await ThrottledRequest(request);
+                }
                 _logger.Information($"{path} - {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     var isGzip = response.Content.Headers.ContentEncoding.Contains("gzip");
-                    var json = isGzip ? await JSONConvertHelper.ReadGzipStream(response.Content) : await JSONConvertHelper.ReadStream(response.Content);
+                    var json = isGzip ? await JSONConvertHelper.ReadGzipStreamAsync(response.Content) : await JSONConvertHelper.ReadStream(response.Content);
                     var result = JsonConvert.DeserializeObject<T>(json);
                     return (result, response.StatusCode);
                 }
