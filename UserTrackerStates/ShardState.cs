@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks.Dataflow;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
@@ -50,18 +52,24 @@ namespace UserTrackerShared.States
             {
                 if (Time != timeResponse.Time)
                 {
-                    await StartSync(timeResponse.Time);
+                    Time = timeResponse.Time;
+                    await StartSync();
                 }
-                Time = timeResponse.Time;
             }
         }
 
-        private async Task StartSync(long time)
+        private long GetSyncTime()
+        {
+            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time - 500) / 100)) * 100);
+            return syncTime;
+        }
+
+        private async Task StartSync()
         {
             if (isSyncing || !_initialized) return;
             isSyncing = true;
 
-            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((time - 500) / 100)) * 100);
+            var syncTime = GetSyncTime();
             if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 100;
 
             _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
@@ -70,20 +78,18 @@ namespace UserTrackerShared.States
                 _successes = 0;
                 var mainStopwatch = Stopwatch.StartNew();
 
-                var tasks = new List<Task>();
-
-                foreach (var room in Rooms)
+                await Parallel.ForEachAsync(Rooms, new ParallelOptions { MaxDegreeOfParallelism = 100000 }, async (room, ct) =>
                 {
-                    tasks.Add(HandleRoomDataAsync(room, i));
-                }
-                await Task.WhenAll(tasks);
+                    if(await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
+                });
                 mainStopwatch.Stop();
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
+                var ticksBehind = GetSyncTime() - i;
 
                 await InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
-                    TicksBehind = syncTime - i,
+                    TicksBehind = ticksBehind,
                     TimeTakenMs = totalMiliseconds,
                     TotalRooms = Rooms.Count,
                     SuccessCount = _successes
@@ -91,7 +97,7 @@ namespace UserTrackerShared.States
                 try
                 {
                     var totalMicroSeconds = totalMiliseconds * 1000;
-                    var performanceLogMessage = $"timeT {totalMiliseconds}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
+                    var performanceLogMessage = $"timeT {totalMiliseconds}, ticksBehind {ticksBehind}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
                     _logger.Information(performanceLogMessage);
                     Screen.AddLog(performanceLogMessage);
                 }
@@ -105,20 +111,6 @@ namespace UserTrackerShared.States
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
             StartUpdate();
-        }
-        async Task HandleRoomDataAsync(string room, long tick)
-        {
-            try
-            {
-                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, tick))
-                {
-                    Interlocked.Increment(ref _successes); // Increment on success
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e, "Error processing room data");
-            }
         }
     }
 }
