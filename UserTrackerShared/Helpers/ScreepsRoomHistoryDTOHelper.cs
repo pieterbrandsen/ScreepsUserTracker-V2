@@ -517,19 +517,19 @@ namespace UserTrackerShared.Helpers
             if (actionLog.Repair != null)
             {
                 actionLogDTO.Repair.Count += 1;
-                actionLogDTO.Repair.Outlflow += workCount;
+                actionLogDTO.Repair.Outflow += workCount;
                 actionLogDTO.Repair.Effect += Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap.Repair * 100));
             }
             if (actionLog.Build != null)
             {
                 actionLogDTO.Build.Count += 1;
-                actionLogDTO.Build.Outlflow += workCount;
+                actionLogDTO.Build.Outflow += workCount;
                 actionLogDTO.Build.Effect += Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap.Build * 5));
             }
             if (actionLog.UpgradeController != null)
             {
                 actionLogDTO.UpgradeController.Count += 1;
-                actionLogDTO.UpgradeController.Outlflow += workCount;
+                actionLogDTO.UpgradeController.Outflow += workCount;
                 actionLogDTO.UpgradeController.Effect += Convert.ToInt64(Math.Round(workCount + intentPowerMap.UpgradeController));
             }
             #endregion
