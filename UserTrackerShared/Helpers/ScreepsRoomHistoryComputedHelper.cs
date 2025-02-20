@@ -742,8 +742,7 @@ namespace UserTrackerShared.Helpers
                     ScreepsClassUpdater.SetAllNestedPropertyValues(nuke, propertiesDict);
                     break;
                 default:
-                    Debug.WriteLine(type);
-                    throw new Exception("Unknown type");
+                    break;
             }
 
             return roomHistory;

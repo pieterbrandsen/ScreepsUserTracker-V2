@@ -7,6 +7,8 @@ namespace UserTrackerShared.Helpers
 {
     public static class RoomDataHelper
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+        
         public static async Task<bool> GetAndHandleRoomData(string shard, string name, long tick)
         {
             var roomData = await ScreepsAPI.GetHistory(shard, name, tick);
