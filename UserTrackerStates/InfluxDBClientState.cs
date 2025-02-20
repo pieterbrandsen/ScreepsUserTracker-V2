@@ -38,6 +38,20 @@ namespace UserTrackerStates
             _clientPerformance = new InfluxDBClient(host, token: token, database: "history_performance");
         }
 
+        private static PointData CreatePoint(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
+        {
+            var point = PointData.Measurement(measurement)
+                .SetTag("shard", shard)
+                .SetTag("room", room)
+                .SetField(field, value)
+                .SetField("tick", tick)
+                .SetTimestamp(timestamp);
+            if (!string.IsNullOrEmpty(username))
+            {
+                point = point.SetTag("user", username);
+            }
+            return point;
+        }
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
         {
             try
@@ -58,7 +72,6 @@ namespace UserTrackerStates
                     }
                 }
 
-                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
                 
                 var flattenedData = new Dictionary<string, object>();
                 var writer = new JTokenWriter();
@@ -68,31 +81,15 @@ namespace UserTrackerStates
                 var points = new List<PointData>();
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is double || kvp.Value is float || kvp.Value is int || kvp.Value is long)
+                    if (kvp.Value is double)
                     {
-                        var point = PointData.Measurement(ConfigSettingsState.InfluxDbServer)
-                            .SetTag("shard", shard)
-                            .SetTag("room", room)
-                            .SetField(kvp.Key, Convert.ToInt64(kvp.Value))
-                            .SetField("tick", tick)
-                            .SetTimestamp(timestamp);
-
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            point = point.SetTag("user", username);
-                        }
-                        points.Add(point);
-
-                         if (points.Count >= 100)
-                        {
-                            await _client.WritePointsAsync(points, headers:new Dictionary<string, string>(){ { "Content-Encoding", "gzip" }});
-                            points.Clear(); // Clear the batch after uploading
-                        }
+                        points.Add(CreatePoint(ConfigSettingsState.InfluxDbServer, shard, room, tick, timestamp, username, kvp.Key, kvp.Value));
                     }
                 }
 
                 if (points.Count > 0)
                 {
+                    _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")} with {points.Count} points");
                     await _client.WritePointsAsync(points, headers:new Dictionary<string, string>(){ { "Content-Encoding", "gzip" }});
                 }
             }
