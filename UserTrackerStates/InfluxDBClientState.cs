@@ -81,7 +81,7 @@ namespace UserTrackerStates
                 var points = new List<PointData>();
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is double)
+                    if (kvp.Value is long)
                     {
                         points.Add(CreatePoint(ConfigSettingsState.InfluxDbServer, shard, room, tick, timestamp, username, kvp.Key, kvp.Value));
                     }
