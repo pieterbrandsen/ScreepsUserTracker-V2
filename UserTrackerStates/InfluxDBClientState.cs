@@ -31,7 +31,7 @@ namespace UserTrackerStates
 
         public static void Init()
         {
-            string host = "http://influxdb:8181";
+            string host = "http://influxdb:8061";
             string token = ConfigSettingsState.InfluxDbToken;
             
             var client = new InfluxDBClient(host, token);
