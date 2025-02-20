@@ -68,7 +68,6 @@ namespace UserTrackerStates
             }
             if (points.Count > 0)
             {
-                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")} with {points.Count} points");
                 _writeApi.WritePoints(points, bucket:bucket, org:"screeps");
             }
         }
@@ -91,6 +90,8 @@ namespace UserTrackerStates
                         GameState.Users.Add(userId, apiUser);
                     }
                 }
+                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")}");
+
 
                 if (screepsRoomHistory.Structures.Controller != null) UploadData(shard, room, tick, timestamp, username, "history_structure_controller", screepsRoomHistory.Structures.Controller);
                 UploadData(shard, room, tick, timestamp, username, "history_structure_mineral", screepsRoomHistory.Structures.Mineral);
