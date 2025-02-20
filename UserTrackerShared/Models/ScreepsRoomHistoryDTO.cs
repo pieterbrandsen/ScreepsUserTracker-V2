@@ -143,11 +143,9 @@ namespace UserTrackerShared.Models
     public class BaseStructureDTO
     {
         public long Count { get; set; } = 0;
-        public ActionLogDTO ActionLog { get; set; } = new ActionLogDTO();
         public void Clear()
         {
             Count = 0;
-            ActionLog.Clear();
         }
     }
     #endregion

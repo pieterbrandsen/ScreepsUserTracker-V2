@@ -90,7 +90,7 @@ namespace UserTrackerStates
                 if (points.Count > 0)
                 {
                     _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")} with {points.Count} points");
-                    await _client.WritePointsAsync(points, headers:new Dictionary<string, string>(){ { "Content-Encoding", "gzip" }});
+                    await _client.WritePointsAsync(points);
                 }
             }
             catch (Exception e)
