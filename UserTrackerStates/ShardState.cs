@@ -86,7 +86,7 @@ namespace UserTrackerShared.States
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
 
-                await InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
+                InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
                     TicksBehind = ticksBehind,

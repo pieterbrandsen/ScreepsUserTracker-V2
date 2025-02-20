@@ -495,7 +495,6 @@ namespace UserTrackerShared.Models
 
             Creeps.PowerCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
         }
-
         private void ProcessStructures(ScreepsRoomHistory his)
         {
             Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures, Structures);

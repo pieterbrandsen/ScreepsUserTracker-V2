@@ -1,5 +1,6 @@
-﻿using InfluxDB3.Client;
-using InfluxDB3.Client.Write;
+﻿using InfluxDB.Client;
+using InfluxDB.Client.Api.Domain;
+using InfluxDB.Client.Writes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
@@ -26,31 +27,50 @@ namespace UserTrackerStates
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
 
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
-        private static InfluxDBClient _client;
-        private static InfluxDBClient _clientPerformance;
+        private static WriteApi _writeApi;
 
         public static void Init()
         {
             string host = "http://influxdb:8181";
             string token = ConfigSettingsState.InfluxDbToken;
-
-            _client = new InfluxDBClient(host, token: token, database: "history");
-            _clientPerformance = new InfluxDBClient(host, token: token, database: "history_performance");
+            
+            var client = new InfluxDBClient(host, token);
+            _writeApi = client.GetWriteApi();
         }
 
         private static PointData CreatePoint(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
         {
             var point = PointData.Measurement(measurement)
-                .SetTag("shard", shard)
-                .SetTag("room", room)
-                .SetField(field, value)
-                .SetField("tick", tick)
-                .SetTimestamp(timestamp);
+                .Tag("shard", shard)
+                .Tag("room", room)
+                .Field(field, value)
+                .Field("tick", tick)
+                .Timestamp(timestamp, InfluxDB.Client.Api.Domain.WritePrecision.Ms);
             if (!string.IsNullOrEmpty(username))
             {
-                point = point.SetTag("user", username);
+                point = point.Tag("user", username);
             }
             return point;
+        }
+        private static void UploadData(string shard, string room, long tick, long timestamp, string username, string bucket, object obj)
+        {
+            var flattenedData = new Dictionary<string, object>();
+            var writer = new JTokenWriter();
+            _serializer.Serialize(writer, obj);
+            FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+            var points = new List<PointData>();
+            foreach (var kvp in flattenedData)
+            {
+                if (kvp.Value is long)
+                {
+                    points.Add(CreatePoint(ConfigSettingsState.InfluxDbServer, shard, room, tick, timestamp, username, kvp.Key, kvp.Value));
+                }
+            }
+            if (points.Count > 0)
+            {
+                _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")} with {points.Count} points");
+                _writeApi.WritePoints(points, bucket:bucket, org:"screeps");
+            }
         }
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
         {
@@ -65,33 +85,47 @@ namespace UserTrackerStates
                 }
                 else if (!string.IsNullOrEmpty(userId))
                 {
-                    var apiUser = ScreepsAPI.GetUser(userId).GetAwaiter().GetResult();
+                    var apiUser = await ScreepsAPI.GetUser(userId);
                     if (apiUser != null)
                     {
                         GameState.Users.Add(userId, apiUser);
                     }
                 }
 
-                
-                var flattenedData = new Dictionary<string, object>();
-                var writer = new JTokenWriter();
-                _serializer.Serialize(writer, screepsRoomHistory);
-                FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+                if (screepsRoomHistory.Structures.Controller != null) UploadData(shard, room, tick, timestamp, username, "history_structure_controller", screepsRoomHistory.Structures.Controller);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_mineral", screepsRoomHistory.Structures.Mineral);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_deposit", screepsRoomHistory.Structures.Deposit);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_wall", screepsRoomHistory.Structures.Wall);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_constructionsite", screepsRoomHistory.Structures.ConstructionSite);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_container", screepsRoomHistory.Structures.Container);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_extension", screepsRoomHistory.Structures.Extension);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_extractor", screepsRoomHistory.Structures.Extractor);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_factory", screepsRoomHistory.Structures.Factory);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_invadercore", screepsRoomHistory.Structures.InvaderCore);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_keeperlair", screepsRoomHistory.Structures.KeeperLair);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_lab", screepsRoomHistory.Structures.Lab);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_link", screepsRoomHistory.Structures.Link);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_observer", screepsRoomHistory.Structures.Observer);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_portal", screepsRoomHistory.Structures.Portal);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_powerbank", screepsRoomHistory.Structures.PowerBank);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_powerspawn", screepsRoomHistory.Structures.PowerSpawn);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_rampart", screepsRoomHistory.Structures.Rampart);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_road", screepsRoomHistory.Structures.Road);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_ruin", screepsRoomHistory.Structures.Ruin);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_source", screepsRoomHistory.Structures.Source);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_spawn", screepsRoomHistory.Structures.Spawn);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_storage", screepsRoomHistory.Structures.Storage);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_terminal", screepsRoomHistory.Structures.Terminal);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_tombstone", screepsRoomHistory.Structures.Tombstone);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_nuker", screepsRoomHistory.Structures.Nuker);
+                UploadData(shard, room, tick, timestamp, username, "history_structure_nuke", screepsRoomHistory.Structures.Nuke);
 
-                var points = new List<PointData>();
-                foreach (var kvp in flattenedData)
-                {
-                    if (kvp.Value is long)
-                    {
-                        points.Add(CreatePoint(ConfigSettingsState.InfluxDbServer, shard, room, tick, timestamp, username, kvp.Key, kvp.Value));
-                    }
-                }
+                UploadData(shard, room, tick, timestamp, username, "history_creep_owned", screepsRoomHistory.Creeps.OwnedCreeps);
+                UploadData(shard, room, tick, timestamp, username, "history_creep_enemy", screepsRoomHistory.Creeps.EnemyCreeps);
+                UploadData(shard, room, tick, timestamp, username, "history_creep_other", screepsRoomHistory.Creeps.OtherCreeps);
+                UploadData(shard, room, tick, timestamp, username, "history_creep_power", screepsRoomHistory.Creeps.PowerCreeps);
 
-                if (points.Count > 0)
-                {
-                    _logger.Information($"Trying to upload {shard}/{room}/{tick}{(!string.IsNullOrEmpty(username) ? $"from {username}" : "")} with {points.Count} points");
-                    await _client.WritePointsAsync(points);
-                }
+                UploadData(shard, room, tick, timestamp, username, "history_groundresource", screepsRoomHistory.GroundResources);
             }
             catch (Exception e)
             {
@@ -99,21 +133,21 @@ namespace UserTrackerStates
             }
         }
 
-        public static async Task WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
         {
             try
             {
                 var point = PointData
                             .Measurement(ConfigSettingsState.InfluxDbServer)
-                            .SetTag("shard", performanceClassDTO.Shard)
-                            .SetField("TicksBehind", performanceClassDTO.TicksBehind)
-                            .SetField("TimeTakenMs", performanceClassDTO.TimeTakenMs)
-                            .SetField("TotalRooms", performanceClassDTO.TotalRooms)
-                            .SetField("SuccessCount", performanceClassDTO.SuccessCount)
-                            .SetField("FailedCount", performanceClassDTO.FailedCount)
-                            .SetTimestamp(DateTime.UtcNow);
+                            .Tag("shard", performanceClassDTO.Shard)
+                            .Field("TicksBehind", performanceClassDTO.TicksBehind)
+                            .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
+                            .Field("TotalRooms", performanceClassDTO.TotalRooms)
+                            .Field("SuccessCount", performanceClassDTO.SuccessCount)
+                            .Field("FailedCount", performanceClassDTO.FailedCount)
+                            .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
-                await _clientPerformance.WritePointAsync(point);
+                _writeApi.WritePoint(point, bucket:"history_performance",org:"screeps");
             }
             catch (Exception e)
             {
