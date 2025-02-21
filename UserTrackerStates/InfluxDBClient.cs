@@ -89,8 +89,7 @@ namespace UserTrackerStates
 
         // A pool of worker tasks that will process the channel.
         private static List<Task> _workerTasks;
-        private const int BatchSize = 10000; // Adjust batch size as needed.
-        private const int WorkerCount = 8;   // Number of concurrent worker tasks; tune per hardware.
+        private const int WorkerCount = 32;   // Number of concurrent worker tasks; tune per hardware.
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
@@ -141,6 +140,13 @@ namespace UserTrackerStates
             _logger.Information("Worker tasks started.");
         }
 
+        public static void AddPoint(string bucket, PointData point)
+        {
+            // Increment pending counter when adding a new point.
+            Interlocked.Increment(ref _pendingPointCount);
+            _channel.Writer.TryWrite((bucket, point));
+        }
+
         public static void UploadData(string shard, string room, long tick, long timestamp, string username, string bucket, object obj)
         {
             try
@@ -180,7 +186,7 @@ namespace UserTrackerStates
                     continue;
 
                 // Read items from the channel up to the batch size.
-                while (_channel.Reader.TryRead(out var item) && batchCount < BatchSize)
+                while (_channel.Reader.TryRead(out var item))
                 {
                     if (!batchDict.ContainsKey(item.bucket))
                         batchDict[item.bucket] = new List<PointData>();
@@ -313,7 +319,7 @@ namespace UserTrackerStates
                             .Field("FailedCount", performanceClassDTO.FailedCount)
                             .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
-                // InfluxDBClientWriter.AddPoint("history_performance", point);
+                InfluxDBClientWriter.AddPoint("history_performance", point);
             }
             catch (Exception e)
             {
