@@ -5,7 +5,7 @@ using UserTrackerStates;
 
 ConfigSettingsState.Init();
 Screen.Init();
-InfluxDBClientState.Init();
+InfluxDBClientWriter.Init();
 await GameState.InitAsync();
 
 GC.SuppressFinalize(typeof(object));
