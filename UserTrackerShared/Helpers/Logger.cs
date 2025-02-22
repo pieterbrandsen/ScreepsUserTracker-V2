@@ -33,7 +33,8 @@ namespace UserTrackerShared.Helpers
         ScreepsAPI,
         States,
         PullPerformance,
-        InfluxDB
+        InfluxDB,
+        GraphiteDB
     }
 
 }
