@@ -157,7 +157,7 @@ namespace UserTrackerStates.DBClients
                 {
                     if (kvp.Value is long || kvp.Value is int)
                     {
-                        _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
+                        _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
                 Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
