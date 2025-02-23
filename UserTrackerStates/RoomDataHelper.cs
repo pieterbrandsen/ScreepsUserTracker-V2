@@ -40,15 +40,12 @@ namespace UserTrackerShared.Helpers
                             _logger.Error(e, $"Error processing tick {tickNumber} for room {name}");
                         }
                         
-                        if (ConfigSettingsState.InfluxDbEnabled)
-                        {
-                            roomHistoryDTO.Update(roomHistory);
-                            await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
-                        }
+                        roomHistoryDTO.Update(roomHistory);
                     }
                 }
             }
 
+            await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
             if (ConfigSettingsState.WriteHistoryFiles) FileWriterManager.GenerateHistoryFile(roomData);
             return true;
         }
