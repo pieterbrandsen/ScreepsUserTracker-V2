@@ -133,7 +133,7 @@ namespace UserTrackerStates.DBClients
 
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is long)
+                    if (kvp.Value is long || kvp.Value is int)
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
@@ -158,11 +158,10 @@ namespace UserTrackerStates.DBClients
 
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is long)
+                    if (kvp.Value is long || kvp.Value is int)
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
-                        _client.AddMetric($"{prefix}{shard}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
             }
