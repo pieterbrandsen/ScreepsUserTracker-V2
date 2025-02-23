@@ -135,11 +135,11 @@ namespace UserTrackerStates.DBClients
                 {
                     if (kvp.Value is long || kvp.Value is int)
                     {
-                        // Increment pending counter when adding a new point.
-                        Interlocked.Increment(ref _pendingPointCount);
+                        Interlocked.Decrement(ref _pendingPointCount);
                         _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
+                Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
             catch (Exception ex)
             {
