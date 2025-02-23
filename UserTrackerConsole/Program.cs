@@ -5,7 +5,7 @@ using UserTrackerStates.DBClients;
 
 ConfigSettingsState.Init();
 Screen.Init();
-GraphiteDBClientWriter.Init();
+DBClient.Init();
 await GameState.InitAsync();
 
 GC.SuppressFinalize(typeof(object));
