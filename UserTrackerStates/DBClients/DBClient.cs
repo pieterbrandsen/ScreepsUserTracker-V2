@@ -26,7 +26,7 @@ namespace UserTrackerStates.DBClients
             }
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
-                await InfluxDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+                await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
             }
         }
 
@@ -38,7 +38,7 @@ namespace UserTrackerStates.DBClients
             }
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
-                InfluxDBClientState.WritePerformanceData(performanceClassDTO);
+                GraphiteDBClientState.WritePerformanceData(performanceClassDTO);
             }
         }
     }
