@@ -90,7 +90,6 @@ namespace UserTrackerStates.DBClients
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
-        private static long _pendingPointCount = 0;
 
         public static void Init()
         {
@@ -135,11 +134,9 @@ namespace UserTrackerStates.DBClients
                 {
                     if (kvp.Value is long || kvp.Value is int)
                     {
-                        Interlocked.Decrement(ref _pendingPointCount);
                         _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
-                Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
             catch (Exception ex)
             {
@@ -160,10 +157,10 @@ namespace UserTrackerStates.DBClients
                 {
                     if (kvp.Value is long || kvp.Value is int)
                     {
-                        // Increment pending counter when adding a new point.
-                        Interlocked.Increment(ref _pendingPointCount);
+                        _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
+                Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
             catch (Exception ex)
             {
@@ -177,8 +174,7 @@ namespace UserTrackerStates.DBClients
             {
                 await Task.Delay(TimeSpan.FromSeconds(10));
                 var flushed = Interlocked.Exchange(ref _flushedPointCount, 0);
-                var pending = Interlocked.Read(ref _pendingPointCount);
-                _logger.Information("Flushed {Flushed} points in the last 10 seconds. Pending points: {Pending}", flushed, pending);
+                _logger.Information("Flushed {Flushed} points in the last 10 seconds", flushed);
             }
         }
     }
