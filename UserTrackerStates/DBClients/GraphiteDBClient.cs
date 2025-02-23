@@ -1,5 +1,4 @@
-﻿using InfluxDB.Client.Writes;
-using JustEat.StatsD;
+﻿using ahd.Graphite;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
@@ -17,8 +16,8 @@ namespace UserTrackerStates.DBClients
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
         private static bool _isInitialized = false;
-        private static StatsDPublisher _client = null;
-        private static Channel<(string key, long value)> _channel;
+        private static CarbonClient _client = null;
+        private static Channel<Datapoint> _channel;
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
@@ -34,8 +33,7 @@ namespace UserTrackerStates.DBClients
 
             _logger.Information("Initializing GraphiteDB client...");
 
-            var statsDConfig = new StatsDConfiguration { Host = ConfigSettingsState.GraphiteDbHost };
-            _client = new StatsDPublisher(statsDConfig);
+            _client = new CarbonClient(ConfigSettingsState.GraphiteDbHost);
 
             try
             {
@@ -50,7 +48,7 @@ namespace UserTrackerStates.DBClients
 
 
             // Create an unbounded channel for point data.
-            _channel = Channel.CreateUnbounded<(string key, long value)>(new UnboundedChannelOptions
+            _channel = Channel.CreateUnbounded<Datapoint>(new UnboundedChannelOptions
             {
                 SingleReader = false,
                 SingleWriter = false
@@ -63,7 +61,7 @@ namespace UserTrackerStates.DBClients
             _logger.Information("Worker tasks started.");
         }
 
-        public static void UploadData(string prefix, object obj)
+        public static void UploadData(string prefix, object obj, DateTime timestamp)
         {
             try
             {
@@ -78,7 +76,7 @@ namespace UserTrackerStates.DBClients
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
-                        _channel.Writer.TryWrite(($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value)));
+                        _channel.Writer.TryWrite(new Datapoint($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp));
                     }
                 }
             }
@@ -103,7 +101,7 @@ namespace UserTrackerStates.DBClients
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
-                        _channel.Writer.TryWrite(($"{prefix}{shard}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value)));
+                        _channel.Writer.TryWrite(new($"{prefix}{shard}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime));
                     }
                 }
             }
@@ -116,7 +114,7 @@ namespace UserTrackerStates.DBClients
         private static async Task WorkerLoop()
         {
             // Create a temporary dictionary to group points per bucket.
-            var batchDict = new Dictionary<string, long>();
+            var datapointList = new List<Datapoint>();
             int batchCount = 0;
 
             // Wait for the first item in the batch.
@@ -126,7 +124,7 @@ namespace UserTrackerStates.DBClients
             // Read items from the channel up to the batch size.
             while (_channel.Reader.TryRead(out var item))
             {
-                batchDict.TryAdd(item.key,item.value);
+                datapointList.Add(item);
                 batchCount++;
 
                 // Decrement pending counter for each item read.
@@ -134,19 +132,19 @@ namespace UserTrackerStates.DBClients
             }
 
             // Process each bucket's batch.
-            Interlocked.Add(ref _flushedPointCount, batchDict.Count);
-            foreach (var kvp in batchDict)
+            Interlocked.Add(ref _flushedPointCount, datapointList.Count);
+            try
             {
-                try
+                await _client.SendAsync(datapointList);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error writing batch to Graphite. Re-enqueuing points.");
+                // On failure, re-enqueue each point and update the pending counter.
+                Interlocked.Increment(ref _pendingPointCount);
+                foreach (var kvp in datapointList)
                 {
-                    //await _client.Gauge(kvp.Key, kvp.Value);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error(ex, "Error writing batch to InfluxDB bucket {Bucket}. Re-enqueuing points.", kvp.Key);
-                    // On failure, re-enqueue each point and update the pending counter.
-                    Interlocked.Increment(ref _pendingPointCount);
-                    _channel.Writer.TryWrite((kvp.Key, kvp.Value));
+                    _channel.Writer.TryWrite(kvp);
                 }
             }
         }
@@ -196,7 +194,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"historyPerformance.{ConfigSettingsState.ServerName}.", performanceClassDTO);
+                GraphiteDBClientWriter.UploadData($"historyPerformance.{ConfigSettingsState.ServerName}.", performanceClassDTO, DateTime.Now);
             }
             catch (Exception e)
             {
