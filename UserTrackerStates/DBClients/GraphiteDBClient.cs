@@ -102,7 +102,7 @@ namespace UserTrackerStates.DBClients
 
             _logger.Information("Initializing GraphiteDB client...");
 
-            _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, 2006);
+            _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, ConfigSettingsState.GraphiteDbPort);
 
             try
             {

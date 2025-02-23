@@ -19,6 +19,7 @@ namespace UserTrackerShared.Helpers
 
         public static bool GraphiteDbEnabled { get; set; }
         public static string GraphiteDbHost { get; set; }
+        public static int GraphiteDbPort { get; set; }
 
 
         public static bool GetAllUsers { get; set; }
@@ -41,6 +42,7 @@ namespace UserTrackerShared.Helpers
 
             GraphiteDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["GRAPHITE_ENABLED"]);
             GraphiteDbHost = ConfigurationManager.AppSettings["GRAPHITE_HOST"] ?? "";
+            GraphiteDbPort = Convert.ToInt32(ConfigurationManager.AppSettings["GRAPHITE_PORT"] ?? "");
 
             GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
             LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);
