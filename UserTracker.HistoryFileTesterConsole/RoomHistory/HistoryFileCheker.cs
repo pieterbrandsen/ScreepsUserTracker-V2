@@ -5,7 +5,7 @@ using System.Buffers;
 using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
-using UserTrackerStates;
+using UserTrackerStates.DBClients;
 
 namespace UserTracker.Tests.RoomHistory
 {

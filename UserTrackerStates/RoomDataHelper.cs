@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models;
-using UserTrackerStates;
+using UserTrackerStates.DBClients;
 
 namespace UserTrackerShared.Helpers
 {
@@ -43,7 +43,7 @@ namespace UserTrackerShared.Helpers
                         if (ConfigSettingsState.InfluxDbEnabled)
                         {
                             roomHistoryDTO.Update(roomHistory);
-                            await InfluxDBClientState.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                            await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                         }
                     }
                 }

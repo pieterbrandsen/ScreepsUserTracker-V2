@@ -1,7 +1,7 @@
 ﻿using UserTrackerShared;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.States;
-using UserTrackerStates;
+using UserTrackerStates.DBClients;
 
 ConfigSettingsState.Init();
 Screen.Init();

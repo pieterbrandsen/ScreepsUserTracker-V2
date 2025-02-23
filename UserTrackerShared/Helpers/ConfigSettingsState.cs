@@ -11,10 +11,14 @@ namespace UserTrackerShared.Helpers
     {
         public static bool RunningHistoryTested { get; set; }
         
+        public static string ServerName { get; set; }
         
         public static bool InfluxDbEnabled { get; set; }
+        public static string InfluxDbHost { get; set; }
         public static string InfluxDbToken { get; set; }
-        public static string InfluxDbServer { get; set; }
+
+        public static bool GraphiteDbEnabled { get; set; }
+        public static string GraphiteDbHost { get; set; }
 
 
         public static bool GetAllUsers { get; set; }
@@ -29,11 +33,14 @@ namespace UserTrackerShared.Helpers
         public static void Init() {
             RunningHistoryTested = Convert.ToBoolean(ConfigurationManager.AppSettings["RUNNING_HISTORY_TESTED"]);
 
+            ServerName = ConfigurationManager.AppSettings["SERVER_NAME"] ?? "";
 
             InfluxDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["INFLUXDB_ENABLED"]);
+            InfluxDbHost = ConfigurationManager.AppSettings["INFLUXDB_HOST"] ?? "";
             InfluxDbToken = ConfigurationManager.AppSettings["INFLUXDB_TOKEN"] ?? "";
-            InfluxDbServer = ConfigurationManager.AppSettings["INFLUXDB_SERVER"] ?? "";
 
+            GraphiteDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["GRAPHITE_ENABLED"]);
+            GraphiteDbHost = ConfigurationManager.AppSettings["GRAPHITE_HOST"] ?? "";
 
             GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
             LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);

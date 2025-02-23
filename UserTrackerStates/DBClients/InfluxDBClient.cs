@@ -13,7 +13,7 @@ using UserTrackerShared.Models;
 using UserTrackerShared.States;
 
 
-namespace UserTrackerStates
+namespace UserTrackerStates.DBClients
 {
     public class PerformanceClassDTO
     {
@@ -34,7 +34,7 @@ namespace UserTrackerStates
                 .Tag("room", room)
                 .Field(field, value)
                 .Field("tick", tick)
-                .Timestamp(timestamp, InfluxDB.Client.Api.Domain.WritePrecision.Ms);
+                .Timestamp(timestamp, WritePrecision.Ms);
             if (!string.IsNullOrEmpty(username))
             {
                 point = point.Tag("user", username);
@@ -104,7 +104,7 @@ namespace UserTrackerStates
             }
 
             _logger.Information("Initializing InfluxDB client...");
-            string host = "http://influxdb:8086";
+            string host = ConfigSettingsState.InfluxDbHost;
             string token = ConfigSettingsState.InfluxDbToken;
 
             try
@@ -160,7 +160,7 @@ namespace UserTrackerStates
                 {
                     if (kvp.Value is long)
                     {
-                        var point = InfluxDBPointHelper.CreatePoint(ConfigSettingsState.InfluxDbServer, shard, room, tick, timestamp, username, kvp.Key, kvp.Value);
+                        var point = InfluxDBPointHelper.CreatePoint(ConfigSettingsState.ServerName, shard, room, tick, timestamp, username, kvp.Key, kvp.Value);
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
                         _channel.Writer.TryWrite((bucket, point));
@@ -310,7 +310,7 @@ namespace UserTrackerStates
             try
             {
                 var point = PointData
-                            .Measurement(ConfigSettingsState.InfluxDbServer)
+                            .Measurement(ConfigSettingsState.ServerName)
                             .Tag("shard", performanceClassDTO.Shard)
                             .Field("TicksBehind", performanceClassDTO.TicksBehind)
                             .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
@@ -326,6 +326,5 @@ namespace UserTrackerStates
                 _logger.Error(e, $"Error uploading performance data");
             }
         }
-
     }
 }

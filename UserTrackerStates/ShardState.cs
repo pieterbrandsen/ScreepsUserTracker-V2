@@ -4,7 +4,7 @@ using System.Threading.Tasks.Dataflow;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
-using UserTrackerStates;
+using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
@@ -86,7 +86,7 @@ namespace UserTrackerShared.States
                 var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
 
-                InfluxDBClientState.WritePerformanceData(new PerformanceClassDTO
+                DBClient.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
                     TicksBehind = ticksBehind,
