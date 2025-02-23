@@ -1,8 +1,7 @@
-﻿using ahd.Graphite;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net.Sockets;
 using System.Text;
-using System.Threading.Channels;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
@@ -11,13 +10,83 @@ using UserTrackerShared.States;
 
 namespace UserTrackerStates.DBClients
 {
+    public class GraphiteBatchClient : IDisposable
+    {
+        private readonly string _host;
+        private readonly int _port;
+        private readonly int _batchSize;
+        private readonly List<string> _metricsBuffer;
+
+        public GraphiteBatchClient(string host, int port, int batchSize = 1000)
+        {
+            _host = host;
+            _port = port;
+            _batchSize = batchSize;
+            _metricsBuffer = new List<string>();
+        }
+
+        /// <summary>
+        /// Adds a metric to the buffer. If the buffer reaches the batch size, it flushes automatically.
+        /// </summary>
+        /// <param name="metricPath">Metric path (dot-separated string).</param>
+        /// <param name="value">Metric value.</param>
+        /// <param name="timestamp">Unix timestamp.</param>
+        public void AddMetric(string metricPath, double value, long timestamp)
+        {
+            string metricLine = $"{metricPath} {value} {timestamp}\n";
+            _metricsBuffer.Add(metricLine);
+
+            if (_metricsBuffer.Count >= _batchSize)
+            {
+                Flush();
+            }
+        }
+
+        /// <summary>
+        /// Sends all buffered metrics in one batch to the configured host/port.
+        /// </summary>
+        public void Flush()
+        {
+            if (_metricsBuffer.Count == 0)
+                return;
+
+            // Combine all metrics into one payload string.
+            string payload = string.Join("", _metricsBuffer);
+
+            try
+            {
+                using (TcpClient client = new TcpClient(_host, _port))
+                using (NetworkStream stream = client.GetStream())
+                {
+                    byte[] data = Encoding.ASCII.GetBytes(payload);
+                    stream.Write(data, 0, data.Length);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions as needed (logging, retry logic, etc.)
+                Console.WriteLine($"Error sending metrics: {ex.Message}");
+            }
+            finally
+            {
+                _metricsBuffer.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Dispose method to flush any remaining metrics.
+        /// </summary>
+        public void Dispose()
+        {
+            Flush();
+        }
+    }
     public static class GraphiteDBClientWriter
     {
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
         private static bool _isInitialized = false;
-        private static CarbonClient _client = null;
-        private static Channel<Datapoint> _channel;
+        private static GraphiteBatchClient _client;
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
@@ -33,7 +102,7 @@ namespace UserTrackerStates.DBClients
 
             _logger.Information("Initializing GraphiteDB client...");
 
-            _client = new CarbonClient(ConfigSettingsState.GraphiteDbHost);
+            _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, 2006);
 
             try
             {
@@ -47,21 +116,13 @@ namespace UserTrackerStates.DBClients
             }
 
 
-            // Create an unbounded channel for point data.
-            _channel = Channel.CreateUnbounded<Datapoint>(new UnboundedChannelOptions
-            {
-                SingleReader = false,
-                SingleWriter = false
-            });
-
             // Start a background task to log status.
-            Task.Run(WorkerLoop);
             Task.Run(LogStatusPeriodically);
 
             _logger.Information("Worker tasks started.");
         }
 
-        public static void UploadData(string prefix, object obj, DateTime timestamp)
+        public static void UploadData(string prefix, object obj, long timestamp)
         {
             try
             {
@@ -76,7 +137,7 @@ namespace UserTrackerStates.DBClients
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
-                        _channel.Writer.TryWrite(new Datapoint($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp));
+                        _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
             }
@@ -101,51 +162,13 @@ namespace UserTrackerStates.DBClients
                     {
                         // Increment pending counter when adding a new point.
                         Interlocked.Increment(ref _pendingPointCount);
-                        _channel.Writer.TryWrite(new($"{prefix}{shard}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), DateTimeOffset.FromUnixTimeMilliseconds(timestamp).DateTime));
+                        _client.AddMetric($"{prefix}{shard}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error in UploadData");
-            }
-        }
-
-        private static async Task WorkerLoop()
-        {
-            // Create a temporary dictionary to group points per bucket.
-            var datapointList = new List<Datapoint>();
-            int batchCount = 0;
-
-            // Wait for the first item in the batch.
-            if (!await _channel.Reader.WaitToReadAsync())
-                return;
-
-            // Read items from the channel up to the batch size.
-            while (_channel.Reader.TryRead(out var item))
-            {
-                datapointList.Add(item);
-                batchCount++;
-
-                // Decrement pending counter for each item read.
-                Interlocked.Decrement(ref _pendingPointCount);
-            }
-
-            // Process each bucket's batch.
-            Interlocked.Add(ref _flushedPointCount, datapointList.Count);
-            try
-            {
-                await _client.SendAsync(datapointList);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error writing batch to Graphite. Re-enqueuing points.");
-                // On failure, re-enqueue each point and update the pending counter.
-                Interlocked.Increment(ref _pendingPointCount);
-                foreach (var kvp in datapointList)
-                {
-                    _channel.Writer.TryWrite(kvp);
-                }
             }
         }
 
@@ -194,7 +217,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"historyPerformance.{ConfigSettingsState.ServerName}.", performanceClassDTO, DateTime.Now);
+                GraphiteDBClientWriter.UploadData($"historyPerformance.{ConfigSettingsState.ServerName}.", performanceClassDTO, DateTime.Now.Ticks);
             }
             catch (Exception e)
             {
