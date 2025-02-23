@@ -174,10 +174,13 @@ namespace UserTrackerStates.DBClients
 
         private static async Task LogStatusPeriodically()
         {
-            await Task.Delay(TimeSpan.FromSeconds(10));
-            var flushed = Interlocked.Exchange(ref _flushedPointCount, 0);
-            var pending = Interlocked.Read(ref _pendingPointCount);
-            _logger.Information("Flushed {Flushed} points in the last 10 seconds. Pending points: {Pending}", flushed, pending);
+            while (true)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                var flushed = Interlocked.Exchange(ref _flushedPointCount, 0);
+                var pending = Interlocked.Read(ref _pendingPointCount);
+                _logger.Information("Flushed {Flushed} points in the last 10 seconds. Pending points: {Pending}", flushed, pending);
+            }
         }
     }
 
