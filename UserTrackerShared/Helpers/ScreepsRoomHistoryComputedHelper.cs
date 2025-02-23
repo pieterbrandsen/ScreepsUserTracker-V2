@@ -902,9 +902,9 @@ namespace UserTrackerShared.Helpers
                     roomHistory.Structures.Nukes[key] = nuke;
                     break;
                 default:
-                    Debug.WriteLine(type);
-                    throw new Exception("Unknown type");
+                    break;
             }
+
 
             return roomHistory;
         }
