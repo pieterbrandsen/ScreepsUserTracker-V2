@@ -215,7 +215,7 @@ namespace UserTrackerShared.Helpers
             }
             foreach (var spawn in structures.Spawns)
             {
-                structuresDTO.Spawn.Count += 1 / ConfigSettingsState.TicksInFile
+                structuresDTO.Spawn.Count += 1 / ConfigSettingsState.TicksInFile;
             }
             foreach (var storage in structures.Storages)
             {
