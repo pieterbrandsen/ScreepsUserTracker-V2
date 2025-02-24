@@ -47,6 +47,7 @@ namespace UserTrackerShared.Helpers
                 }
 
                 await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateHistoryFile(roomData);
                 return true;
             }
             catch (Exception e)
