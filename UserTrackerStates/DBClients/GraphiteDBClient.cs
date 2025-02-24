@@ -199,7 +199,7 @@ namespace UserTrackerStates.DBClients
                     var apiUser = await ScreepsAPI.GetUser(userId);
                     if (apiUser != null)
                     {
-                        GameState.Users.Add(userId, apiUser);
+                        GameState.Users.TryAdd(userId, apiUser);
                     }
                 }
 
