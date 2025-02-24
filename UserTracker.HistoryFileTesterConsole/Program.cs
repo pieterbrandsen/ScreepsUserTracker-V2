@@ -116,15 +116,14 @@ onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
 onSave.Enabled = true;
 
-
 var stopwatch = new Stopwatch();
 stopwatch.Start();
 
-async void Execute(string file)
+Task Execute(string file)
 {
     try
     {
-        var changesProcessed = await HistoryFileChecker.ParseFile(file);
+        var changesProcessed = HistoryFileChecker.ParseFile(file);
         totalChangesToBeWritten.Add(changesProcessed);
         linesToBeWrittenGood.Add(file);
     }
@@ -137,6 +136,8 @@ async void Execute(string file)
         linesToBeWrittenBad.Add(file);
         linesToBeWrittenBadErrors.Add(e.Message + Environment.NewLine + e.StackTrace);
     }
+
+    return Task.CompletedTask;
 }
 
 switch (HistoryConfigSettingsState.LoopStrategy)
@@ -160,7 +161,7 @@ switch (HistoryConfigSettingsState.LoopStrategy)
         //Parallel.ForEach(files, Execute);
         break;
     case "semaphore":
-        var semaphore = new SemaphoreSlim(10000);
+        var semaphore = new SemaphoreSlim(Environment.ProcessorCount);
         var tasks = new List<Task>();
         foreach (var file in files)
         {
@@ -180,6 +181,7 @@ switch (HistoryConfigSettingsState.LoopStrategy)
                 })
             );
         }
+        Console.WriteLine($"Waiting for tasks to finish, started {tasks.Count} tasks");
         await Task.WhenAll(tasks);
         break;
     default:

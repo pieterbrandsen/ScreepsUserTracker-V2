@@ -71,7 +71,7 @@ namespace UserTracker.Tests.RoomHistory
             return changesProcessed;
         }
 
-        private static async Task<long> ProcessHistory(JObject roomData, string filePath)
+        private static long ProcessHistory(JObject roomData, string filePath)
         {
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
@@ -102,15 +102,14 @@ namespace UserTracker.Tests.RoomHistory
                 }
             }
 
-            await DBClient.WriteScreepsRoomHistory("shard", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
             return changesProcessed;
         }
 
-        public static async Task<long> ParseFile(string filePath)
+        public static long ParseFile(string filePath)
         {
             using var reader = new StreamReader(filePath);
             using var jsonReader = new JsonTextReader(reader);
-            return await ProcessHistory(JObject.Load(jsonReader), filePath);
+            return ProcessHistory(JObject.Load(jsonReader), filePath);
         }
     }
 }
