@@ -53,8 +53,10 @@ var files = Directory.EnumerateFiles(HistoryFilesLocations)
     || (HistoryConfigSettingsState.IncludeUnknownFiles && !goodFilesText.Contains(file) && !badFilesText.Contains(file)))
     .ToList();
 
+var filesCount = files.Count;
 
-Console.WriteLine($"Found {files.Count} files to parse, started at {DateTime.Now.ToLongTimeString()}");
+
+Console.WriteLine($"Found {filesCount} files to parse, started at {DateTime.Now.ToLongTimeString()}");
 
 bool isWriting = false;
 var totalChangesToBeWritten = new ConcurrentBag<long>();
@@ -107,7 +109,7 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
     writeStopwatch.Stop();
     Console.WriteLine();
     Console.WriteLine($"Write times: Good {goodWriteTime.TotalMilliseconds} ms, Bad {badWriteTime.TotalMilliseconds - goodWriteTime.TotalMilliseconds} ms, Bad Errors {badErrorWriteTime.TotalMilliseconds - badWriteTime.TotalMilliseconds} ms, TotalLines {totalWriteTime.TotalMilliseconds - badErrorWriteTime.TotalMilliseconds} ms at {DateTime.Now.ToLongTimeString()}");
-    Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files");
+    Console.WriteLine($"Changes processed {totalChanges - originalTotalChanges} ({changesProcessedThisSync}) in {fileProcessedCount} ({filesChangesProcessedThisSync}) files (out of {filesCount} files)");
     isWriting = false;
 }
 
