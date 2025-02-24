@@ -484,7 +484,7 @@ namespace UserTrackerShared.Models
                     currentAmount = existingGroundResource;
                 }
 
-                GroundResources[groundResourceObj.ResourceType] += (currentAmount + toBeAddedAmount) / ConfigSettingsState.TicksInFile;
+                GroundResources[groundResourceObj.ResourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
             }
         }
         private void ProcessCreeps(ScreepsRoomHistory his)

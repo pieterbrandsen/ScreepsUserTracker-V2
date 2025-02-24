@@ -78,7 +78,7 @@ namespace UserTrackerShared.States
                 var mainStopwatch = Stopwatch.StartNew();
                 var semaphore = new SemaphoreSlim(Rooms.Count);
                 var tasks = new List<Task>();
-                foreach (var file in files)
+                foreach (var room in Rooms)
                 {
                     await semaphore.WaitAsync();
                     tasks.Add(

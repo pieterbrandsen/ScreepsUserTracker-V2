@@ -4,16 +4,17 @@ using System.Diagnostics;
 using System.Timers;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared.Helpers;
+using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
 ConfigSettingsState.Init();
 HistoryConfigSettingsState.Init();
 //await GameState.InitAsync();
-//InfluxDBClientState.Init();
+DBClient.Init();
 
 
-string HistoryFilesLocations = @$"{HistoryConfigSettingsState.HistoryFilesLocation}";
-string BasePath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects";
+string BasePath = HistoryConfigSettingsState.HistoryBasePath;
+string HistoryFilesLocations = @$"{BasePath}\History";
 string BadFilesPath = @$"{BasePath}\bad.txt";
 string TotalChangesTextPath = @$"{BasePath}\totalChanges.txt";
 string BadFilesErrorsPath = @$"{BasePath}\badErrors.txt";
@@ -47,9 +48,9 @@ var files = Directory.EnumerateFiles(HistoryFilesLocations)
         .SelectMany(subdir => Directory.EnumerateFiles(subdir)))
     .OrderBy(File.GetCreationTimeUtc)
     .Where(file =>
-    goodFilesText.Contains(file) == HistoryConfigSettingsState.InluceGoodFiles
-    || badFilesText.Contains(file) == HistoryConfigSettingsState.IncludeBadFiles
-    || (goodFilesText.Contains(file) && badFilesText.Contains(file)) != HistoryConfigSettingsState.IncludeUnknownFiles)
+    (HistoryConfigSettingsState.InluceGoodFiles && goodFilesText.Contains(file))
+    || (HistoryConfigSettingsState.IncludeBadFiles && badFilesText.Contains(file))
+    || (HistoryConfigSettingsState.IncludeUnknownFiles && !goodFilesText.Contains(file) && !badFilesText.Contains(file)))
     .ToList();
 
 
@@ -110,7 +111,7 @@ async void OnSaveTimer(Object? source, ElapsedEventArgs e)
     isWriting = false;
 }
 
-Timer? onSave = new Timer(10 * 1000);
+Timer? onSave = new Timer(60 * 1000);
 onSave.Elapsed += OnSaveTimer;
 onSave.AutoReset = true;
 onSave.Enabled = true;
@@ -119,13 +120,13 @@ onSave.Enabled = true;
 var stopwatch = new Stopwatch();
 stopwatch.Start();
 
-void Execute(string file)
+async void Execute(string file)
 {
     try
     {
-        var changesProcessed = HistoryFileChecker.ParseFile(file);
+        var changesProcessed = await HistoryFileChecker.ParseFile(file);
         totalChangesToBeWritten.Add(changesProcessed);
-        //linesToBeWrittenGood.Add(file);
+        linesToBeWrittenGood.Add(file);
     }
     catch (JsonReaderException e)
     {
@@ -159,7 +160,7 @@ switch (HistoryConfigSettingsState.LoopStrategy)
         //Parallel.ForEach(files, Execute);
         break;
     case "semaphore":
-        var semaphore = new SemaphoreSlim(1000);
+        var semaphore = new SemaphoreSlim(10000);
         var tasks = new List<Task>();
         foreach (var file in files)
         {

@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Buffers;
+using System.Threading.Tasks;
 using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
@@ -70,7 +71,7 @@ namespace UserTracker.Tests.RoomHistory
             return changesProcessed;
         }
 
-        private static long ProcessHistory(JObject roomData, string filePath)
+        private static async Task<long> ProcessHistory(JObject roomData, string filePath)
         {
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
@@ -96,24 +97,20 @@ namespace UserTracker.Tests.RoomHistory
                     {
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                         changesProcessed += AssertHistory(roomHistory, tickObject, filePath);
-
                         roomHistoryDTO.Update(roomHistory);
-                        if (ConfigSettingsState.InfluxDbEnabled)
-                            InfluxDBClientState.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                     }
                 }
             }
 
+            await DBClient.WriteScreepsRoomHistory("test", room, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
             return changesProcessed;
         }
 
-        public static long ParseFile(string filePath)
+        public static async Task<long> ParseFile(string filePath)
         {
-            using (var reader = new StreamReader(filePath))
-            using (var jsonReader = new JsonTextReader(reader))
-            {
-                return ProcessHistory(JObject.Load(jsonReader), filePath);
-            }
+            using var reader = new StreamReader(filePath);
+            using var jsonReader = new JsonTextReader(reader);
+            return await ProcessHistory(JObject.Load(jsonReader), filePath);
         }
     }
 }
