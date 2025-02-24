@@ -66,7 +66,7 @@ var linesToBeWrittenBadErrors = new ConcurrentBag<string>();
 
 async void OnSaveTimer(Object? source, ElapsedEventArgs e)
 {
-    if (isWriting || totalChangesToBeWritten.Count < 50) return;
+    if (isWriting || totalChangesToBeWritten.Count + linesToBeWrittenGood.Count + linesToBeWrittenBad.Count < 1) return;
     isWriting = true;
     var writeStopwatch = new Stopwatch();
     writeStopwatch.Start();

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-using UserTrackerShared.Helpers;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace UserTrackerShared.Models
 {
@@ -429,7 +421,7 @@ namespace UserTrackerShared.Models
         public string Type { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("boost")]
         public string Boost { get; set; }
@@ -626,10 +618,10 @@ namespace UserTrackerShared.Models
         public string Type { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("user")]
         public string User { get; set; }
@@ -650,10 +642,365 @@ namespace UserTrackerShared.Models
         public string Description { get; set; }
     }
 
+    public class StockpileResource
+    {
+        [JsonProperty("stockpiled")]
+        public long Stockpiled { get; set; }
+        [JsonProperty("stockpileUseTick")]
+        public long StockpileUseTick { get; set; }
+
+        public void Clear()
+        {
+            Stockpiled = 0;
+            StockpileUseTick = 0;
+        }
+    }
+
     public class MarketData
     {
         [JsonProperty("nextUpdate")]
         public long NextUpdate { get; set; }
+
+        [JsonProperty("energy")]
+        public StockpileResource energy { get; set; }
+
+        [JsonProperty("power")]
+        public StockpileResource power { get; set; }
+
+        [JsonProperty("h")]
+        public StockpileResource H { get; set; }
+
+        [JsonProperty("o")]
+        public StockpileResource O { get; set; }
+
+        [JsonProperty("u")]
+        public StockpileResource U { get; set; }
+
+        [JsonProperty("l")]
+        public StockpileResource L { get; set; }
+
+        [JsonProperty("k")]
+        public StockpileResource K { get; set; }
+
+        [JsonProperty("z")]
+        public StockpileResource Z { get; set; }
+
+        [JsonProperty("x")]
+        public StockpileResource X { get; set; }
+
+        [JsonProperty("g")]
+        public StockpileResource G { get; set; }
+
+        [JsonProperty("silicon")]
+        public StockpileResource silicon { get; set; }
+
+        [JsonProperty("metal")]
+        public StockpileResource metal { get; set; }
+
+        [JsonProperty("biomass")]
+        public StockpileResource biomass { get; set; }
+
+        [JsonProperty("mist")]
+        public StockpileResource mist { get; set; }
+
+        [JsonProperty("oh")]
+        public StockpileResource OH { get; set; }
+
+        [JsonProperty("zk")]
+        public StockpileResource ZK { get; set; }
+
+        [JsonProperty("ul")]
+        public StockpileResource UL { get; set; }
+
+        [JsonProperty("uh")]
+        public StockpileResource UH { get; set; }
+
+        [JsonProperty("uo")]
+        public StockpileResource UO { get; set; }
+
+        [JsonProperty("kh")]
+        public StockpileResource KH { get; set; }
+
+        [JsonProperty("ko")]
+        public StockpileResource KO { get; set; }
+
+        [JsonProperty("lh")]
+        public StockpileResource LH { get; set; }
+
+        [JsonProperty("lo")]
+        public StockpileResource LO { get; set; }
+
+        [JsonProperty("zh")]
+        public StockpileResource ZH { get; set; }
+
+        [JsonProperty("zo")]
+        public StockpileResource ZO { get; set; }
+
+        [JsonProperty("gh")]
+        public StockpileResource GH { get; set; }
+
+        [JsonProperty("go")]
+        public StockpileResource GO { get; set; }
+
+        [JsonProperty("uh2o")]
+        public StockpileResource UH2O { get; set; }
+
+        [JsonProperty("uho2")]
+        public StockpileResource UHO2 { get; set; }
+
+        [JsonProperty("kh2o")]
+        public StockpileResource KH2O { get; set; }
+
+        [JsonProperty("kho2")]
+        public StockpileResource KHO2 { get; set; }
+
+        [JsonProperty("lh2o")]
+        public StockpileResource LH2O { get; set; }
+
+        [JsonProperty("lho2")]
+        public StockpileResource LHO2 { get; set; }
+
+        [JsonProperty("zh2o")]
+        public StockpileResource ZH2O { get; set; }
+
+        [JsonProperty("zho2")]
+        public StockpileResource ZHO2 { get; set; }
+
+        [JsonProperty("gh2o")]
+        public StockpileResource GH2O { get; set; }
+
+        [JsonProperty("gho2")]
+        public StockpileResource GHO2 { get; set; }
+
+        [JsonProperty("xuh2o")]
+        public StockpileResource XUH2O { get; set; }
+
+        [JsonProperty("xuho2")]
+        public StockpileResource XUHO2 { get; set; }
+
+        [JsonProperty("xkh2o")]
+        public StockpileResource XKH2O { get; set; }
+
+        [JsonProperty("xkho2")]
+        public StockpileResource XKHO2 { get; set; }
+
+        [JsonProperty("xlh2o")]
+        public StockpileResource XLH2O { get; set; }
+
+        [JsonProperty("xlho2")]
+        public StockpileResource XLHO2 { get; set; }
+
+        [JsonProperty("xzh2o")]
+        public StockpileResource XZH2O { get; set; }
+
+        [JsonProperty("xzho2")]
+        public StockpileResource XZHO2 { get; set; }
+
+        [JsonProperty("xgh2o")]
+        public StockpileResource XGH2O { get; set; }
+
+        [JsonProperty("xgho2")]
+        public StockpileResource XGHO2 { get; set; }
+
+        [JsonProperty("ops")]
+        public StockpileResource ops { get; set; }
+
+        [JsonProperty("utrium_bar")]
+        public StockpileResource utrium_bar { get; set; }
+
+        [JsonProperty("lemergium_bar")]
+        public StockpileResource lemergium_bar { get; set; }
+
+        [JsonProperty("zynthium_bar")]
+        public StockpileResource zynthium_bar { get; set; }
+
+        [JsonProperty("keanium_bar")]
+        public StockpileResource keanium_bar { get; set; }
+
+        [JsonProperty("ghodium_melt")]
+        public StockpileResource ghodium_melt { get; set; }
+
+        [JsonProperty("oxidant")]
+        public StockpileResource oxidant { get; set; }
+
+        [JsonProperty("reductant")]
+        public StockpileResource reductant { get; set; }
+
+        [JsonProperty("purifier")]
+        public StockpileResource purifier { get; set; }
+
+        [JsonProperty("battery")]
+        public StockpileResource battery { get; set; }
+
+        [JsonProperty("composite")]
+        public StockpileResource composite { get; set; }
+
+        [JsonProperty("crystal")]
+        public StockpileResource crystal { get; set; }
+
+        [JsonProperty("liquid")]
+        public StockpileResource liquid { get; set; }
+
+        [JsonProperty("wire")]
+        public StockpileResource wire { get; set; }
+
+        [JsonProperty("switch")]
+        public StockpileResource Switch { get; set; }
+
+        [JsonProperty("transistor")]
+        public StockpileResource transistor { get; set; }
+
+        [JsonProperty("microchip")]
+        public StockpileResource microchip { get; set; }
+
+        [JsonProperty("circuit")]
+        public StockpileResource circuit { get; set; }
+
+        [JsonProperty("device")]
+        public StockpileResource device { get; set; }
+
+        [JsonProperty("cell")]
+        public StockpileResource cell { get; set; }
+
+        [JsonProperty("phlegm")]
+        public StockpileResource phlegm { get; set; }
+
+        [JsonProperty("tissue")]
+        public StockpileResource tissue { get; set; }
+
+        [JsonProperty("muscle")]
+        public StockpileResource muscle { get; set; }
+
+        [JsonProperty("organoid")]
+        public StockpileResource organoid { get; set; }
+
+        [JsonProperty("organism")]
+        public StockpileResource organism { get; set; }
+
+        [JsonProperty("alloy")]
+        public StockpileResource alloy { get; set; }
+
+        [JsonProperty("tube")]
+        public StockpileResource tube { get; set; }
+
+        [JsonProperty("fixtures")]
+        public StockpileResource fixtures { get; set; }
+
+        [JsonProperty("frame")]
+        public StockpileResource frame { get; set; }
+
+        [JsonProperty("hydraulics")]
+        public StockpileResource hydraulics { get; set; }
+
+        [JsonProperty("machine")]
+        public StockpileResource machine { get; set; }
+
+        [JsonProperty("condensate")]
+        public StockpileResource condensate { get; set; }
+
+        [JsonProperty("concentrate")]
+        public StockpileResource concentrate { get; set; }
+
+        [JsonProperty("extract")]
+        public StockpileResource extract { get; set; }
+
+        [JsonProperty("spirit")]
+        public StockpileResource spirit { get; set; }
+
+        [JsonProperty("emanation")]
+        public StockpileResource emanation { get; set; }
+
+        [JsonProperty("essence")]
+        public StockpileResource essence { get; set; }
+
+        public void Clear()
+        {
+            NextUpdate = 0;
+            energy.Clear();
+            power.Clear();
+            H.Clear();
+            O.Clear();
+            U.Clear();
+            L.Clear();
+            K.Clear();
+            Z.Clear();
+            X.Clear();
+            G.Clear();
+            silicon.Clear();
+            metal.Clear();
+            biomass.Clear();
+            mist.Clear();
+            OH.Clear();
+            ZK.Clear();
+            UL.Clear();
+            UH.Clear();
+            UO.Clear();
+            KH.Clear();
+            KO.Clear();
+            LH.Clear();
+            LO.Clear();
+            ZH.Clear();
+            ZO.Clear();
+            GH.Clear();
+            GO.Clear();
+            UH2O.Clear();
+            UHO2.Clear();
+            KH2O.Clear();
+            KHO2.Clear();
+            LH2O.Clear();
+            LHO2.Clear();
+            ZH2O.Clear();
+            ZHO2.Clear();
+            GH2O.Clear();
+            GHO2.Clear();
+            XUH2O.Clear();
+            XUHO2.Clear();
+            XKH2O.Clear();
+            XKHO2.Clear();
+            XLH2O.Clear();
+            XLHO2.Clear();
+            XZH2O.Clear();
+            XZHO2.Clear();
+            XGH2O.Clear();
+            XGHO2.Clear();
+            ops.Clear();
+            utrium_bar.Clear();
+            lemergium_bar.Clear();
+            zynthium_bar.Clear();
+            keanium_bar.Clear();
+            ghodium_melt.Clear();
+            oxidant.Clear();
+            reductant.Clear();
+            purifier.Clear();
+            battery.Clear();
+            composite.Clear();
+            crystal.Clear();
+            liquid.Clear();
+            wire.Clear();
+            Switch.Clear();
+            transistor.Clear();
+            microchip.Clear();
+            circuit.Clear();
+            device.Clear();
+            cell.Clear();
+            phlegm.Clear();
+            tissue.Clear();
+            muscle.Clear();
+            organoid.Clear();
+            organism.Clear();
+            alloy.Clear();
+            tube.Clear();
+            fixtures.Clear();
+            frame.Clear();
+            hydraulics.Clear();
+            machine.Clear();
+            condensate.Clear();
+            concentrate.Clear();
+            extract.Clear();
+            spirit.Clear();
+            emanation.Clear();
+            essence.Clear();
+        }
     }
 
     public class Spawning
@@ -727,10 +1074,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("spawning")]
         public bool Spawning { get; set; }
@@ -808,7 +1155,7 @@ namespace UserTrackerShared.Models
         public long Level { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("storeCapacity")]
         public long? StoreCapacity { get; set; }
@@ -835,7 +1182,7 @@ namespace UserTrackerShared.Models
         public long Y { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("ageTime")]
         public long AgeTime { get; set; }
@@ -845,7 +1192,7 @@ namespace UserTrackerShared.Models
 
         [JsonProperty("fatigue")]
         public long? Fatigue { get; set; }
-        
+
         [JsonProperty("_fatigue")]
         public long? _fatigue { get; set; }
 
@@ -900,13 +1247,13 @@ namespace UserTrackerShared.Models
         public long ProgressTotal { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("nextDecayTime")]
-        public long NextDecayTime { get; set; }
+        public long? NextDecayTime { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -963,7 +1310,7 @@ namespace UserTrackerShared.Models
         public string CreepSaying { get; set; }
 
         [JsonProperty("creepTicksToLive")]
-        public long CreepTicksToLive { get; set; }
+        public long? CreepTicksToLive { get; set; }
 
         [JsonProperty("creepBody")]
         public string[] CreepBody { get; set; } = [];
@@ -1146,10 +1493,10 @@ namespace UserTrackerShared.Models
         public Store StoreCapacityResource { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("off")]
         public bool Off { get; set; }
@@ -1194,10 +1541,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("off")]
         public bool Off { get; set; }
@@ -1233,10 +1580,10 @@ namespace UserTrackerShared.Models
         public bool NotifyWhenAttacked { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("nextDecayTime")]
         public long NextDecayTime { get; set; }
@@ -1248,7 +1595,7 @@ namespace UserTrackerShared.Models
         public long DecayTime { get; set; }
 
         [JsonProperty("effects")]
-        public object Effects { get; set; } = new ();
+        public object Effects { get; set; } = new();
 
         [JsonProperty("_updated")]
         public long Updated { get; set; }
@@ -1281,7 +1628,7 @@ namespace UserTrackerShared.Models
         public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("_updated")]
         public long Updated { get; set; }
@@ -1311,10 +1658,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("nextDecayTime")]
         public long NextDecayTime { get; set; }
@@ -1329,10 +1676,10 @@ namespace UserTrackerShared.Models
         public long DecayTime { get; set; }
 
         [JsonProperty("effects")]
-        public object Effects { get; set; } = new ();
+        public object Effects { get; set; } = new();
 
         [JsonProperty("hitsTarget")]
-        public long HitsTarget { get; set; }
+        public long? HitsTarget { get; set; }
 
         [JsonProperty("isPublic")]
         public bool IsPublic { get; set; }
@@ -1413,10 +1760,10 @@ namespace UserTrackerShared.Models
         public long? TicksToDowngrade { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("progressTotal")]
         public long ProgressTotal { get; set; }
@@ -1437,7 +1784,11 @@ namespace UserTrackerShared.Models
         public Datetime Datetime { get; set; }
 
         [JsonProperty("safeModeAvailable")]
-        public long SafeModeAvailable { get; set; }
+        public long? SafeModeAvailable { get; set; }
+
+        [JsonProperty("_safeModeActivated")]
+        public long? _safeModeActivated { get; set; }
+
 
         [JsonProperty("safeMode")]
         public long? SafeMode { get; set; }
@@ -1506,10 +1857,10 @@ namespace UserTrackerShared.Models
         public long Cooldown { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("actionLog")]
         public ActionLog ActionLog { get; set; }
@@ -1557,10 +1908,10 @@ namespace UserTrackerShared.Models
         public long? StoreCapacity { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("_updated")]
         public long Updated { get; set; }
@@ -1587,10 +1938,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("actionLog")]
         public ActionLog ActionLog { get; set; }
@@ -1638,10 +1989,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("observeRoom")]
         public string ObserveRoom { get; set; }
@@ -1668,10 +2019,10 @@ namespace UserTrackerShared.Models
         public Store Store { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("decayTime")]
         public long DecayTime { get; set; }
@@ -1695,10 +2046,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("store")]
         public Store Store { get; set; }
@@ -1737,10 +2088,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("_cooldown")]
         public long? _cooldown { get; set; }
@@ -1776,10 +2127,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("mineralAmount")]
         public long MineralAmount { get; set; }
@@ -1839,10 +2190,10 @@ namespace UserTrackerShared.Models
         public string User { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("cooldownTime")]
         public long CooldownTime { get; set; }
@@ -1884,10 +2235,10 @@ namespace UserTrackerShared.Models
         public long? StoreCapacity { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("nextDecayTime")]
         public long NextDecayTime { get; set; }
@@ -1929,10 +2280,10 @@ namespace UserTrackerShared.Models
         public Store StoreCapacityResource { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("cooldownTime")]
         public long CooldownTime { get; set; }
@@ -1965,10 +2316,10 @@ namespace UserTrackerShared.Models
         public long? StoreCapacity { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("cooldown")]
         public long Cooldown { get; set; }
@@ -2019,10 +2370,10 @@ namespace UserTrackerShared.Models
         public string TemplateName { get; set; }
 
         [JsonProperty("hits")]
-        public long Hits { get; set; }
+        public long? Hits { get; set; }
 
         [JsonProperty("hitsMax")]
-        public long HitsMax { get; set; }
+        public long? HitsMax { get; set; }
 
         [JsonProperty("nextExpandTime")]
         public long NextExpandTime { get; set; }
@@ -2125,7 +2476,7 @@ namespace UserTrackerShared.Models
     }
 
     #endregion
-    
+
     public class ScreepsRoomHistory
     {
         public long TimeStamp { get; set; }

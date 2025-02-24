@@ -187,7 +187,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1 / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var road in structures.Roads)
             {
@@ -200,7 +200,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1 / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var source in structures.Sources)
             {
@@ -211,7 +211,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1 / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var spawn in structures.Spawns)
             {
