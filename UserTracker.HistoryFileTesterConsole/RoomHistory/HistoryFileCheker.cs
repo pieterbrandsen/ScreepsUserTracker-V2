@@ -22,7 +22,7 @@ namespace UserTracker.Tests.RoomHistory
 
                 var obj = GetObjectFromHistory.GetById(history, id);
                 if (obj == null) continue;
-                
+
                 history.PropertiesListDictionary.TryGetValue(id, out var historyChanges);
                 if (historyChanges == null) continue;
                 var originalChanges = GetObjectChangesInTick.GetById(jTokenTick, id);
@@ -59,7 +59,7 @@ namespace UserTracker.Tests.RoomHistory
 
                             if (!convertedKV.Equals(convertedVal))
                             {
-                                throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",",variations)} : {convertedKV} vs {convertedVal}");
+                                throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",", variations)} : {convertedKV} vs {convertedVal}");
                             }
                             changesProcessed += 1;
                         }
@@ -94,7 +94,7 @@ namespace UserTracker.Tests.RoomHistory
 
                     if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                     {
-                        roomHistory = ScreespRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
+                        roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                         changesProcessed += AssertHistory(roomHistory, tickObject, filePath);
 
                         roomHistoryDTO.Update(roomHistory);

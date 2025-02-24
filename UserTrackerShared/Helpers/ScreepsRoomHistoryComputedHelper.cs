@@ -466,7 +466,7 @@ namespace UserTrackerShared.Helpers
             }
         }
     }
-    public static class ScreespRoomHistoryHelper
+    public static class ScreepsRoomHistoryHelper
     {
         public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, Dictionary<string, object> propertiesDict)
         {

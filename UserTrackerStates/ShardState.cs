@@ -37,7 +37,7 @@ namespace UserTrackerShared.States
         }
 
         public string Name { get; set; }
-        private long LastSynceTime { get; set; }
+        private long LastSyncTime { get; set; }
         public long Time { get; set; }
         public List<string> Rooms { get; set; } = new List<string>();
         private static Timer? _setTimeTimer;
@@ -52,6 +52,8 @@ namespace UserTrackerShared.States
                 if (Time != timeResponse.Time)
                 {
                     Time = timeResponse.Time;
+                    if (isSyncing || !_initialized) return;
+                    isSyncing = true;
                     StartSync();
                 }
             }
@@ -65,18 +67,15 @@ namespace UserTrackerShared.States
 
         private async void StartSync()
         {
-            if (isSyncing || !_initialized) return;
-            isSyncing = true;
-
             var syncTime = GetSyncTime();
-            if (LastSynceTime == 0) LastSynceTime = syncTime - 100 * 100;
+            if (LastSyncTime == 0) LastSyncTime = syncTime - 100 * 100;
 
-            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSynceTime} ticks and {Rooms.Count} rooms");
-            for (long i = LastSynceTime; i < syncTime; i += 100)
+            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSyncTime} ticks and {Rooms.Count} rooms");
+            for (long i = LastSyncTime; i < syncTime; i += 100)
             {
                 _successes = 0;
-                var mainStopwatch = Stopwatch.StartNew();
 
+                var mainStopwatch = Stopwatch.StartNew();
                 var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
                 await Parallel.ForEachAsync(Rooms, parallelOptions, async (room, ct) =>
                 {
@@ -105,7 +104,7 @@ namespace UserTrackerShared.States
                 {
                 }
             }
-            LastSynceTime = syncTime;
+            LastSyncTime = syncTime;
             isSyncing = false;
         }
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
