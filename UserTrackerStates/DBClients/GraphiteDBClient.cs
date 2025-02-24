@@ -215,7 +215,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"historyperformance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTime.Now.Ticks);
+                GraphiteDBClientWriter.UploadData($"historyperformance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             }
             catch (Exception e)
             {
