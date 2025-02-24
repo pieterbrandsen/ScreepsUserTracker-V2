@@ -15,8 +15,6 @@ namespace UserTrackerShared.Helpers
             {
                 var roomData = await ScreepsAPI.GetHistory(shard, name, tick);
                 if (roomData == null) return false;
-                if (ConfigSettingsState.WriteHistoryFiles) FileWriterManager.GenerateHistoryFile(roomData);
-                return true;
 
                 var roomHistory = new ScreepsRoomHistory();
                 var roomHistoryDTO = new ScreepsRoomHistoryDTO();
