@@ -33,7 +33,7 @@ namespace UserTrackerStates.DBClients
         /// <param name="timestamp">Unix timestamp.</param>
         public void AddMetric(string metricPath, double value, long timestamp)
         {
-            string metricLine = $"{metricPath} {value} {timestamp}\n";
+            string metricLine = $"{metricPath} {value} {timestamp / 1000}\n";
             _metricsBuffer.Add(metricLine);
 
             if (_metricsBuffer.Count >= _batchSize)
