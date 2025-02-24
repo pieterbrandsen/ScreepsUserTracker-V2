@@ -76,27 +76,42 @@ namespace UserTrackerShared.States
                 _successes = 0;
 
                 var mainStopwatch = Stopwatch.StartNew();
-                var parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
-                await Parallel.ForEachAsync(Rooms, parallelOptions, async (room, ct) =>
+                var semaphore = new SemaphoreSlim(Rooms.Count);
+                var tasks = new List<Task>();
+                foreach (var file in files)
                 {
-                    if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
-                });
+                    await semaphore.WaitAsync();
+                    tasks.Add(
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        })
+                    );
+                }
+                await Task.WhenAll(tasks);
                 mainStopwatch.Stop();
-                var totalMiliseconds = mainStopwatch.ElapsedMilliseconds;
+                var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
 
                 DBClient.WritePerformanceData(new PerformanceClassDTO
                 {
                     Shard = Name,
                     TicksBehind = ticksBehind,
-                    TimeTakenMs = totalMiliseconds,
+                    TimeTakenMs = totalMilliseconds,
                     TotalRooms = Rooms.Count,
                     SuccessCount = _successes
                 });
                 try
                 {
-                    var totalMicroSeconds = totalMiliseconds * 1000;
-                    var performanceLogMessage = $"timeT {totalMiliseconds}, ticksBehind {ticksBehind}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
+                    var totalMicroSeconds = totalMilliseconds * 1000;
+                    var performanceLogMessage = $"timeT {totalMilliseconds}, ticksBehind {ticksBehind}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
                     _logger.Information(performanceLogMessage);
                     Screen.AddLog(performanceLogMessage);
                 }
