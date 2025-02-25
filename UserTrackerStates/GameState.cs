@@ -70,6 +70,18 @@ namespace UserTrackerShared.States
             _onSetLeaderboardTimer.Enabled = true;
         }
 
+        private static async Task<string?> GetUser(string userId, int rank = 0) {
+            var userResponse = await ScreepsAPI.GetUser(userId);
+            if (userResponse != null) {
+                if (rank > 0) userResponse.Rank = rank;
+                Users[userId] = userResponse;
+                
+                DBClient.WriteSingleUserdData(userResponse);
+                return userResponse.Username;
+            }
+            return null;
+        }
+
         public static async Task UpdateCurrentLeaderboard()
         {
             var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
@@ -80,14 +92,7 @@ namespace UserTrackerShared.States
                 CurrentLeaderboard = currentLeaderboardResponse;
                 foreach (var leaderboardSpot in CurrentLeaderboard)
                 {
-                    var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
-                    if (userResponse != null) {
-                        userResponse.Rank = leaderboardSpot.Rank;
-                        Users[leaderboardSpot.UserId] = userResponse;
-                        
-                        leaderboardSpot.UserName = userResponse.Username;
-                        DBClient.WriteSingleUserdData(userResponse);
-                    }
+                    await GetUser(leaderboardSpot.UserId, leaderboardSpot.Rank);
                 }
             }
             else
@@ -105,16 +110,17 @@ namespace UserTrackerShared.States
                 {
                     foreach (var leaderboardSpot in leaderboardKVP.Value)
                     {
-                        if (!Users.ContainsKey(leaderboardSpot.UserId)) {
-                            var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
-                            if (userResponse != null)
-                            {
-                                Users[leaderboardSpot.UserId] = userResponse;
-                                leaderboardSpot.UserName = userResponse.Username;
-                            }
+                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
+                        {
+                            await GetUser(leaderboardSpot.UserId, leaderboardSpot.Rank);
+                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
                         }
 
-                        DBClient.WriteLeaderboardData(leaderboardSpot);
+                        if (value != null)
+                        {
+                            leaderboardSpot.UserName = value.Username;
+                            DBClient.WriteLeaderboardData(leaderboardSpot);
+                        }
                     }
                 }
             }
