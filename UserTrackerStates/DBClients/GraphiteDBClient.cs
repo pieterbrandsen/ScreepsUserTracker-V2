@@ -189,7 +189,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? screepsRoomHistory.Structures.Controller?.ReservationUserId ??  "";
+                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? screepsRoomHistory.Structures.Controller?.ReservationUserId ?? "";
                 var username = "none";
                 GameState.Users.TryGetValue(userId, out var user);
                 if (user != null)
@@ -235,7 +235,7 @@ namespace UserTrackerStates.DBClients
 
                 DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
-                GraphiteDBClientWriter.UploadData($"leaderboard.{ConfigSettingsState.ServerName}.{seasonItem.UserName}", seasonItem, timestamp);
+                GraphiteDBClientWriter.UploadData($"leaderboard.{ConfigSettingsState.ServerName}.{seasonItem.UserName}.", seasonItem, timestamp);
             }
             catch (Exception e)
             {
