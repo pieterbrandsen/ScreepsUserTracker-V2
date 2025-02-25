@@ -187,7 +187,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? "";
+                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? screepsRoomHistory.Structures.Controller?.ReservationUserId ??  "";
                 var username = "none";
                 GameState.Users.TryGetValue(userId, out var user);
                 if (user != null)

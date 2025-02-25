@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
 using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.Models;
 using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
@@ -78,6 +80,9 @@ namespace UserTrackerShared.States
                 var mainStopwatch = Stopwatch.StartNew();
                 var semaphore = new SemaphoreSlim(Rooms.Count);
                 var tasks = new List<Task>();
+
+                var reservedRoomsByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDTO>();
+                var userLocks = new ConcurrentDictionary<string, object>();
                 foreach (var room in Rooms)
                 {
                     await semaphore.WaitAsync();
@@ -86,7 +91,7 @@ namespace UserTrackerShared.States
                         {
                             try
                             {
-                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i)) Interlocked.Increment(ref _successes);
+                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i, reservedRoomsByUser, userLocks)) Interlocked.Increment(ref _successes);
                             }
                             finally
                             {
@@ -96,6 +101,14 @@ namespace UserTrackerShared.States
                     );
                 }
                 await Task.WhenAll(tasks);
+
+                foreach (var historyDTO in reservedRoomsByUser)
+                {
+                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDTO.Value.TimeStamp, historyDTO.Value);
+                }
+
+
+
                 mainStopwatch.Stop();
                 var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;

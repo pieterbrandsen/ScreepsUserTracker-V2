@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Collections.Concurrent;
+using Newtonsoft.Json.Linq;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models;
 using UserTrackerStates.DBClients;
@@ -9,10 +10,11 @@ namespace UserTrackerShared.Helpers
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public static async Task<bool> GetAndHandleRoomData(string shard, string name, long tick)
+        public static async Task<bool> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDTO> reservedRoomsByUser, ConcurrentDictionary<string, object> userLocks)
         {
             try
             {
+                var isReservedRoom = false;
                 var roomData = await ScreepsAPI.GetHistory(shard, name, tick);
                 if (roomData == null) return false;
 
@@ -41,12 +43,29 @@ namespace UserTrackerShared.Helpers
                             {
                                 _logger.Error(e, $"Error processing single tick {tickNumber} for room {name}");
                             }
-                            roomHistoryDTO.Update(roomHistory);
+                            if (roomHistory.Structures.Controller?.Reservation != null) {
+                                isReservedRoom = true;
+                                var userKey = roomHistory.Structures.Controller.Reservation.User;
+                                var userLock = userLocks.GetOrAdd(userKey, _ => new object());
+                                lock (userLock)
+                                {
+                                    if (!reservedRoomsByUser.TryGetValue(userKey, out ScreepsRoomHistoryDTO? value))
+                                    {
+                                        value = new ScreepsRoomHistoryDTO();
+                                        reservedRoomsByUser[userKey] = value;
+                                    }
+
+                                    value.Update(roomHistory);
+                                }
+                            }
+                            else {
+                                roomHistoryDTO.Update(roomHistory);
+                            }
                         }
                     }
                 }
 
-                await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
+                if (!isReservedRoom) await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                 if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateHistoryFile(roomData);
                 return true;
             }

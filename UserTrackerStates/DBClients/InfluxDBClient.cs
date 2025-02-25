@@ -15,16 +15,6 @@ using UserTrackerShared.States;
 
 namespace UserTrackerStates.DBClients
 {
-    public class PerformanceClassDTO
-    {
-        public string Shard { get; set; }
-        public long TicksBehind { get; set; }
-        public long TimeTakenMs { get; set; }
-        public int TotalRooms { get; set; }
-        public int SuccessCount { get; set; }
-        public int FailedCount => TotalRooms - SuccessCount;
-    }
-
     public static class InfluxDBPointHelper
     {
         public static PointData CreatePoint(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
