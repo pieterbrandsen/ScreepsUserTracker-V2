@@ -40,26 +40,53 @@ namespace UserTrackerScreepsApi
             MaxConnectionsPerServer = 10000,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         });
-        private static async Task<HttpResponseMessage> ThrottledRequest(HttpRequestMessage request)
+        private static async Task<(HttpResponseMessage response, int retyCount)> ThrottledRequest(HttpRequestMessage request)
         {
             await throttler.WaitAsync();
             try
             {
-                var retriesLeft = 5;
+                var retryCount = 0;
                 HttpResponseMessage response = null;
-                while (retriesLeft > 0)
+
+                while (retryCount < 100)
                 {
-                    await Task.Delay(100);
-                    response = await _normalHttpClient.SendAsync(request);
-                    if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500) return response;
-                    retriesLeft -= 1;
+                    Thread.Sleep(50);
+                    using (var clonedRequest = CloneHttpRequestMessage(request))
+                    {
+                        response = await _normalHttpClient.SendAsync(clonedRequest);
+                        if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500)
+                            return (response, retryCount);
+                    }
+                    retryCount += 1;
                 }
-                return response; 
+                return (response, retryCount);
             }
             finally
             {
                 throttler.Release();
             }
+        }
+
+        private static HttpRequestMessage CloneHttpRequestMessage(HttpRequestMessage request)
+        {
+            var clonedRequest = new HttpRequestMessage(request.Method, request.RequestUri);
+
+            foreach (var header in request.Headers)
+            {
+                clonedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            if (request.Content != null)
+            {
+                var content = request.Content.ReadAsStringAsync().Result;
+                clonedRequest.Content = new StringContent(content);
+                foreach (var header in request.Content.Headers)
+                {
+                    clonedRequest.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
+
+            return clonedRequest;
         }
 
         public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
@@ -92,6 +119,7 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Token", ScreepsAPIToken);
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
+                var retryCount = 0;
                 HttpResponseMessage response = null;
                 if (isHistoryRequest)
                 {
@@ -99,9 +127,9 @@ namespace UserTrackerScreepsApi
                 }
                 else
                 {
-                    response = await ThrottledRequest(request);
+                    (response, retryCount) = await ThrottledRequest(request);
                 }
-                _logger.Information($"{path} - {response.StatusCode}");
+                _logger.Information($"{path} - {response.StatusCode} - {retryCount}");
 
                 if (response.IsSuccessStatusCode)
                 {
