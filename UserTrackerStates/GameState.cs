@@ -22,7 +22,7 @@ namespace UserTrackerShared.States
 
         public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
         public static List<ShardState> Shards = new List<ShardState>();
-        public static Dictionary<string, ScreepsUser> Users= new ();
+        public static Dictionary<string, ScreepsUser> Users = new();
 
         private static Timer? _onSetLeaderboardTimer;
 
@@ -52,9 +52,16 @@ namespace UserTrackerShared.States
                 }
             }
 
-            if (ConfigSettingsState.LoadSeasonalLeaderboard) await UpdateCurrentLeaderboard();
-            if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
 
+            if (ConfigSettingsState.LoadSeasonalLeaderboard)
+            {
+                await UpdateCurrentLeaderboard();
+                _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
+                _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
+                _onSetLeaderboardTimer.AutoReset = true;
+                _onSetLeaderboardTimer.Enabled = true;
+            }
+            if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
                 foreach (var shard in Shards)
@@ -62,20 +69,16 @@ namespace UserTrackerShared.States
                     await shard.StartAsync();
                 }
             }
-
-
-            _onSetLeaderboardTimer = new Timer(60*60*1000);
-            _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
-            _onSetLeaderboardTimer.AutoReset = true;
-            _onSetLeaderboardTimer.Enabled = true;
         }
 
-        private static async Task<string?> GetUser(string userId, int rank = 0) {
+        private static async Task<string?> GetUser(string userId, int rank = 0)
+        {
             var userResponse = await ScreepsAPI.GetUser(userId);
-            if (userResponse != null) {
+            if (userResponse != null)
+            {
                 if (rank > 0) userResponse.Rank = rank;
                 Users[userId] = userResponse;
-                
+
                 DBClient.WriteSingleUserdData(userResponse);
                 return userResponse.Username;
             }
