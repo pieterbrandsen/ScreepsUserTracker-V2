@@ -203,7 +203,7 @@ namespace UserTrackerStates.DBClients
                     }
                 }
 
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.", shard, room, timestamp, username, screepsRoomHistory);
+                GraphiteDBClientWriter.UploadData($"history_ticks.{ConfigSettingsState.ServerName}.", shard, room, timestamp, username, screepsRoomHistory);
             }
             catch (Exception e)
             {
@@ -215,7 +215,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"historyperformance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                GraphiteDBClientWriter.UploadData($"history_performance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             }
             catch (Exception e)
             {
