@@ -20,7 +20,7 @@ namespace UserTrackerShared.Helpers
                     logFilePath,
                     rollingInterval: RollingInterval.Day,  // Create a new file each day
                     retainedFileCountLimit: 31,             // Keep last 31 log files
-                    fileSizeLimitBytes: 20_000_000,        // Max 20MB per file
+                    fileSizeLimitBytes: 100_000_000,        // Max 20MB per file
                     shared: true,                         // Allow multiple processes to log
                     flushToDiskInterval: TimeSpan.FromSeconds(1) // Flush logs quickly
                 )

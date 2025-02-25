@@ -69,13 +69,14 @@ namespace UserTrackerScreepsApi
         {
             return new Uri(ScreepsAPIUrl + path);
         }
-        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, Uri? proxyUri = null)
+        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null)
         {
             if (method == HttpMethod.Post && httpContent == null)
             {
                 throw new ArgumentNullException("No HttpContent provided");
             }
 
+            var isHistoryRequest = path.StartsWith("/room-history");
             try
             {
                 var request = new HttpRequestMessage()
@@ -91,7 +92,6 @@ namespace UserTrackerScreepsApi
                 request.Headers.Add("X-Token", ScreepsAPIToken);
                 request.Headers.Add("X-Username", ScreepsAPIToken);
 
-                var isHistoryRequest = path.StartsWith("/room-history");
                 HttpResponseMessage response = null;
                 if (isHistoryRequest)
                 {
@@ -116,7 +116,7 @@ namespace UserTrackerScreepsApi
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"{proxyUri} {path} - {ex.Message}");
+                if (!isHistoryRequest) _logger.Error(ex, $"{path} - {ex.Message}");
                 return (default, HttpStatusCode.InternalServerError);
             }
         }
