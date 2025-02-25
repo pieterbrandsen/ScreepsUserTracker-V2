@@ -20,5 +20,6 @@ namespace UserTrackerShared.Models
         public long Power { get; set; }
         [JsonProperty("badge")]
         public MapStatUserBadge Badge { get; set; }
+        public int Rank { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerStates;
+using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
@@ -63,7 +64,7 @@ namespace UserTrackerShared.States
             }
 
 
-            _onSetLeaderboardTimer = new Timer(300000);
+            _onSetLeaderboardTimer = new Timer(60*60*1000);
             _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
             _onSetLeaderboardTimer.AutoReset = true;
             _onSetLeaderboardTimer.Enabled = true;
@@ -79,11 +80,13 @@ namespace UserTrackerShared.States
                 CurrentLeaderboard = currentLeaderboardResponse;
                 foreach (var leaderboardSpot in CurrentLeaderboard)
                 {
-                    if (Users.ContainsKey(leaderboardSpot.UserId)) continue;
                     var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
                     if (userResponse != null) {
+                        userResponse.Rank = leaderboardSpot.Rank;
                         Users[leaderboardSpot.UserId] = userResponse;
+                        
                         leaderboardSpot.UserName = userResponse.Username;
+                        DBClient.WriteSingleUserdData(userResponse);
                     }
                 }
             }
@@ -102,13 +105,16 @@ namespace UserTrackerShared.States
                 {
                     foreach (var leaderboardSpot in leaderboardKVP.Value)
                     {
-                        if (Users.ContainsKey(leaderboardSpot.UserId)) continue;
-                        var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
-                        if (userResponse != null)
-                        {
-                            Users[leaderboardSpot.UserId] = userResponse;
-                            leaderboardSpot.UserName = userResponse.Username;
+                        if (!Users.ContainsKey(leaderboardSpot.UserId)) {
+                            var userResponse = await ScreepsAPI.GetUser(leaderboardSpot.UserId);
+                            if (userResponse != null)
+                            {
+                                Users[leaderboardSpot.UserId] = userResponse;
+                                leaderboardSpot.UserName = userResponse.Username;
+                            }
                         }
+
+                        DBClient.WriteLeaderboardData(leaderboardSpot);
                     }
                 }
             }

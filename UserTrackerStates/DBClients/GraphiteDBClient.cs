@@ -5,6 +5,7 @@ using System.Text;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
 
 
@@ -137,6 +138,7 @@ namespace UserTrackerStates.DBClients
                         _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
                 }
+                Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
             catch (Exception ex)
             {
@@ -223,5 +225,34 @@ namespace UserTrackerStates.DBClients
             }
         }
 
+        public static void WriteLeaderboardData(SeaonListItem seasonItem)
+        {
+            try
+            {
+                string[] parts = seasonItem.Season.Split('-');
+                int year = int.Parse(parts[0]);
+                int month = int.Parse(parts[1]);
+
+                DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+                var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeSeconds();
+                GraphiteDBClientWriter.UploadData($"leaderboard.{ConfigSettingsState.ServerName}.{seasonItem.UserName}", seasonItem, timestamp);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, $"Error uploading performance data");
+            }
+        }
+
+        public static void WriteSingleUserdData(ScreepsUser user)
+        {
+            try
+            {
+                GraphiteDBClientWriter.UploadData($"users.{ConfigSettingsState.ServerName}.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, $"Error uploading performance data");
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Reactive;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.Models.ScreepsAPI;
 
 namespace UserTrackerStates.DBClients
 {
@@ -39,6 +40,30 @@ namespace UserTrackerStates.DBClients
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
                 GraphiteDBClientState.WritePerformanceData(performanceClassDTO);
+            }
+        }
+
+        public static void WriteLeaderboardData(SeaonListItem seasonItem)
+        {
+            if (ConfigSettingsState.InfluxDbEnabled)
+            {
+                // InfluxDBClientState.WriteLeaderboardData(seasonItem);
+            }
+            if (ConfigSettingsState.GraphiteDbEnabled)
+            {
+                GraphiteDBClientState.WriteLeaderboardData(seasonItem);
+            }
+        }
+
+        public static void WriteSingleUserdData(ScreepsUser user)
+        {
+            if (ConfigSettingsState.InfluxDbEnabled)
+            {
+                // InfluxDBClientState.WriteSingleUserdData(user);
+            }
+            if (ConfigSettingsState.GraphiteDbEnabled)
+            {
+                GraphiteDBClientState.WriteSingleUserdData(user);
             }
         }
     }
