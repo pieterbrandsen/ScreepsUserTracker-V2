@@ -67,26 +67,30 @@ namespace UserTrackerScreepsApi
             }
         }
 
-        private static HttpRequestMessage CloneHttpRequestMessage(HttpRequestMessage request)
+        public static HttpRequestMessage CloneHttpRequestMessage(HttpRequestMessage request)
         {
-            var clonedRequest = new HttpRequestMessage(request.Method, request.RequestUri);
+            var clone = new HttpRequestMessage(request.Method, request.RequestUri)
+            {
+                Version = request.Version
+            };
 
             foreach (var header in request.Headers)
             {
-                clonedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
 
             if (request.Content != null)
             {
-                var content = request.Content.ReadAsStringAsync().Result;
-                clonedRequest.Content = new StringContent(content);
+                var contentBytes = request.Content.ReadAsByteArrayAsync().Result;
+                clone.Content = new ByteArrayContent(contentBytes);
+
                 foreach (var header in request.Content.Headers)
                 {
-                    clonedRequest.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
 
-            return clonedRequest;
+            return clone;
         }
 
         public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
