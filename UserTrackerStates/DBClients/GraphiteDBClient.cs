@@ -217,7 +217,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"history_performance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                GraphiteDBClientWriter.UploadData($"history_performance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
@@ -234,7 +234,7 @@ namespace UserTrackerStates.DBClients
                 int month = int.Parse(parts[1]);
 
                 DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-                var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeSeconds();
+                var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
                 GraphiteDBClientWriter.UploadData($"leaderboard.{ConfigSettingsState.ServerName}.{seasonItem.UserName}", seasonItem, timestamp);
             }
             catch (Exception e)
@@ -247,7 +247,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"users.{ConfigSettingsState.ServerName}.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                GraphiteDBClientWriter.UploadData($"users.{ConfigSettingsState.ServerName}.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
