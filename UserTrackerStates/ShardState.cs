@@ -72,7 +72,13 @@ namespace UserTrackerShared.States
             var syncTime = GetSyncTime();
             if (LastSyncTime == 0) LastSyncTime = syncTime - 100 * 100;
 
-            _logger.Warning($"Started sync Shard {Name} for {syncTime - LastSyncTime} ticks and {Rooms.Count} rooms");
+            var ticksToBeSynced = syncTime - LastSyncTime;
+            if (ticksToBeSynced <= 0)
+            {
+                isSyncing = false;
+                return;
+            }
+            _logger.Warning($"Started sync Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms");
             for (long i = LastSyncTime; i < syncTime; i += 100)
             {
                 _successes = 0;
