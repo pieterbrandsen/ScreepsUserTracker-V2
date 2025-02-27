@@ -10,7 +10,13 @@ namespace UserTrackerShared.Helpers
     public static class ConfigSettingsState
     {
         public static bool RunningHistoryTested { get; set; }
-        
+
+        public static string ScreepsToken { get; set; }
+        public static string ScreepsHttpsUrl { get; set; }
+        public static string ScreepsUsername { get; set; }
+        public static string ScreepsPassword { get; set; }
+        public static string ScreepsShardName { get; set; }
+
         public static string ServerName { get; set; }
         
         public static bool InfluxDbEnabled { get; set; }
@@ -33,6 +39,12 @@ namespace UserTrackerShared.Helpers
 
         public static void Init() {
             RunningHistoryTested = Convert.ToBoolean(ConfigurationManager.AppSettings["RUNNING_HISTORY_TESTED"]);
+
+            ScreepsToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
+            ScreepsHttpsUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
+            ScreepsUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
+            ScreepsPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
+            ScreepsShardName = ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? "";
 
             ServerName = ConfigurationManager.AppSettings["SERVER_NAME"] ?? "";
 

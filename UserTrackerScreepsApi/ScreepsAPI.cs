@@ -93,9 +93,9 @@ namespace UserTrackerScreepsApi
             return clone;
         }
 
-        public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
-        public static string ScreepsAPIHTTPUrl = (ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "").Replace("https://", "http://");
-        public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
+        public static string ScreepsAPIUrl = ConfigSettingsState.ScreepsHttpsUrl;
+        public static string ScreepsAPIHTTPUrl = ConfigSettingsState.ScreepsHttpsUrl.Replace("https://", "http://");
+        public static string ScreepsAPIToken => ConfigSettingsState.ScreepsToken;
 
         private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false)
         {

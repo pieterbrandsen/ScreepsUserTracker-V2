@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Configuration;
-using System.Timers;
+﻿using System.Timers;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
@@ -15,11 +13,6 @@ namespace UserTrackerShared.States
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public static string ScreepsAPIUrl = "";
-        public static string ScreepsAPIToken = "";
-        public static string ScreepsAPIUsername = "";
-        public static string ScreepsAPIPassword = "";
-
         public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
         public static List<ShardState> Shards = new List<ShardState>();
         public static Dictionary<string, ScreepsUser> Users = new();
@@ -29,21 +22,16 @@ namespace UserTrackerShared.States
 
         public static async Task InitAsync()
         {
-            ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
-            ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
-            ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
-            ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
-
-            bool isPrivateServer = ScreepsAPIUrl != "https://screeps.com";
+            bool isPrivateServer = ConfigSettingsState.ScreepsHttpsUrl != "https://screeps.com";
             if (isPrivateServer)
             {
-                var signinReponse = await ScreepsAPI.SignIn(ScreepsAPIUsername, ScreepsAPIPassword);
+                var signinReponse = await ScreepsAPI.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
 
                 if (signinReponse == null)
                     throw new Exception("Failed to sign in");
-                ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] = signinReponse.Token;
+                ConfigSettingsState.ScreepsToken = signinReponse.Token;
 
-                Shards.Add(new ShardState(ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? ""));
+                Shards.Add(new ShardState(ConfigSettingsState.ScreepsShardName));
 
                 OnUpdateAdminUtilsDataTimer(null, null);
                 _onSetAdminUtilsDataTimer = new Timer(60 * 1000);
