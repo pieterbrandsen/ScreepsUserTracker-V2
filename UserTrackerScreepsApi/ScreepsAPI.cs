@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Text;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
@@ -29,20 +30,19 @@ namespace UserTrackerScreepsApi
     public static class ScreepsAPI
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
-        private static SemaphoreSlim throttler = new SemaphoreSlim(1);
+        private static SemaphoreSlim _normalThrottler = new SemaphoreSlim(1);
+        private static SemaphoreSlim _filesThrottler = new SemaphoreSlim(500);
 
         private static HttpClient _normalHttpClient = new HttpClient();
 
         private static HttpClient _filesHttpClient = new(new SocketsHttpHandler
         {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-            PooledConnectionIdleTimeout = TimeSpan.FromSeconds(30),
-            MaxConnectionsPerServer = 10000,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            ConnectTimeout = TimeSpan.FromSeconds(10),
         });
-        private static async Task<(HttpResponseMessage response, int retyCount)> ThrottledRequest(HttpRequestMessage request)
+        private static async Task<(HttpResponseMessage response, int retyCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
-            await throttler.WaitAsync();
+            await _normalThrottler.WaitAsync();
             try
             {
                 var retryCount = 0;
@@ -50,7 +50,7 @@ namespace UserTrackerScreepsApi
 
                 while (retryCount < 100)
                 {
-                    Thread.Sleep(50);
+                    await Task.Delay(50);
                     using (var clonedRequest = CloneHttpRequestMessage(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
@@ -63,7 +63,7 @@ namespace UserTrackerScreepsApi
             }
             finally
             {
-                throttler.Release();
+                _normalThrottler.Release();
             }
         }
 
@@ -93,47 +93,63 @@ namespace UserTrackerScreepsApi
             return clone;
         }
 
-        public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
+        public static string ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
+        public static string ScreepsAPIHTTPUrl = (ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "").Replace("https://", "http://");
         public static string ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
 
-        private static Uri CombineUrl(string path)
+        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false)
         {
-            return new Uri(ScreepsAPIUrl + path);
-        }
-        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null)
-        {
+            var reqUrl = "";
+            if (isHistoryRequest)
+            {
+                reqUrl = ScreepsAPIHTTPUrl + path;
+            }
+            else
+            {
+                reqUrl = ScreepsAPIUrl + path;
+            }
             if (method == HttpMethod.Post && httpContent == null)
             {
                 throw new ArgumentNullException("No HttpContent provided");
             }
 
-            var isHistoryRequest = path.StartsWith("/room-history");
             try
             {
-                var request = new HttpRequestMessage()
-                {
-                    RequestUri = CombineUrl(path),
-                    Method = method,
-                };
-                if (httpContent != null)
-                {
-                    request.Content = httpContent;
-                }
-
-                request.Headers.Add("X-Token", ScreepsAPIToken);
-                request.Headers.Add("X-Username", ScreepsAPIToken);
-
                 var retryCount = 0;
                 HttpResponseMessage response = null;
                 if (isHistoryRequest)
                 {
-                    response = await _filesHttpClient.SendAsync(request);
+                    await _filesThrottler.WaitAsync();
+                    try
+                    {
+                        response = await _filesHttpClient.GetAsync(reqUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Error(ex, reqUrl);
+                    }
+                    finally
+                    {
+                        _filesThrottler.Release();
+                    }
                 }
                 else
                 {
-                    (response, retryCount) = await ThrottledRequest(request);
+                    var request = new HttpRequestMessage()
+                    {
+                        RequestUri = new Uri(reqUrl),
+                        Method = method,
+                    };
+                    if (httpContent != null)
+                    {
+                        request.Content = httpContent;
+                    }
+
+                    request.Headers.Add("X-Token", ScreepsAPIToken);
+                    request.Headers.Add("X-Username", ScreepsAPIToken);
+                    (response, retryCount) = await ThrottledRequestAsync(request);
                 }
-                _logger.Information($"{path} - {response.StatusCode} - {retryCount}");
+                _logger.Information($"{reqUrl} - {response.StatusCode} - {retryCount}");
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -142,13 +158,12 @@ namespace UserTrackerScreepsApi
                 }
                 else
                 {
-                    Debug.WriteLine(response.StatusCode);
                     return (default, response.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                if (!isHistoryRequest) _logger.Error(ex, $"{path} - {ex.Message}");
+                _logger.Error(ex, reqUrl);
                 return (default, HttpStatusCode.InternalServerError);
             }
         }
@@ -256,12 +271,10 @@ namespace UserTrackerScreepsApi
             return Status == HttpStatusCode.OK && Result.Ok == 1 ? Result.User : null;
         }
 
-        public static async Task<JObject?> GetHistory(string shard, string room, long tick)
+        public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)
         {
             var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
-
-            var (Result, Status) = await ExecuteRequestAsync<JObject>(HttpMethod.Get, path);
-            return Result;
+            return await ExecuteRequestAsync<JObject>(HttpMethod.Get, path, isHistoryRequest: true);
         }
 
         public static async Task<MapStatsResponse?> GetMapStats(List<string> rooms, string shard, string statName)

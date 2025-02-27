@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Net;
 using Newtonsoft.Json.Linq;
 using UserTrackerScreepsApi;
 using UserTrackerShared.Models;
@@ -8,15 +9,18 @@ namespace UserTrackerShared.Helpers
 {
     public static class RoomDataHelper
     {
-        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.HistoryProcessor);
 
-        public static async Task<bool> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDTO> reservedRoomsByUser, ConcurrentDictionary<string, object> userLocks)
+        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDTO> reservedRoomsByUser, ConcurrentDictionary<string, object> userLocks)
         {
             try
             {
                 var isReservedRoom = false;
-                var roomData = await ScreepsAPI.GetHistory(shard, name, tick);
-                if (roomData == null) return false;
+                var (roomData, Result) = await ScreepsAPI.GetHistory(shard, name, tick);
+                if (roomData == null)
+                {
+                    return (int)Result;
+                }
 
                 var roomHistory = new ScreepsRoomHistory();
                 var roomHistoryDTO = new ScreepsRoomHistoryDTO();
@@ -43,7 +47,8 @@ namespace UserTrackerShared.Helpers
                             {
                                 _logger.Error(e, $"Error processing single tick {tickNumber} for room {name}");
                             }
-                            if (roomHistory.Structures.Controller?.Reservation != null) {
+                            if (roomHistory.Structures.Controller?.Reservation != null)
+                            {
                                 isReservedRoom = true;
                                 var userKey = roomHistory.Structures.Controller.Reservation.User;
                                 var userLock = userLocks.GetOrAdd(userKey, _ => new object());
@@ -58,7 +63,8 @@ namespace UserTrackerShared.Helpers
                                     value.Update(roomHistory);
                                 }
                             }
-                            else {
+                            else
+                            {
                                 roomHistoryDTO.Update(roomHistory);
                             }
                         }
@@ -67,12 +73,12 @@ namespace UserTrackerShared.Helpers
 
                 if (!isReservedRoom) await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDTO);
                 if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateHistoryFile(roomData);
-                return true;
+                return 200;
             }
             catch (Exception e)
             {
                 _logger.Error(e, $"Error processing room {name}");
-                return false;
+                return (int)HttpStatusCode.InternalServerError;
             }
         }
     }

@@ -44,7 +44,6 @@ namespace UserTrackerShared.States
         public List<string> Rooms { get; set; } = new List<string>();
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
-        private int _successes = 0;
 
         public async void StartUpdate()
         {
@@ -81,7 +80,7 @@ namespace UserTrackerShared.States
             _logger.Warning($"Started sync Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms");
             for (long i = LastSyncTime; i < syncTime; i += 100)
             {
-                _successes = 0;
+                var resultCodes = new ConcurrentDictionary<int, int>();
 
                 var mainStopwatch = Stopwatch.StartNew();
                 var semaphore = new SemaphoreSlim(Rooms.Count);
@@ -97,7 +96,15 @@ namespace UserTrackerShared.States
                         {
                             try
                             {
-                                if (await RoomDataHelper.GetAndHandleRoomData(Name, room, i, reservedRoomsByUser, userLocks)) Interlocked.Increment(ref _successes);
+                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, reservedRoomsByUser, userLocks);
+                                if (resultCodes.TryGetValue(statusResult, out int value))
+                                {
+                                    resultCodes[statusResult] = ++value;
+                                }
+                                else
+                                {
+                                    resultCodes[statusResult] = 1;
+                                }
                             }
                             finally
                             {
@@ -114,7 +121,6 @@ namespace UserTrackerShared.States
                 }
 
 
-
                 mainStopwatch.Stop();
                 var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
@@ -125,12 +131,12 @@ namespace UserTrackerShared.States
                     TicksBehind = ticksBehind,
                     TimeTakenMs = totalMilliseconds,
                     TotalRooms = Rooms.Count,
-                    SuccessCount = _successes
+                    ResultCodes = resultCodes
                 });
                 try
                 {
                     var totalMicroSeconds = totalMilliseconds * 1000;
-                    var performanceLogMessage = $"timeT {totalMilliseconds}, ticksBehind {ticksBehind}, roomsT {_successes}/{Rooms.Count}, shard {Name}:{i} timeT/roomsT {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)}miS at {DateTime.Now.ToLongTimeString()}";
+                    var performanceLogMessage = $"{Name}:{i} took {totalMilliseconds} milliseconds, is {ticksBehind} ticks behind and took {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)} microseconds per room on average";
                     _logger.Information(performanceLogMessage);
                     Screen.AddLog(performanceLogMessage);
                 }

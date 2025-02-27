@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,6 @@ namespace UserTrackerShared.Models
         public long TicksBehind { get; set; }
         public long TimeTakenMs { get; set; }
         public int TotalRooms { get; set; }
-        public int SuccessCount { get; set; }
-        public int FailedCount => TotalRooms - SuccessCount;
+        public ConcurrentDictionary<int, int> ResultCodes { get; set; }
     }
 }

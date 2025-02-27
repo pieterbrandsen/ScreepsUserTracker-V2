@@ -32,6 +32,7 @@ namespace UserTrackerShared.Helpers
     {
         ScreepsAPI,
         States,
+        HistoryProcessor,
         PullPerformance,
         InfluxDB,
         GraphiteDB

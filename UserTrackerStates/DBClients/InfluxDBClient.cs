@@ -305,8 +305,6 @@ namespace UserTrackerStates.DBClients
                             .Field("TicksBehind", performanceClassDTO.TicksBehind)
                             .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
                             .Field("TotalRooms", performanceClassDTO.TotalRooms)
-                            .Field("SuccessCount", performanceClassDTO.SuccessCount)
-                            .Field("FailedCount", performanceClassDTO.FailedCount)
                             .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
                 InfluxDBClientWriter.AddPoint("history_performance", point);

@@ -28,7 +28,7 @@ namespace UserTrackerShared.States
 
         public static async Task InitAsync()
         {
-            ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_URL"] ?? "";
+            ScreepsAPIUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
             ScreepsAPIToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
             ScreepsAPIUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
             ScreepsAPIPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
