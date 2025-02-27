@@ -205,7 +205,7 @@ namespace UserTrackerStates.DBClients
                     }
                 }
 
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.ticks.", shard, room, timestamp, username, screepsRoomHistory);
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.data.", shard, room, timestamp, username, screepsRoomHistory);
             }
             catch (Exception e)
             {
