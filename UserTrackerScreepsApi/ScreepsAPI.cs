@@ -94,7 +94,7 @@ namespace UserTrackerScreepsApi
         }
 
         public static string ScreepsAPIUrl = ConfigSettingsState.ScreepsHttpsUrl;
-        public static string ScreepsAPIHTTPUrl = ConfigSettingsState.ScreepsHttpUr;
+        public static string ScreepsAPIHTTPUrl = ConfigSettingsState.ScreepsHttpUrl;
         public static string ScreepsAPIToken => ConfigSettingsState.ScreepsToken;
 
         private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false)
