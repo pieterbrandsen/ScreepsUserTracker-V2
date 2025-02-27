@@ -205,7 +205,7 @@ namespace UserTrackerStates.DBClients
                     }
                 }
 
-                GraphiteDBClientWriter.UploadData($"history_ticks.{ConfigSettingsState.ServerName}.", shard, room, timestamp, username, screepsRoomHistory);
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.ticks.", shard, room, timestamp, username, screepsRoomHistory);
             }
             catch (Exception e)
             {
@@ -217,7 +217,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"history_performance.{ConfigSettingsState.ServerName}.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.performance.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
@@ -235,7 +235,7 @@ namespace UserTrackerStates.DBClients
 
                 DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
-                GraphiteDBClientWriter.UploadData($"leaderboard.{ConfigSettingsState.ServerName}.{seasonItem.UserName}.", seasonItem, timestamp);
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.leaderboard.{seasonItem.UserName}.", seasonItem, timestamp);
             }
             catch (Exception e)
             {
@@ -247,7 +247,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"users.{ConfigSettingsState.ServerName}.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.users.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
