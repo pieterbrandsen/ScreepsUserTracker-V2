@@ -273,7 +273,7 @@ namespace UserTrackerScreepsApi
 
         public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)
         {
-            var path = $"/room-history{(!string.IsNullOrEmpty(shard) ? $"/{shard}" : "")}/{room}/{tick}.json";
+            var path = !ConfigSettingsState.ScreepsIsPrivateServer ? $"/room-history/{shard}/{room}/{tick}.json" : $"/room-history?room={room}&time={tick}";
             return await ExecuteRequestAsync<JObject>(HttpMethod.Get, path, isHistoryRequest: true);
         }
 

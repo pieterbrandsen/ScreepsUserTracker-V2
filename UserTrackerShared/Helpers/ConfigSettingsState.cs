@@ -14,6 +14,7 @@ namespace UserTrackerShared.Helpers
         public static string ScreepsToken { get; set; }
         public static string ScreepsHttpsUrl { get; set; }
         public static string ScreepsHttpUrl { get; set; }
+        public static bool ScreepsIsPrivateServer { get; set; }
         public static string ScreepsUsername { get; set; }
         public static string ScreepsPassword { get; set; }
         public static string ScreepsShardName { get; set; }
@@ -44,6 +45,7 @@ namespace UserTrackerShared.Helpers
             ScreepsToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
             ScreepsHttpsUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
             ScreepsHttpUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTP_URL"] ?? "";
+            ScreepsIsPrivateServer = ScreepsHttpsUrl != "https://screeps.com";
             ScreepsUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
             ScreepsPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
             ScreepsShardName = ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? "";

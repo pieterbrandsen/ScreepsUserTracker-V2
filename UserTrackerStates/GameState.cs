@@ -22,7 +22,7 @@ namespace UserTrackerShared.States
 
         public static async Task InitAsync()
         {
-            bool isPrivateServer = ConfigSettingsState.ScreepsHttpsUrl != "https://screeps.com";
+            bool isPrivateServer = ConfigSettingsState.ScreepsIsPrivateServer;
             if (isPrivateServer)
             {
                 var signinReponse = await ScreepsAPI.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
