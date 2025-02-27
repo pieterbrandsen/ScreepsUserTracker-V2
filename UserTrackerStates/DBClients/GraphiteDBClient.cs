@@ -259,7 +259,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.adminUtils.", data, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.adminutils.", data, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
