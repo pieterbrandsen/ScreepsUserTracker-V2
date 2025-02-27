@@ -243,11 +243,23 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WriteSingleUserdData(ScreepsUser user)
+        public static void WriteSingleUserData(ScreepsUser user)
         {
             try
             {
                 GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.users.{user.Username}.", user, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, $"Error uploading performance data");
+            }
+        }
+
+        public static void WriteAdminUtilsData(AdminUtilsDTO data)
+        {
+            try
+            {
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.adminUtils.", data, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {

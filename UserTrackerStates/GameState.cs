@@ -25,6 +25,7 @@ namespace UserTrackerShared.States
         public static Dictionary<string, ScreepsUser> Users = new();
 
         private static Timer? _onSetLeaderboardTimer;
+        private static Timer? _onSetAdminUtilsDataTimer;
 
         public static async Task InitAsync()
         {
@@ -43,6 +44,12 @@ namespace UserTrackerShared.States
                 ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] = signinReponse.Token;
 
                 Shards.Add(new ShardState(ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? ""));
+
+                OnUpdateAdminUtilsDataTimer(null, null);
+                _onSetAdminUtilsDataTimer = new Timer(60 * 1000);
+                _onSetAdminUtilsDataTimer.AutoReset = true;
+                _onSetAdminUtilsDataTimer.Enabled = true;
+                _onSetAdminUtilsDataTimer.Elapsed += OnUpdateAdminUtilsDataTimer;
             }
             else
             {
@@ -83,7 +90,7 @@ namespace UserTrackerShared.States
                 if (rank > 0) userResponse.Rank = rank;
                 Users[userId] = userResponse;
 
-                DBClient.WriteSingleUserdData(userResponse);
+                DBClient.WriteSingleUserData(userResponse);
                 return userResponse.Username;
             }
             return null;
@@ -142,6 +149,14 @@ namespace UserTrackerShared.States
             foreach (var user in Users)
             {
                 await GetUser(user.Key);
+            }
+        }
+        private static async void OnUpdateAdminUtilsDataTimer(Object? source, ElapsedEventArgs e)
+        {
+            var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();
+            if (adminUtilsResponse != null)
+            {
+                DBClient.WriteAdminUtilsData(adminUtilsResponse);
             }
         }
     }

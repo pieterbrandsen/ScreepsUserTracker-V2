@@ -277,6 +277,14 @@ namespace UserTrackerScreepsApi
             return await ExecuteRequestAsync<JObject>(HttpMethod.Get, path, isHistoryRequest: true);
         }
 
+        public static async Task<AdminUtilsResponse?> GetAdminUtilsStats()
+        {
+            var path = "/stats";
+
+            var (Result, Status) = await ExecuteRequestAsync<AdminUtilsResponse>(HttpMethod.Get, path);
+            return Result;
+        }
+
         public static async Task<MapStatsResponse?> GetMapStats(List<string> rooms, string shard, string statName)
         {
             var path = $"/api/game/map-stats";
@@ -364,8 +372,6 @@ namespace UserTrackerScreepsApi
 
             return await GetAllMapsStatsOfDirection(shard, statName, isNorth, isEast, startIndex + layerSize, mapStatsResponse);
         }
-
-
 
         public static async Task<MapStatsResponse> GetAllMapStats(string shard, string statName)
         {

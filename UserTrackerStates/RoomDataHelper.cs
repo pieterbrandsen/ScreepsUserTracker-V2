@@ -9,7 +9,7 @@ namespace UserTrackerShared.Helpers
 {
     public static class RoomDataHelper
     {
-        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.HistoryProcessor);
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
         public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDTO> reservedRoomsByUser, ConcurrentDictionary<string, object> userLocks)
         {

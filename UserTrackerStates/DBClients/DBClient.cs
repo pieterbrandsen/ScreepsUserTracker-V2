@@ -55,15 +55,28 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WriteSingleUserdData(ScreepsUser user)
+        public static void WriteSingleUserData(ScreepsUser user)
         {
+            if (ConfigSettingsState.InfluxDbEnabled)
+            {
+                // InfluxDBClientState.WriteSingleUserData(user);
+            }
+            if (ConfigSettingsState.GraphiteDbEnabled)
+            {
+                GraphiteDBClientState.WriteSingleUserData(user);
+            }
+        }
+
+        public static void WriteAdminUtilsData(AdminUtilsResponse data)
+        {
+            var dto = new AdminUtilsDTO(data);
             if (ConfigSettingsState.InfluxDbEnabled)
             {
                 // InfluxDBClientState.WriteSingleUserdData(user);
             }
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
-                GraphiteDBClientState.WriteSingleUserdData(user);
+                GraphiteDBClientState.WriteAdminUtilsData(dto);
             }
         }
     }
