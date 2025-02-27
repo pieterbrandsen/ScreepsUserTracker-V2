@@ -53,13 +53,17 @@ namespace UserTrackerShared.States
             }
 
 
+            _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
+            _onSetLeaderboardTimer.AutoReset = true;
+            _onSetLeaderboardTimer.Enabled = true;
             if (ConfigSettingsState.LoadSeasonalLeaderboard)
             {
                 await UpdateCurrentLeaderboard();
-                _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
-                _onSetLeaderboardTimer.Elapsed += OnSetTimeTimer;
-                _onSetLeaderboardTimer.AutoReset = true;
-                _onSetLeaderboardTimer.Enabled = true;
+                _onSetLeaderboardTimer.Elapsed += OnUpdateSeasonalLeaderboardTimer;
+            }
+            else
+            {
+                _onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
             }
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
@@ -129,9 +133,16 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async void OnSetTimeTimer(Object? source, ElapsedEventArgs e)
+        private static async void OnUpdateSeasonalLeaderboardTimer(Object? source, ElapsedEventArgs e)
         {
             await UpdateCurrentLeaderboard();
+        }
+        private static async void OnUpdateUsersLeaderboardTimer(Object? source, ElapsedEventArgs e)
+        {
+            foreach (var user in Users)
+            {
+                await GetUser(user.Key);
+            }
         }
     }
 }
