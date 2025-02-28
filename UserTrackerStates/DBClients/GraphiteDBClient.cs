@@ -133,7 +133,7 @@ namespace UserTrackerStates.DBClients
 
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is long || kvp.Value is int)
+                    if (kvp.Value is long || kvp.Value is int || kvp.Value is double)
                     {
                         _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
@@ -157,7 +157,7 @@ namespace UserTrackerStates.DBClients
 
                 foreach (var kvp in flattenedData)
                 {
-                    if (kvp.Value is long || kvp.Value is int)
+                    if (kvp.Value is long || kvp.Value is int || kvp.Value is double)
                     {
                         _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                     }
