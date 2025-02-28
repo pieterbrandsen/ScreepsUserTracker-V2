@@ -123,6 +123,8 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int OwnedRooms { get; set; }
         [JsonProperty("gametime")]
         public long GameTime { get; set; }
+        [JsonProperty("ticks")]
+        public AdminUtilsTicks Ticks { get; set; }
         [JsonProperty("users")]
         public List<AdminUtilsUser> Users { get; set; }
     }
@@ -136,6 +138,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
             TotalRooms = response.TotalRooms;
             OwnedRooms = response.OwnedRooms;
             GameTime = response.GameTime;
+            Ticks = response.Ticks;
             Users = new Dictionary<string, AdminUtilsUser>();
             foreach (var user in response.Users)
             {
@@ -154,6 +157,8 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int OwnedRooms { get; set; }
         [JsonProperty("gametime")]
         public long GameTime { get; set; }
+        [JsonProperty("ticks")]
+        public AdminUtilsTicks Ticks { get; set; }
         [JsonProperty("users")]
         public Dictionary<string, AdminUtilsUser> Users { get; set; }
     }
