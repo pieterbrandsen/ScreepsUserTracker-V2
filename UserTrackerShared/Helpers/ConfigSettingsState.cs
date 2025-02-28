@@ -29,6 +29,7 @@ namespace UserTrackerShared.Helpers
         public static string GraphiteDbHost { get; set; }
         public static int GraphiteDbPort { get; set; }
 
+        public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
         public static bool LoadSeasonalLeaderboard { get; set; }
@@ -60,6 +61,7 @@ namespace UserTrackerShared.Helpers
             GraphiteDbHost = ConfigurationManager.AppSettings["GRAPHITE_HOST"] ?? "";
             GraphiteDbPort = Convert.ToInt32(ConfigurationManager.AppSettings["GRAPHITE_PORT"] ?? "");
 
+            PullBackwardsTickAmount = Convert.ToInt32(ConfigurationManager.AppSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
             TicksInFile = Convert.ToInt32(ConfigurationManager.AppSettings["TICKS_IN_FILE"]);
             GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
             LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);

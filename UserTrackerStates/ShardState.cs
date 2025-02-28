@@ -69,7 +69,7 @@ namespace UserTrackerShared.States
         private async void StartSync()
         {
             var syncTime = GetSyncTime();
-            if (LastSyncTime == 0) LastSyncTime = syncTime - 100 * 100;
+            if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
 
             var ticksToBeSynced = syncTime - LastSyncTime;
             if (ticksToBeSynced <= 0)
