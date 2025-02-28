@@ -289,7 +289,7 @@ namespace UserTrackerShared.Helpers
             var creepsDTOBodyPart = new CountByPartDTO();
             foreach (var creep in creeps)
             {
-                creepsDTO.Count += 1;
+                creepsDTO.Count += 1 / ConfigSettingsState.TicksInFile;
                 ConvertBody(creep.Body, creepsDTOBodyPart);
                 ComputeExtraIntentPower(creep.Body, creepsDTOBodyPart, intentMap);
                 ConvertActiongLog(creep.ActionLog, creepsDTO.ActionLog, creepsDTOBodyPart, intentMap, creep._oldFatigue);
