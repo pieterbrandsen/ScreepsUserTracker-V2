@@ -70,18 +70,22 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async Task<string?> GetUser(string userId, int rank = 0)
+        private static async Task<string?> GetUser(string userId)
         {
             var userResponse = await ScreepsAPI.GetUser(userId);
             if (userResponse != null)
             {
-                if (rank > 0) userResponse.Rank = rank;
                 Users[userId] = userResponse;
-
-                DBClient.WriteSingleUserData(userResponse);
                 return userResponse.Username;
             }
             return null;
+        }
+        private static void WriteAllUsers()
+        {
+            foreach (var user in Users)
+            {
+                DBClient.WriteSingleUserData(user.Value);
+            }
         }
 
         public static async Task UpdateCurrentLeaderboard()
@@ -94,8 +98,10 @@ namespace UserTrackerShared.States
                 CurrentLeaderboard = currentLeaderboardResponse;
                 foreach (var leaderboardSpot in CurrentLeaderboard)
                 {
-                    await GetUser(leaderboardSpot.UserId, leaderboardSpot.Rank);
+                    await GetUser(leaderboardSpot.UserId);
+                    Users[leaderboardSpot.UserId].GCLRank = leaderboardSpot.Rank;
                 }
+                WriteAllUsers();
             }
             else
             {
@@ -114,7 +120,7 @@ namespace UserTrackerShared.States
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
-                            await GetUser(leaderboardSpot.UserId, leaderboardSpot.Rank);
+                            await GetUser(leaderboardSpot.UserId);
                             Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
                         }
 
@@ -137,6 +143,14 @@ namespace UserTrackerShared.States
             foreach (var user in Users)
             {
                 await GetUser(user.Key);
+            }
+
+            var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
+            var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
+            foreach (var user in Users)
+            {
+                user.Value.GCLRank = gclSorted.FindIndex(x => x.Id == user.Value.Id) + 1;
+                user.Value.PowerRank = powerSorted.FindIndex(x => x.Id == user.Value.Id) + 1;
             }
         }
         private static async void OnUpdateAdminUtilsDataTimer(Object? source, ElapsedEventArgs e)
