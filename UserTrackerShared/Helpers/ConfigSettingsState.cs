@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
 using System.Text;
@@ -40,38 +41,46 @@ namespace UserTrackerShared.Helpers
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
 
-        public static void Init() {
-            RunningHistoryTested = Convert.ToBoolean(ConfigurationManager.AppSettings["RUNNING_HISTORY_TESTED"]);
+        public static void Init() { 
+            Init(ConfigurationManager.AppSettings);
+        }
+        private static void Init(NameValueCollection appsettings) {
+            RunningHistoryTested = Convert.ToBoolean(appsettings["RUNNING_HISTORY_TESTED"]);
 
-            ScreepsToken = ConfigurationManager.AppSettings["SCREEPS_API_TOKEN"] ?? "";
-            ScreepsHttpsUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTPS_URL"] ?? "";
-            ScreepsHttpUrl = ConfigurationManager.AppSettings["SCREEPS_API_HTTP_URL"] ?? "";
+            ScreepsToken = appsettings["SCREEPS_API_TOKEN"] ?? "";
+            ScreepsHttpsUrl = appsettings["SCREEPS_API_HTTPS_URL"] ?? "";
+            ScreepsHttpUrl = appsettings["SCREEPS_API_HTTP_URL"] ?? "";
             ScreepsIsPrivateServer = ScreepsHttpsUrl != "https://screeps.com";
-            ScreepsUsername = ConfigurationManager.AppSettings["SCREEPS_API_USERNAME"] ?? "";
-            ScreepsPassword = ConfigurationManager.AppSettings["SCREEPS_API_PASSWORD"] ?? "";
-            ScreepsShardName = ConfigurationManager.AppSettings["SCREEPS_SHARDNAME"] ?? "";
+            ScreepsUsername = appsettings["SCREEPS_API_USERNAME"] ?? "";
+            ScreepsPassword = appsettings["SCREEPS_API_PASSWORD"] ?? "";
+            ScreepsShardName = appsettings["SCREEPS_SHARDNAME"] ?? "";
 
-            ServerName = ConfigurationManager.AppSettings["SERVER_NAME"] ?? "";
+            ServerName = appsettings["SERVER_NAME"] ?? "";
 
-            InfluxDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["INFLUXDB_ENABLED"]);
-            InfluxDbHost = ConfigurationManager.AppSettings["INFLUXDB_HOST"] ?? "";
-            InfluxDbToken = ConfigurationManager.AppSettings["INFLUXDB_TOKEN"] ?? "";
+            InfluxDbEnabled = Convert.ToBoolean(appsettings["INFLUXDB_ENABLED"]);
+            InfluxDbHost = appsettings["INFLUXDB_HOST"] ?? "";
+            InfluxDbToken = appsettings["INFLUXDB_TOKEN"] ?? "";
 
-            GraphiteDbEnabled = Convert.ToBoolean(ConfigurationManager.AppSettings["GRAPHITE_ENABLED"]);
-            GraphiteDbHost = ConfigurationManager.AppSettings["GRAPHITE_HOST"] ?? "";
-            GraphiteDbPort = Convert.ToInt32(ConfigurationManager.AppSettings["GRAPHITE_PORT"] ?? "");
+            GraphiteDbEnabled = Convert.ToBoolean(appsettings["GRAPHITE_ENABLED"]);
+            GraphiteDbHost = appsettings["GRAPHITE_HOST"] ?? "";
+            GraphiteDbPort = Convert.ToInt32(appsettings["GRAPHITE_PORT"] ?? "");
 
-            PullBackwardsTickAmount = Convert.ToInt32(ConfigurationManager.AppSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
-            TicksInFile = Convert.ToInt32(ConfigurationManager.AppSettings["TICKS_IN_FILE"]);
-            GetAllUsers = Convert.ToBoolean(ConfigurationManager.AppSettings["GET_ALL_USERS"]);
-            LoadSeasonalLeaderboard = Convert.ToBoolean(ConfigurationManager.AppSettings["LOAD_SEASONAL_LEADERBOARD"]);
-            StartsShards = Convert.ToBoolean(ConfigurationManager.AppSettings["START_SHARDS"]);
-            LogsFolder = ConfigurationManager.AppSettings["LOGS_FOLDER"] ?? "";
+            PullBackwardsTickAmount = Convert.ToInt32(appsettings["PULL_BACKWARDS_TICK_AMOUNT"]);
+            TicksInFile = Convert.ToInt32(appsettings["TICKS_IN_FILE"]);
+            GetAllUsers = Convert.ToBoolean(appsettings["GET_ALL_USERS"]);
+            LoadSeasonalLeaderboard = Convert.ToBoolean(appsettings["LOAD_SEASONAL_LEADERBOARD"]);
+            StartsShards = Convert.ToBoolean(appsettings["START_SHARDS"]);
+            LogsFolder = appsettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new Exception("No logs folder provided");
 
 
-            WriteHistoryFiles = Convert.ToBoolean(ConfigurationManager.AppSettings["WRITE_HISTORY_FILES"]);
-            WriteHistoryProperties = Convert.ToBoolean(ConfigurationManager.AppSettings["WRITE_HISTORY_PROPERTIES"]);
+            WriteHistoryFiles = Convert.ToBoolean(appsettings["WRITE_HISTORY_FILES"]);
+            WriteHistoryProperties = Convert.ToBoolean(appsettings["WRITE_HISTORY_PROPERTIES"]);
+        }
+        public static void InitTest(AppSettingsSection appSettingsSection)
+        {
+            var settings = appSettingsSection.Settings;
+            TicksInFile = Convert.ToInt32(settings["TICKS_IN_FILE"].Value);
         }
     }
 }

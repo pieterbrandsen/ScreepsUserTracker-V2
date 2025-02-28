@@ -10,9 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="App.Private.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="App.Live.Config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

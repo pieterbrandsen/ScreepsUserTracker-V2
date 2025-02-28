@@ -6,8 +6,8 @@ namespace UserTrackerShared.Models
     #region Base DTO
     public class DamageActionDTO
     {
-        public long Count { get; set; } = 0;
-        public long Damage { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
+        public decimal Damage { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -16,8 +16,8 @@ namespace UserTrackerShared.Models
     }
     public class HealActionDTO
     {
-        public long Count { get; set; } = 0;
-        public long Heal { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
+        public decimal Heal { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -26,8 +26,8 @@ namespace UserTrackerShared.Models
     }
     public class InflowActionDTO
     {
-        public long Count { get; set; } = 0;
-        public long Inflow { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
+        public decimal Inflow { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -36,9 +36,9 @@ namespace UserTrackerShared.Models
     }
     public class OutlflowActionDTO
     {
-        public long Count { get; set; } = 0;
-        public long Outflow { get; set; } = 0;
-        public long Effect { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
+        public decimal Outflow { get; set; } = 0;
+        public decimal Effect { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -48,7 +48,7 @@ namespace UserTrackerShared.Models
     }
     public class GenericActionDTO
     {
-        public long Count { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -104,14 +104,14 @@ namespace UserTrackerShared.Models
     }
     public class CountByPartDTO
     {
-        public long Move { get; set; } = 0;
-        public long Work { get; set; } = 0;
-        public long Carry { get; set; } = 0;
-        public long Attack { get; set; } = 0;
-        public long RangedAttack { get; set; } = 0;
-        public long Tough { get; set; } = 0;
-        public long Heal { get; set; } = 0;
-        public long Claim { get; set; } = 0;
+        public decimal Move { get; set; } = 0;
+        public decimal Work { get; set; } = 0;
+        public decimal Carry { get; set; } = 0;
+        public decimal Attack { get; set; } = 0;
+        public decimal RangedAttack { get; set; } = 0;
+        public decimal Tough { get; set; } = 0;
+        public decimal Heal { get; set; } = 0;
+        public decimal Claim { get; set; } = 0;
         public void Clear()
         {
             Move = 0;
@@ -127,7 +127,7 @@ namespace UserTrackerShared.Models
 
     public class CreepDTO
     {
-        public long Count { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
         public Store Store = new Store();
         public CountByPartDTO BodyParts = new CountByPartDTO();
         public ActionLogDTO ActionLog { get; set; } = new ActionLogDTO();
@@ -142,7 +142,7 @@ namespace UserTrackerShared.Models
     }
     public class BaseStructureDTO
     {
-        public long Count { get; set; } = 0;
+        public decimal Count { get; set; } = 0;
         public void Clear()
         {
             Count = 0;
@@ -152,9 +152,9 @@ namespace UserTrackerShared.Models
     #region Structures DTO
     public class StructureControllerDTO : BaseStructureDTO
     {
-        public long Level { get; set; } = 0;
-        public long Progress { get; set; } = 0;
-        public long ProgressTotal { get; set; } = 0;
+        public decimal Level { get; set; } = 0;
+        public decimal Progress { get; set; } = 0;
+        public decimal ProgressTotal { get; set; } = 0;
         public string UserId { get; set; } = "";
         public string ReservationUserId { get; set; } = "";
         public new void Clear()
@@ -182,7 +182,7 @@ namespace UserTrackerShared.Models
     }
     public class StructureWallDTO : BaseStructureDTO
     {
-        public long Hits { get; set; } = 0;
+        public decimal Hits { get; set; } = 0;
         public new void Clear()
         {
             Hits = 0;
@@ -191,9 +191,9 @@ namespace UserTrackerShared.Models
     }
     public class StructureConstructionSiteDTO : BaseStructureDTO
     {
-        public long Progress { get; set; } = 0;
-        public long ProgressTotal { get; set; } = 0;
-        public Dictionary<string, long> TypesBuilding { get; set; } = new Dictionary<string, long>();
+        public decimal Progress { get; set; } = 0;
+        public decimal ProgressTotal { get; set; } = 0;
+        public Dictionary<string, decimal> TypesBuilding { get; set; } = new Dictionary<string, decimal>();
         public new void Clear()
         {
             Progress = 0;
@@ -213,8 +213,8 @@ namespace UserTrackerShared.Models
     }
     public class StructureExtensionDTO : BaseStructureDTO
     {
-        public long Energy { get; set; } = 0;
-        public long EnergyCapacity { get; set; } = 0;
+        public decimal Energy { get; set; } = 0;
+        public decimal EnergyCapacity { get; set; } = 0;
         public new void Clear()
         {
             Energy = 0;
@@ -259,8 +259,8 @@ namespace UserTrackerShared.Models
     }
     public class StructureLinkDTO : BaseStructureDTO
     {
-        public long Energy { get; set; } = 0;
-        public long EnergyCapacity { get; set; } = 0;
+        public decimal Energy { get; set; } = 0;
+        public decimal EnergyCapacity { get; set; } = 0;
         public new void Clear()
         {
             Energy = 0;
@@ -298,7 +298,7 @@ namespace UserTrackerShared.Models
     }
     public class StructureRampartDTO : BaseStructureDTO
     {
-        public long Hits { get; set; } = 0;
+        public decimal Hits { get; set; } = 0;
         public new void Clear()
         {
             Hits = 0;
@@ -321,8 +321,8 @@ namespace UserTrackerShared.Models
     }
     public class StructureSourceDTO : BaseStructureDTO
     {
-        public long Energy { get; set; } = 0;
-        public long EnergyCapacity { get; set; } = 0;
+        public decimal Energy { get; set; } = 0;
+        public decimal EnergyCapacity { get; set; } = 0;
         public new void Clear()
         {
             Energy = 0;
@@ -364,7 +364,7 @@ namespace UserTrackerShared.Models
     }
     public class StructureTowerDTO : BaseStructureDTO
     {
-        public long Energy { get; set; } = 0;
+        public decimal Energy { get; set; } = 0;
         public void Clear()
         {
             Energy = 0;
@@ -468,7 +468,7 @@ namespace UserTrackerShared.Models
     #endregion
     public class ScreepsRoomHistoryDTO
     {
-        private void ProcessGroundResources(ScreepsRoomHistory his)
+        public void ProcessGroundResources(ScreepsRoomHistory his)
         {
             var groundResourceKeys = his.GroundResources.Keys.ToList();
             for (int gr = 0; gr < groundResourceKeys.Count; gr++)
@@ -477,8 +477,8 @@ namespace UserTrackerShared.Models
                 if (groundResourceObj == null) continue;
 
                 PropertyInfo property = groundResourceObj.GetType().GetProperty(groundResourceObj.ResourceType);
-                long toBeAddedAmount = Convert.ToInt64(property.GetValue(groundResourceObj));
-                long currentAmount = 0;
+                decimal toBeAddedAmount = (decimal)(property.GetValue(groundResourceObj));
+                decimal currentAmount = 0;
 
                 if (GroundResources.TryGetValue(groundResourceObj.ResourceType, out var existingGroundResource))
                 {
@@ -488,7 +488,7 @@ namespace UserTrackerShared.Models
                 GroundResources[groundResourceObj.ResourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
             }
         }
-        private void ProcessCreeps(ScreepsRoomHistory his)
+        public void ProcessCreeps(ScreepsRoomHistory his)
         {
             Creeps.OwnedCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
             Creeps.EnemyCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.EnemyCreeps.Values.ToList<BaseCreep>(), Creeps.EnemyCreeps);
@@ -496,7 +496,7 @@ namespace UserTrackerShared.Models
 
             Creeps.PowerCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
         }
-        private void ProcessStructures(ScreepsRoomHistory his)
+        public void ProcessStructures(ScreepsRoomHistory his)
         {
             Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures, Structures);
         }
@@ -512,7 +512,7 @@ namespace UserTrackerShared.Models
             ProcessCreeps(his);
             ProcessStructures(his);
         }
-        private void ClearAll()
+        public void ClearAll()
         {
             GroundResources.Clear();
             Creeps.Clear();
@@ -522,7 +522,7 @@ namespace UserTrackerShared.Models
         public long TimeStamp { get; set; }
         public long Base { get; set; }
         public long Tick { get; set; }
-        public Dictionary<string, long> GroundResources { get; set; } = new Dictionary<string, long>();
+        public Dictionary<string, decimal> GroundResources { get; set; } = new Dictionary<string, decimal>();
         public CreepsDTO Creeps { get; set; } = new CreepsDTO();
         public StructuresDTO Structures { get; set; } = new StructuresDTO();
     }
