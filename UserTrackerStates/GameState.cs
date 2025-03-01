@@ -147,10 +147,24 @@ namespace UserTrackerShared.States
 
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
             var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
-            foreach (var user in Users)
+            int gclRank = 1;
+            foreach (var group in gclSorted.GroupBy(x => x.GCL))
             {
-                user.Value.GCLRank = gclSorted.FindIndex(x => x.Id == user.Value.Id) + 1;
-                user.Value.PowerRank = powerSorted.FindIndex(x => x.Id == user.Value.Id) + 1;
+                foreach (var user in group)
+                {
+                    user.GCLRank = gclRank;
+                }
+                gclRank += group.Count();
+            }
+
+            int powerRank = 1;
+            foreach (var group in powerSorted.GroupBy(x => x.Power))
+            {
+                foreach (var user in group)
+                {
+                    user.PowerRank = powerRank;
+                }
+                powerRank += group.Count();
             }
             WriteAllUsers();
         }
