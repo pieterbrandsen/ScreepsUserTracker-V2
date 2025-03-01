@@ -47,26 +47,27 @@ namespace UserTrackerShared.Helpers
                             {
                                 _logger.Error(e, $"Error processing single tick {tickNumber} for room {name}");
                             }
-                            if (roomHistory.Structures.Controller?.Reservation != null)
-                            {
-                                isReservedRoom = true;
-                                var userKey = roomHistory.Structures.Controller.Reservation.User;
-                                var userLock = userLocks.GetOrAdd(userKey, _ => new object());
-                                lock (userLock)
-                                {
-                                    if (!reservedRoomsByUser.TryGetValue(userKey, out ScreepsRoomHistoryDTO? value))
-                                    {
-                                        value = new ScreepsRoomHistoryDTO();
-                                        reservedRoomsByUser[userKey] = value;
-                                    }
+                        }
 
-                                    value.Update(roomHistory);
-                                }
-                            }
-                            else
+                        if (roomHistory.Structures.Controller?.Reservation != null)
+                        {
+                            isReservedRoom = true;
+                            var userKey = roomHistory.Structures.Controller.Reservation.User;
+                            var userLock = userLocks.GetOrAdd(userKey, _ => new object());
+                            lock (userLock)
                             {
-                                roomHistoryDTO.Update(roomHistory);
+                                if (!reservedRoomsByUser.TryGetValue(userKey, out ScreepsRoomHistoryDTO? value))
+                                {
+                                    value = new ScreepsRoomHistoryDTO();
+                                    reservedRoomsByUser[userKey] = value;
+                                }
+
+                                value.Update(roomHistory);
                             }
+                        }
+                        else
+                        {
+                            roomHistoryDTO.Update(roomHistory);
                         }
                     }
                 }

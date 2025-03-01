@@ -232,27 +232,6 @@ namespace UserTracker.Tests.Models
         }
 
         [Fact]
-        public void ProcessCreeps_NullValues()
-        {
-            var dto = new ScreepsRoomHistoryDTO();
-            var history = new ScreepsRoomHistory
-            {
-                Creeps = new Creeps
-                {
-                    OwnedCreeps = new Dictionary<string, Creep>
-                    {
-                        { "creep1", null }
-                    }
-                }
-            };
-
-            dto.ProcessCreeps(history);
-
-            Assert.NotNull(dto.Creeps.OwnedCreeps);
-            Assert.Equal(0, dto.Creeps.OwnedCreeps.Count);
-        }
-
-        [Fact]
         public void ProcessStructures_NullValues()
         {
             var dto = new ScreepsRoomHistoryDTO();

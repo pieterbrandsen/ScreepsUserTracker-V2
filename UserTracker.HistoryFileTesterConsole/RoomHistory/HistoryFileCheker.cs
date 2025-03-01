@@ -97,8 +97,8 @@ namespace UserTracker.Tests.RoomHistory
                     {
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                         changesProcessed += AssertHistory(roomHistory, tickObject, filePath);
-                        roomHistoryDTO.Update(roomHistory);
                     }
+                    roomHistoryDTO.Update(roomHistory);
                 }
             }
 

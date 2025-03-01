@@ -287,7 +287,7 @@ namespace UserTrackerShared.Helpers
         {
             var intentMap = new IntentMapDTO();
             var creepsDTOBodyPart = new CountByPartDTO();
-            foreach (var creep in creeps.Where(c => c != null))
+            foreach (var creep in creeps)
             {
                 creepsDTO.Count += 1m / ConfigSettingsState.TicksInFile;
                 ConvertBody(creep.Body, creepsDTOBodyPart);
