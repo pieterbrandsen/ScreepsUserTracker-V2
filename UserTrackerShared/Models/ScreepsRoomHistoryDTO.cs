@@ -477,7 +477,7 @@ namespace UserTrackerShared.Models
                 if (groundResourceObj == null) continue;
 
                 PropertyInfo property = groundResourceObj.GetType().GetProperty(groundResourceObj.ResourceType);
-                decimal toBeAddedAmount = (decimal)(property.GetValue(groundResourceObj));
+                long toBeAddedAmount = Convert.ToInt64(property.GetValue(groundResourceObj));
                 decimal currentAmount = 0;
 
                 if (GroundResources.TryGetValue(groundResourceObj.ResourceType, out var existingGroundResource))

@@ -1015,7 +1015,7 @@ namespace UserTrackerShared.Models
         public decimal SpawnTime { get; set; }
 
         [JsonProperty("directions")]
-        public decimal[] Directions { get; set; } = [];
+        public long[] Directions { get; set; } = [];
     }
     #endregion
 
