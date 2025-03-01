@@ -127,6 +127,7 @@ namespace UserTrackerScreepsApi
                     catch (Exception ex)
                     {
                         _logger.Error(ex, reqUrl);
+                        return (default, HttpStatusCode.InternalServerError);
                     }
                     finally
                     {
