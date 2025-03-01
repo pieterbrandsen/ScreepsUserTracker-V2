@@ -9,7 +9,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AppConfig>App.Live.config</AppConfig>
+      <AppConfig>$(APP_CONFIG_FILE)</AppConfig>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(APP_CONFIG_FILE)' == ''">
+      <AppConfig>App.Live.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>

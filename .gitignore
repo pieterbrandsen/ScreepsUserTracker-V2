@@ -402,6 +402,5 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Development config
-App.Live.config
-App.Private.config
+App.*.config
 /UserTrackerConsole/Objects
