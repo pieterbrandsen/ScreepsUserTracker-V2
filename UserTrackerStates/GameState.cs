@@ -48,7 +48,7 @@ namespace UserTrackerShared.States
             }
 
 
-            _onSetLeaderboardTimer = new Timer(1000);
+            _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
             _onSetLeaderboardTimer.AutoReset = true;
             _onSetLeaderboardTimer.Enabled = true;
             if (ConfigSettingsState.LoadSeasonalLeaderboard)
