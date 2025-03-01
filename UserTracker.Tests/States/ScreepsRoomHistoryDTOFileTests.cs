@@ -71,5 +71,16 @@ namespace UserTracker.Tests.States
             Assert.NotNull(dto);
             Assert.Equal(12, dto.Creeps.OwnedCreeps.Count);
         }
+
+        [Fact]
+        public void Case2()
+        {
+            var jObject = ParseFile("case2.json");
+            Assert.NotNull(jObject);
+            var dto = ProcessHistory(jObject);
+
+            Assert.NotNull(dto);
+            Assert.Equal(4, dto.Creeps.OwnedCreeps.Count);
+        }
     }
 }
