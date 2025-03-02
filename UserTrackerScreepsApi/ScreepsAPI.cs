@@ -201,54 +201,76 @@ namespace UserTrackerScreepsApi
             var (Result, Status) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
-        public static async Task<List<SeaonListItem>> GetCurrentSeasonLeaderboard(string mode)
+        public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
         {
             var season = DateTime.Now.ToString("yyyy-MM");
-            var leaderboardList = new List<SeaonListItem>();
+            var gclLeaderboardList = new List<SeaonListItem>();
+            var powerLeaderboardList = new List<SeaonListItem>();
 
             int offset = 0;
             int limit = 20;
             while (true)
             {
-                var listResponse = await GetCurrentSeasonLeaderboard(mode, season, offset, limit);
-                if (listResponse == null || listResponse.List.Count == 0) break;
-                leaderboardList.AddRange(listResponse.List);
-
+                var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
+                var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
+                var didSomething = false;
+                if (gclListResponse != null && gclListResponse.List.Count > 0)
+                {
+                    gclLeaderboardList.AddRange(gclListResponse.List);
+                    didSomething = true;
+                }
+                if (powerListResponse != null && powerListResponse.List.Count > 0)
+                {
+                    powerLeaderboardList.AddRange(powerListResponse.List);
+                    didSomething = true;
+                }
+                if (!didSomething) break;
                 offset += limit;
             }
 
-            return leaderboardList.OrderBy(s => s.Rank).ToList();
+            return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList());
         }
 
-        public static async Task<Dictionary<string, List<SeaonListItem>>> GetAllSeasonsLeaderboard(string mode)
+        public static async Task<Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>> GetAllSeasonsLeaderboard()
         {
-            var leaderboardsList = new Dictionary<string, List<SeaonListItem>>();
+            var leaderboardsList = new Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>();
 
             var lastSeasonEmpty = false;
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var leaderboardList = new List<SeaonListItem>();
-                season = DateTime.Parse(season).AddMonths(-1).ToString("yyyy-MM");
+                var gclLeaderboardList = new List<SeaonListItem>();
+                var powerLeaderboardList = new List<SeaonListItem>();
 
                 int offset = 0;
                 int limit = 20;
                 while (true)
                 {
-                    var listResponse = await GetCurrentSeasonLeaderboard(mode, season, offset, limit);
-                    if (listResponse == null || listResponse.List.Count == 0) break;
-                    leaderboardList.AddRange(listResponse.List);
-
+                    var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
+                    var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
+                    var didSomething = false;
+                    if (gclListResponse != null && gclListResponse.List.Count > 0)
+                    {
+                        gclLeaderboardList.AddRange(gclListResponse.List);
+                        didSomething = true;
+                    }
+                    if (powerListResponse != null && powerListResponse.List.Count > 0)
+                    {
+                        powerLeaderboardList.AddRange(powerListResponse.List);
+                        didSomething = true;
+                    }
+                    if (!didSomething) break;
                     offset += limit;
                 }
 
-                if (leaderboardList.Count == 0)
+                if (gclLeaderboardList.Count+ powerLeaderboardList.Count == 0)
                 {
                     lastSeasonEmpty = true;
                 }
                 else
                 {
-                    leaderboardsList[season] = leaderboardList;
+                    leaderboardsList.Add(season, (gclLeaderboardList, powerLeaderboardList));
+                    season = DateTime.Parse(season).AddMonths(-1).ToString("yyyy-MM");
                 }
             }
 

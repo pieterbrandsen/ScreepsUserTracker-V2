@@ -235,7 +235,7 @@ namespace UserTrackerStates.DBClients
 
                 DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.leaderboard.{seasonItem.UserName}.", seasonItem, timestamp);
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.leaderboard.{seasonItem.Type}.{seasonItem.UserName}.", seasonItem, timestamp);
             }
             catch (Exception e)
             {

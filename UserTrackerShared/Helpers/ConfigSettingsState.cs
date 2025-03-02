@@ -33,7 +33,6 @@ namespace UserTrackerShared.Helpers
         public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
-        public static bool LoadSeasonalLeaderboard { get; set; }
         public static bool StartsShards { get; set; }
         public static string LogsFolder { get; set; }
 
@@ -68,7 +67,6 @@ namespace UserTrackerShared.Helpers
             PullBackwardsTickAmount = Convert.ToInt32(appsettings["PULL_BACKWARDS_TICK_AMOUNT"]);
             TicksInFile = Convert.ToInt32(appsettings["TICKS_IN_FILE"]);
             GetAllUsers = Convert.ToBoolean(appsettings["GET_ALL_USERS"]);
-            LoadSeasonalLeaderboard = Convert.ToBoolean(appsettings["LOAD_SEASONAL_LEADERBOARD"]);
             StartsShards = Convert.ToBoolean(appsettings["START_SHARDS"]);
             LogsFolder = appsettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new Exception("No logs folder provided");

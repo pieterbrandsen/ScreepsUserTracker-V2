@@ -4,6 +4,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
 {
     public class SeaonListItem
     {
+        public string Type { get; set; }
         [JsonProperty("_id")]
         public string Id { get; set; }
 

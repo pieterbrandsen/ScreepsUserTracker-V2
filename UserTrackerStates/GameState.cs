@@ -13,7 +13,6 @@ namespace UserTrackerShared.States
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public static List<SeaonListItem> CurrentLeaderboard { get; set; } = new List<SeaonListItem>();
         public static List<ShardState> Shards = new List<ShardState>();
         public static Dictionary<string, ScreepsUser> Users = new();
 
@@ -51,15 +50,8 @@ namespace UserTrackerShared.States
             _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
             _onSetLeaderboardTimer.AutoReset = true;
             _onSetLeaderboardTimer.Enabled = true;
-            if (ConfigSettingsState.LoadSeasonalLeaderboard)
-            {
-                await UpdateCurrentLeaderboard();
-                _onSetLeaderboardTimer.Elapsed += OnUpdateSeasonalLeaderboardTimer;
-            }
-            else
-            {
-                _onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
-            }
+            _onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
+            
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
@@ -88,35 +80,15 @@ namespace UserTrackerShared.States
             }
         }
 
-        public static async Task UpdateCurrentLeaderboard()
-        {
-            var currentLeaderboardResponse = await ScreepsAPI.GetCurrentSeasonLeaderboard("world");
-
-            if (currentLeaderboardResponse != null)
-            {
-                _logger.Information("Started updating current leaderboard");
-                CurrentLeaderboard = currentLeaderboardResponse;
-                foreach (var leaderboardSpot in CurrentLeaderboard)
-                {
-                    await GetUser(leaderboardSpot.UserId);
-                    Users[leaderboardSpot.UserId].GCLRank = leaderboardSpot.Rank;
-                }
-                WriteAllUsers();
-            }
-            else
-            {
-                _logger.Information("Failed to do api to update current leaderboard");
-            }
-        }
-
         public static async Task GetAllUsers()
         {
-            var LeaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard("world");
+            var LeaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard();
             if (LeaderboardsResponse != null)
             {
                 foreach (var leaderboardKVP in LeaderboardsResponse)
                 {
-                    foreach (var leaderboardSpot in leaderboardKVP.Value)
+                    var gclLeaderborad = leaderboardKVP.Value.gcl;
+                    foreach (var leaderboardSpot in gclLeaderborad)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
@@ -127,6 +99,24 @@ namespace UserTrackerShared.States
                         if (value != null)
                         {
                             leaderboardSpot.UserName = value.Username;
+                            leaderboardSpot.Type = "gcl";
+                            DBClient.WriteLeaderboardData(leaderboardSpot);
+                        }
+                    }
+
+                    var powerLeaderboard = leaderboardKVP.Value.power;
+                    foreach (var leaderboardSpot in powerLeaderboard)
+                    {
+                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
+                        {
+                            await GetUser(leaderboardSpot.UserId);
+                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
+                        }
+
+                        if (value != null)
+                        {
+                            leaderboardSpot.UserName = value.Username;
+                            leaderboardSpot.Type = "power";
                             DBClient.WriteLeaderboardData(leaderboardSpot);
                         }
                     }
@@ -134,10 +124,6 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async void OnUpdateSeasonalLeaderboardTimer(Object? source, ElapsedEventArgs e)
-        {
-            await UpdateCurrentLeaderboard();
-        }
         private static async void OnUpdateUsersLeaderboardTimer(Object? source, ElapsedEventArgs e)
         {
             foreach (var user in Users)
