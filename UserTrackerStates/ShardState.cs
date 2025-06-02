@@ -35,7 +35,7 @@ namespace UserTrackerShared.States
 
             _initialized = true;
             _logger.Warning($"Loaded Shard {Name} with rooms {response.Rooms.Count}");
-            StartUpdate();
+            _ = StartUpdate();
         }
 
         public string Name { get; set; }
@@ -45,7 +45,7 @@ namespace UserTrackerShared.States
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
 
-        public async void StartUpdate()
+        public async Task StartUpdate()
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
             if (timeResponse != null)
@@ -55,7 +55,7 @@ namespace UserTrackerShared.States
                     Time = timeResponse.Time;
                     if (isSyncing || !_initialized) return;
                     isSyncing = true;
-                    StartSync();
+                    _ = StartSync();
                 }
             }
         }
@@ -66,7 +66,7 @@ namespace UserTrackerShared.States
             return syncTime;
         }
 
-        private async void StartSync()
+        private async Task StartSync()
         {
             var syncTime = GetSyncTime();
             if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
@@ -149,7 +149,7 @@ namespace UserTrackerShared.States
         }
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
-            StartUpdate();
+            _= StartUpdate();
         }
     }
 }
