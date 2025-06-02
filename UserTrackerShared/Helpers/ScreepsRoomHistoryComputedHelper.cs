@@ -2,7 +2,6 @@
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Timers;
@@ -13,8 +12,8 @@ namespace UserTrackerShared.Helpers
 {
     public static class FileWriterManager
     {
-        private static readonly string HistoryDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\History";
-        private static readonly string KeysDirectoryPath = @"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTrackerConsole\Objects\Keys";
+        private static readonly string HistoryDirectoryPath = @$"{ConfigSettingsState.ObjectsFolder}\History";
+        private static readonly string KeysDirectoryPath = @$"{ConfigSettingsState.ObjectsFolder}\Keys";
 
         private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
         private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();

@@ -34,11 +34,12 @@ namespace UserTrackerShared.Helpers
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
         public static bool StartsShards { get; set; }
-        public static string LogsFolder { get; set; }
+        public static string? LogsFolder { get; set; }
 
 
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
+        public static string? ObjectsFolder { get; set; }
 
         public static void Init() { 
             Init(ConfigurationManager.AppSettings);
@@ -70,6 +71,8 @@ namespace UserTrackerShared.Helpers
             StartsShards = Convert.ToBoolean(appsettings["START_SHARDS"]);
             LogsFolder = appsettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new Exception("No logs folder provided");
+            ObjectsFolder = appsettings["OBJECTS_FOLDER"] ?? "";
+            if (ObjectsFolder == "") throw new Exception("No objects folder provided");
 
 
             WriteHistoryFiles = Convert.ToBoolean(appsettings["WRITE_HISTORY_FILES"]);
