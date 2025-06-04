@@ -19,16 +19,6 @@ if (HasHistoryFilesLocation(baseDirectory))
     await historyFolder.Start();
 }
 
-foreach (var folder in Directory.GetDirectories(baseDirectory))
-{
-    Console.WriteLine($"Checking {folder}");
-    if (HasHistoryFilesLocation(folder))
-    {
-        var historyFolder = new HistoryFolderClass(baseDirectory, folder);
-        await historyFolder.Start();
-    }
-}
-
 while (true)
 {
     foreach (var folder in Directory.GetDirectories(baseDirectory))
@@ -41,5 +31,7 @@ while (true)
         }
     }
 
+    Console.WriteLine("All folders checked. Waiting for next cycle...");
+    Console.WriteLine("Waiting for 30 minutes before next check...");
     await Task.Delay(TimeSpan.FromMinutes(30));
 }
