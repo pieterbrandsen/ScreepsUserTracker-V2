@@ -1,8 +1,4 @@
-﻿// DynamicPatcherTests.cs
-using System;
-using System.Collections.Generic;
-using UserTrackerShared;
-using Xunit;
+﻿using UserTrackerShared;
 
 namespace UserTracker.Tests;
 public class Company
