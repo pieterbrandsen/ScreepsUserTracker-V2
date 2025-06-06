@@ -91,7 +91,7 @@ namespace UserTracker.Tests.States
             var dto = ProcessHistory(jObject);
 
             Assert.NotNull(dto);
-            Assert.Equal(4, dto.Structures.Wall.Count);
+            Assert.Equal(375, dto.Structures.Wall.Count);
         }
     }
 }

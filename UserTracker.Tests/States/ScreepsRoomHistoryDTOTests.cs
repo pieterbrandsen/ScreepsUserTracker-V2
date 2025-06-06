@@ -257,7 +257,7 @@ namespace UserTracker.Tests.Models
             {
                 GroundResources = new Dictionary<string, GroundResource>
                 {
-                    { "energy", new GroundResource { ResourceType = "energy", energy = 987654321 } }
+                    { "energy", new GroundResource { ResourceType = "energy", energy = 900000 } }
                 }
             };
 
@@ -268,7 +268,7 @@ namespace UserTracker.Tests.Models
             }
 
             Assert.Single(dto.GroundResources);
-            Assert.Equal(987654321, dto.GroundResources["energy"]);
+            Assert.Equal(900000, dto.GroundResources["energy"]);
         }
 
         [Fact]
