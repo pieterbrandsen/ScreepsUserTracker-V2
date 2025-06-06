@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Timers;
@@ -62,20 +61,10 @@ namespace UserTracker.HistoryFileTesterConsole
             var seenPropertiesLines = File.ReadLines(_seenPropertiesPath);
             foreach (var line in seenPropertiesLines)
             {
-                var match = Regex.Match(line, @"\d+");
-                if (match.Success)
-                {
-                    int count = int.Parse(match.Value); // The number (count)
-                    int index = match.Index;
-
-                    // Get the property name from the part before the number
-                    string propertyName = line.Substring(0, index).Trim();
-                    _seenPropertiesDict[propertyName] = count;
-                }
-                else
-                {
-                    Console.WriteLine($"No number found in line: {line}");
-                }
+                var keyValueSplit = line.Split(" : ");
+                var key = keyValueSplit[0].Trim();
+                var value = int.Parse(keyValueSplit[1].Trim());
+               _seenPropertiesDict[key] = value;
             }
 
 
@@ -98,7 +87,7 @@ namespace UserTracker.HistoryFileTesterConsole
             var filesCount = _files.Count();
             Console.WriteLine($"Found {filesCount} files to parse in {readFolder}, started at {DateTime.Now.ToLongTimeString()}");
 
-            Timer? onSave = new Timer(60 * 1000);
+            Timer? onSave = new Timer(10 * 1000);
             onSave.Elapsed += OnSaveTimer;
             onSave.AutoReset = true;
             onSave.Enabled = true;
@@ -141,17 +130,20 @@ namespace UserTracker.HistoryFileTesterConsole
                 _seenPropertiesDict[property] = value;
                 if (value == 1)
                 {
-                    newSeenProperties+=1;
+                    newSeenProperties += 1;
                     _seenProperties += 1;
                 }
             }
-            var sortedProperties = _seenPropertiesDict.OrderBy(p => p.Key);
-            using StreamWriter seenPropertiesWriter = new StreamWriter(_seenPropertiesPath, false);
-            int maxPropertyNameLength = sortedProperties.Max(p => p.Key.Length);
-            foreach (var property in sortedProperties)
+            if (_seenPropertiesDict.Count > 0)
             {
-                var formattedLine = $"{property.Key.PadRight(maxPropertyNameLength)} : {property.Value}";
-                seenPropertiesWriter.WriteLine(formattedLine);
+                var sortedProperties = _seenPropertiesDict.OrderBy(p => p.Key);
+                using StreamWriter seenPropertiesWriter = new StreamWriter(_seenPropertiesPath, false);
+                int maxPropertyNameLength = sortedProperties.Max(p => p.Key.Length);
+                foreach (var property in sortedProperties)
+                {
+                    var formattedLine = $"{property.Key.PadRight(maxPropertyNameLength)} : {property.Value}";
+                    seenPropertiesWriter.WriteLine(formattedLine);
+                }
             }
             var seenPropertiesWriteTime = writeStopwatch.Elapsed;
 
