@@ -1,131 +1,183 @@
-﻿using UserTrackerShared;
+﻿using System;
+using System.Collections.Generic;
+using UserTrackerShared;
+using Xunit;
 
-namespace UserTracker.Tests;
-public class Company
+namespace UserTrackerShared.Tests
 {
-    public List<Department> Departments { get; set; }
-}
-
-public class Department
-{
-    public List<Employee> Employees { get; set; }
-}
-
-public class Employee
-{
-    public string Name { get; set; }
-    public Address Location { get; set; }
-    public int Age { get; set; }
-    public long Id { get; set; }
-    public int[] Ratings { get; set; }
-}
-
-public class Address
-{
-    public string City { get; set; }
-    public string Zip { get; set; }
-    public Coordinates Geo { get; set; }
-}
-
-public class Coordinates
-{
-    public double Lat { get; set; }
-    public double Lng { get; set; }
-}
-
-public class PatchDiagnostics : IDynamicPatchDiagnostics
-{
-    public void Error(string path, string segment, Exception ex) => Console.WriteLine($"ERROR at {path}: {segment} => {ex.Message}");
-    public void Trace(string message) => Console.WriteLine("TRACE: " + message);
-}
-
-public class DynamicPatcherTests
-{
-    [Fact]
-    public void Test_Set_Nested_Null()
+    public class DynamicPatcherTests
     {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, "Departments[0].Employees[0].Location.City", null);
-        Assert.Null(c.Departments[0].Employees[0].Location.City);
-    }
-
-    [Fact]
-    public void Test_Set_Array_Index()
-    {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, "Departments[0].Employees[0].Ratings[3]", 5);
-        Assert.Equal(5, c.Departments[0].Employees[0].Ratings[3]);
-    }
-
-    [Fact]
-    public void Test_Deep_Object_AutoCreate()
-    {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, "Departments[1].Employees[1].Location.Geo.Lat", 52.1);
-        Assert.Equal(52.1, c.Departments[1].Employees[1].Location.Geo.Lat);
-    }
-
-    [Theory]
-    [InlineData("Departments[2].Employees[3].Age", 45)]
-    [InlineData("Departments[2].Employees[3].Id", 100L)]
-    [InlineData("Departments[1].Employees[0].Name", "TestName")]
-    [InlineData("Departments[0].Employees[1].Location.Zip", "12345")]
-    [InlineData("Departments[3].Employees[1].Location.Geo.Lng", 13.37)]
-    [InlineData("Departments[0].Employees[0].Ratings[2]", 99)]
-    public void Test_Multiple_Property_Patching(string path, object value)
-    {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, path, value);
-        // Implicitly successful if no exceptions thrown and value is set — more targeted asserts could be used.
-    }
-
-    [Fact]
-    public void Test_Replace_Array()
-    {
-        var e = new Employee { Ratings = new int[2] { 1, 2 } };
-        var c = new Company
+        private class Sample
         {
-            Departments = new List<Department> {
-            new Department { Employees = new List<Employee> { e } }
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public NestedSample Nested { get; set; }
+            public int[] Numbers { get; set; }
+            public List<string> Tags { get; set; }
+            public Dictionary<string, object> Data { get; set; }
+            public NestedSample[] Children { get; set; }
+            public List<NestedSample> NestedList { get; set; }
         }
-        };
-        DynamicPatcher.ApplyPatch(c, "Departments[0].Employees[0].Ratings[4]", 88);
-        Assert.Equal(88, c.Departments[0].Employees[0].Ratings[4]);
-    }
 
-    [Fact]
-    public void Test_Set_Object_To_Null()
-    {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, "Departments[0].Employees[0].Location", null);
-        Assert.Null(c.Departments[0].Employees[0].Location);
-    }
+        private class NestedSample
+        {
+            public int Id { get; set; }
+            public DateTime Updated { get; set; }
+            public EffectType EffectType { get; set; }
+            public string Info { get; set; }
+        }
 
-    [Fact]
-    public void Test_Set_Invalid_Index_Throws()
-    {
-        var c = new Company();
-        Assert.Throws<FormatException>(() => DynamicPatcher.ApplyPatch(c, "Departments[abc].Employees[0].Age", 1));
-    }
 
-    [Fact]
-    public void Test_Missing_Property_Throws()
-    {
-        var c = new Company();
-        Assert.Throws<InvalidOperationException>(() => DynamicPatcher.ApplyPatch(c, "UnknownProp.X", 1));
-    }
+        private enum EffectType
+        {
+            None,
+            Started,
+            Completed
+        }
 
-    [Theory]
-    [InlineData("Departments[0].Employees[0].Location.Geo.Lat", 0.123)]
-    [InlineData("Departments[0].Employees[0].Location.Geo.Lng", 0.456)]
-    [InlineData("Departments[0].Employees[0].Location.Zip", "54321")]
-    [InlineData("Departments[0].Employees[0].Name", "Alex")]
-    [InlineData("Departments[0].Employees[0].Age", 30)]
-    [InlineData("Departments[0].Employees[0].Id", 123456789L)]
-    [InlineData("Departments[0].Employees[0].Ratings[1]", 42)]
-    public void Test_Deeply_Nested_All_Types(string path, object value)
-    {
-        var c = new Company();
-        DynamicPatcher.ApplyPatch(c, path, value);
+        [Fact]
+        public void ApplyPatch_NullTarget_ThrowsArgumentNull()
+        {
+            Assert.Throws<ArgumentNullException>(() => DynamicPatcher.ApplyPatch((object)null!, "Id", 1));
+        }
+
+        [Fact]
+        public void ApplyPatch_EmptyPath_ThrowsArgumentException()
+        {
+            var sample = new Sample();
+            Assert.Throws<ArgumentException>(() => DynamicPatcher.ApplyPatch(sample, string.Empty, 1));
+            Assert.Throws<ArgumentException>(() => DynamicPatcher.ApplyPatch(sample, "   ", 1));
+        }
+
+        [Fact]
+        public void ApplyPatch_NullChanges_DoesNothing()
+        {
+            var sample = new Sample { Id = 5 };
+            DynamicPatcher.ApplyPatch(sample, (Dictionary<string, object?>)null!);
+            Assert.Equal(5, sample.Id);
+        }
+
+        [Fact]
+        public void ApplyPatch_EmptyChanges_DoesNothing()
+        {
+            var sample = new Sample { Id = 5 };
+            DynamicPatcher.ApplyPatch(sample, new Dictionary<string, object?>());
+            Assert.Equal(5, sample.Id);
+        }
+
+        [Fact]
+        public void ApplyPatch_SimpleProperty_UpdatesValue()
+        {
+            var sample = new Sample { Id = 1, Name = "Old" };
+            DynamicPatcher.ApplyPatch(sample, "Name", "New");
+            Assert.Equal("New", sample.Name);
+        }
+
+        [Fact]
+        public void ApplyPatch_NestedProperty_UpdatesValue()
+        {
+            var sample = new Sample { Nested = new NestedSample() };
+            DynamicPatcher.ApplyPatch(sample, new Dictionary<string, object?>
+            {
+                { "nested.updated", new DateTime(2025, 6, 7) }
+            });
+            Assert.Equal(new DateTime(2025, 6, 7), sample.Nested.Updated);
+        }
+
+        [Fact]
+        public void ApplyPatch_ArrayIndex_ExpandsAndSetsValue()
+        {
+            var sample = new Sample { Numbers = new int[0] };
+            DynamicPatcher.ApplyPatch(sample, "Numbers[2]", 42);
+            Assert.Equal(3, sample.Numbers.Length);
+            Assert.Equal(42, sample.Numbers[2]);
+        }
+
+        [Fact]
+        public void ApplyPatch_ArrayIndex_NonLast_CreatesAndNavigates()
+        {
+            var sample = new Sample { Children = new NestedSample[0] };
+            DynamicPatcher.ApplyPatch(sample, "Children[1].Info", "hello");
+            Assert.Equal(2, sample.Children.Length);
+            Assert.Equal("hello", sample.Children[1].Info);
+        }
+
+        [Fact]
+        public void ApplyPatch_ListIndex_ExpandsAndSetsValue()
+        {
+            var sample = new Sample { Tags = null };
+            DynamicPatcher.ApplyPatch(sample, "Tags[1]", "tag2");
+            Assert.NotNull(sample.Tags);
+            Assert.Equal(2, sample.Tags.Count);
+            Assert.Null(sample.Tags[0]);
+            Assert.Equal("tag2", sample.Tags[1]);
+        }
+
+        [Fact]
+        public void ApplyPatch_ListIndex_NonLast_CreatesAndNavigates()
+        {
+            var sample = new Sample { NestedList = null };
+            DynamicPatcher.ApplyPatch(sample, "NestedList[0].Info", "data");
+            Assert.NotNull(sample.NestedList);
+            Assert.Single(sample.NestedList);
+            Assert.Equal("data", sample.NestedList[0].Info);
+        }
+
+        [Fact]
+        public void ApplyPatch_Dictionary_CreatesAndSetsValue()
+        {
+            var sample = new Sample { Data = new Dictionary<string, object>() };
+            DynamicPatcher.ApplyPatch(sample, "Data.customKey", 123);
+            Assert.True(sample.Data.ContainsKey("customKey"));
+            Assert.Equal(123, sample.Data["customKey"]);
+        }
+
+        [Fact]
+        public void ApplyPatch_PropertyNameMapping_WorksForSpecialNames()
+        {
+            var sample = new Sample { Nested = new NestedSample() };
+            DynamicPatcher.ApplyPatch(sample, "nested.effect", EffectType.Completed);
+            Assert.Equal(EffectType.Completed, sample.Nested.EffectType);
+            DynamicPatcher.ApplyPatch(sample, "nested._id", 5); // maps to Id
+            Assert.Equal(5, sample.Nested.GetType().GetProperty("Id").GetValue(sample.Nested));
+        }
+
+        [Fact]
+        public void ApplyPatch_ApplyMultipleChanges_WorksCorrectly()
+        {
+            var sample = new Sample
+            {
+                Id = 5,
+                Name = "A",
+                Numbers = new int[1] { 0 },
+                Tags = new List<string>(),
+                Data = new Dictionary<string, object>(),
+                Nested = new NestedSample()
+            };
+            var changes = new Dictionary<string, object?>
+            {
+                { "Id", 10 },
+                { "Name", "B" },
+                { "Numbers[0]", 7 },
+                { "Tags[0]", "first" },
+                { "Data.key1", "value" },
+                { "nested._updated", new DateTime(2025, 1, 1) }
+            };
+            DynamicPatcher.ApplyPatch(sample, changes);
+            Assert.Equal(10, sample.Id);
+            Assert.Equal("B", sample.Name);
+            Assert.Equal(7, sample.Numbers[0]);
+            Assert.Single(sample.Tags);
+            Assert.Equal("first", sample.Tags[0]);
+            Assert.Equal("value", sample.Data["key1"]);
+            Assert.Equal(new DateTime(2025, 1, 1), sample.Nested.Updated);
+        }
+
+        [Fact]
+        public void ApplyPatch_InvalidPath_ThrowsException()
+        {
+            var sample = new Sample();
+            Assert.Throws<InvalidOperationException>(() => DynamicPatcher.ApplyPatch(sample, "NonExistent", 1));
+        }
     }
 }

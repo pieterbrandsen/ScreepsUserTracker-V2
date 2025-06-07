@@ -97,7 +97,7 @@ namespace UserTrackerShared.Helpers
             {
                 structuresDTO.Controller.Count += 1m / ConfigSettingsState.TicksInFile;
                 structuresDTO.Controller.Level += structures.Controller.Level / ConfigSettingsState.TicksInFile;
-                structuresDTO.Controller.Progress += structures.Controller.Progress / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Controller.Progress += structures.Controller.Progress / ConfigSettingsState.TicksInFile;
                 structuresDTO.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInFile;
                 structuresDTO.Controller.UserId = structures.Controller.User;
                 structuresDTO.Controller.ReservationUserId = structures.Controller.Reservation?.User ?? "";
@@ -113,7 +113,7 @@ namespace UserTrackerShared.Helpers
             foreach (var wall in structures.Walls)
             {
                 structuresDTO.Wall.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Wall.Hits += wall.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Wall.Hits += wall.Value.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var constructionSite in structures.ConstructionSites)
             {
@@ -137,8 +137,8 @@ namespace UserTrackerShared.Helpers
             foreach (var extension in structures.Extensions)
             {
                 structuresDTO.Extension.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Extension.Energy += extension.Value.Store.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Extension.EnergyCapacity += extension.Value.StoreCapacityResource.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Extension.Energy += extension.Value.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Extension.EnergyCapacity += extension.Value.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var extractor in structures.Extractors)
             {
@@ -167,8 +167,8 @@ namespace UserTrackerShared.Helpers
             foreach (var link in structures.Links)
             {
                 structuresDTO.Link.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Link.Energy += link.Value.Store.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Link.EnergyCapacity += link.Value.StoreCapacityResource.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Link.Energy += link.Value.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Link.EnergyCapacity += link.Value.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var observer in structures.Observers)
             {
@@ -189,7 +189,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var road in structures.Roads)
             {
@@ -202,7 +202,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var source in structures.Sources)
             {
@@ -213,7 +213,7 @@ namespace UserTrackerShared.Helpers
             foreach (var rampart in structures.Ramparts)
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var spawn in structures.Spawns)
             {

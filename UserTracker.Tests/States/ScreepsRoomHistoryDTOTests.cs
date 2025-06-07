@@ -279,7 +279,7 @@ namespace UserTracker.Tests.Models
             {
                 Structures = new Structures
                 {
-                    Controller = new StructureController { Id = "controller1", Level = 987654321 }
+                    Controller = new StructureController { Id = "controller1", Level = 900000 }
                 }
             };
 
@@ -290,7 +290,7 @@ namespace UserTracker.Tests.Models
 
 
             Assert.NotNull(dto.Structures.Controller);
-            Assert.Equal(987654321, dto.Structures.Controller.Level);
+            Assert.Equal(900000, dto.Structures.Controller.Level);
         }
     }
 }

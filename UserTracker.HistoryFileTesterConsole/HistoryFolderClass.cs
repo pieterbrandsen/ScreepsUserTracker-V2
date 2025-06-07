@@ -87,7 +87,7 @@ namespace UserTracker.HistoryFileTesterConsole
             var filesCount = _files.Count();
             Console.WriteLine($"Found {filesCount} files to parse in {readFolder}, started at {DateTime.Now.ToLongTimeString()}");
 
-            Timer? onSave = new Timer(10 * 1000);
+            Timer? onSave = new Timer(60 * 1000);
             onSave.Elapsed += OnSaveTimer;
             onSave.AutoReset = true;
             onSave.Enabled = true;
@@ -101,7 +101,7 @@ namespace UserTracker.HistoryFileTesterConsole
             writeStopwatch.Start();
 
 
-            _fileProcessedCount += _totalChangesToBeWritten.Count + _linesToBeWrittenGood.Count;
+            _fileProcessedCount += _linesToBeWrittenBad.Count + _linesToBeWrittenGood.Count;
             using StreamWriter goodWriter = new StreamWriter(_goodFilesPath, true);
             while (_linesToBeWrittenGood.TryTake(out var file))
             {
@@ -182,6 +182,10 @@ namespace UserTracker.HistoryFileTesterConsole
             {
                 _linesToBeWrittenBad.Add(file);
                 _linesToBeWrittenBadErrors.Add(e.Message + Environment.NewLine + e.StackTrace);
+                if (HistoryConfigSettingsState.ThrowOnBadFile)
+                {
+                    throw;
+                }
             }
 
             return Task.CompletedTask;

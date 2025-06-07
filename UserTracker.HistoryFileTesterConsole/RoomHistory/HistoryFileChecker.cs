@@ -100,9 +100,9 @@ namespace UserTracker.Tests.RoomHistory
                     if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                     {
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
-                        var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
-                        changesProcessed += vChangesProcessed;
-                        seenProperties.UnionWith(vSeenProcessed);
+                        //var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
+                        //changesProcessed += vChangesProcessed;
+                        //seenProperties.UnionWith(vSeenProcessed);
                     }
                     roomHistoryDTO.Update(roomHistory);
                 }

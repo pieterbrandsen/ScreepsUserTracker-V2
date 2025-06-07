@@ -1,146 +1,204 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
 namespace UserTrackerShared
 {
-    public interface IDynamicPatchDiagnostics
-    {
-        void Trace(string message);
-        void Error(string path, string segment, Exception ex);
-    }
-
     public static class DynamicPatcher
     {
-        public static void ApplyPatch(object target, string path, object? value, IDynamicPatchDiagnostics? diagnostics = null)
+        private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> _propertyCache = new();
+        private static readonly ConcurrentDictionary<Type, Type> _dictValueTypeCache = new();
+
+        public static void ApplyPatch(object target, Dictionary<string, object?> changes)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (changes == null || changes.Count == 0) return;
+            foreach (var kv in changes)
+                ApplyPatch(target, kv.Key, kv.Value);
+        }
+
+        public static void ApplyPatch(object target, string path, object? value)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Path cannot be empty");
 
+            object current = target;
             var segments = path.Split('.');
-            var current = target;
 
             for (int i = 0; i < segments.Length; i++)
             {
-                var isLast = i == segments.Length - 1;
-                var seg = segments[i];
+                bool isLast = (i == segments.Length - 1);
+                var rawSegment = segments[i];
 
-                (string propName, int? index) = ParseSegment(seg);
-                var prop = current.GetType().GetProperty(propName);
-                if (prop == null)
-                    throw new InvalidOperationException($"Property '{propName}' not found on type '{current.GetType().Name}'");
-
-                var propValue = prop.GetValue(current);
-
-                // If index is used, we deal with list or array
-                if (index.HasValue)
+                if (current is IDictionary dict)
                 {
-                    var list = EnsureList(propValue, prop.PropertyType, index.Value, diagnostics);
-                    if (propValue == null || !ReferenceEquals(list, propValue))
+                    // Use raw key to preserve case and avoid mapping
+                    HandleDictionary(dict, rawSegment, isLast, ref current, value);
+                    continue;
+                }
+
+                var (propName, index) = ParseSegment(rawSegment, current.GetType());
+                HandleProperty(current, propName, index, isLast, ref current, value);
+            }
+        }
+
+        private static void HandleDictionary(IDictionary dict, string key, bool isLast, ref object current, object? value)
+        {
+            if (isLast)
+            {
+                dict[key] = value;
+                current = dict[key]!;
+                return;
+            }
+
+            if (!dict.Contains(key) || dict[key] == null)
+            {
+                var valType = _dictValueTypeCache.GetOrAdd(dict.GetType(), t =>
+                {
+                    var iface = t.GetInterfaces().First(i =>
+                        i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+                    return iface.GetGenericArguments()[1];
+                });
+                dict[key] = Activator.CreateInstance(valType)!;
+            }
+            current = dict[key]!;
+        }
+
+        private static void HandleProperty(object current, string propName, int? index, bool isLast, ref object obj, object? value)
+        {
+            var type = current.GetType();
+            var prop = _propertyCache
+                .GetOrAdd(type, t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                     .ToDictionary(p => p.Name, p => p))
+                .GetValueOrDefault(propName)
+                ?? throw new InvalidOperationException($"Property '{propName}' not found on '{type.Name}'");
+
+            var propValue = prop.GetValue(current);
+            var propType = prop.PropertyType;
+
+            if (index.HasValue)
+            {
+                int idx = index.Value;
+                if (propType.IsArray)
+                {
+                    var elemType = propType.GetElementType()!;
+                    var oldArr = (Array?)propValue ?? Array.CreateInstance(elemType, 0);
+                    int required = idx + 1;
+                    Array newArr = oldArr.Length < required
+                        ? ResizeArray(oldArr, elemType, required)
+                        : oldArr;
+
+                    if (isLast)
+                    {
+                        newArr.SetValue(ConvertValue(value, elemType), idx);
+                        prop.SetValue(current, newArr);
+                    }
+                    else
+                    {
+                        var next = newArr.GetValue(idx) ?? CreateInstanceSafely(elemType);
+                        newArr.SetValue(next, idx);
+                        prop.SetValue(current, newArr);
+                        obj = next;
+                    }
+                }
+                else
+                {
+                    var elemType = propType.GetGenericArguments()[0];
+                    var listType = typeof(List<>).MakeGenericType(elemType);
+                    var list = (IList)(propValue ?? Activator.CreateInstance(listType)!);
+
+                    while (list.Count <= idx)
+                        list.Add(elemType.IsValueType ? CreateInstanceSafely(elemType) : null!);
+
+                    if (isLast)
+                    {
+                        list[idx] = ConvertValue(value, elemType);
                         prop.SetValue(current, list);
-
-                    EnsureListItemExists(list, index.Value, diagnostics);
-
-                    if (isLast)
-                    {
-                        list[index.Value] = value;
-                        return;
                     }
                     else
                     {
-                        current = list[index.Value] ??= Activator.CreateInstance(list.GetType().GetElementType() ?? list.GetType().GetGenericArguments()[0])!;
-                    }
-                }
-                else
-                {
-                    if (isLast)
-                    {
-                        prop.SetValue(current, value);
-                        return;
-                    }
-                    else
-                    {
-                        if (propValue == null)
+                        object? currentElem = list[idx];
+                        object next = currentElem ?? CreateInstanceSafely(elemType);
+                        if (currentElem == null)
                         {
-                            propValue = Activator.CreateInstance(prop.PropertyType);
-                            prop.SetValue(current, propValue);
+                            list[idx] = next;
+                            prop.SetValue(current, list);
                         }
-                        current = propValue;
+                        obj = next;
                     }
                 }
-
-                diagnostics?.Trace($"Traversed: {seg}");
             }
-        }
-
-        private static IList EnsureList(object? value, Type propType, int requiredIndex, IDynamicPatchDiagnostics? diagnostics)
-        {
-            IList list;
-
-            var isArray = propType.IsArray;
-            if (isArray)
+            else
             {
-                var elemType = propType.GetElementType()!;
-                if (value == null)
+                if (isLast)
                 {
-                    var newArr = Array.CreateInstance(elemType, requiredIndex + 1);
-                    diagnostics?.Trace($"Created new array of {elemType.Name} with size {requiredIndex + 1}");
-                    return newArr;
+                    var targetType = Nullable.GetUnderlyingType(propType) ?? propType;
+                    prop.SetValue(current, ConvertValue(value, targetType));
                 }
                 else
                 {
-                    var oldArr = (Array)value;
-                    if (oldArr.Length > requiredIndex) return oldArr;
-                    var newArr = Array.CreateInstance(elemType, requiredIndex + 1);
-                    Array.Copy(oldArr, newArr, oldArr.Length);
-                    diagnostics?.Trace($"Resized array to size {requiredIndex + 1}");
-                    return newArr;
+                    if (propValue == null)
+                    {
+                        propValue = CreateInstanceSafely(propType);
+                        prop.SetValue(current, propValue);
+                    }
+                    obj = propValue!;
                 }
-            }
-            else if (typeof(IList).IsAssignableFrom(propType))
-            {
-                if (value == null)
-                {
-                    list = (IList)Activator.CreateInstance(propType)!;
-                    diagnostics?.Trace($"Created new list: {propType.Name}");
-                }
-                else
-                {
-                    list = (IList)value;
-                }
-
-                while (list.Count <= requiredIndex)
-                {
-                    var elemType = list.GetType().IsGenericType ? list.GetType().GetGenericArguments()[0] : typeof(object);
-                    list.Add(Activator.CreateInstance(elemType));
-                }
-                return list;
-            }
-            throw new NotSupportedException($"Type {propType.Name} is not supported as a list or array");
-        }
-
-        private static void EnsureListItemExists(IList list, int index, IDynamicPatchDiagnostics? diagnostics)
-        {
-            if (list is Array arr) return; // Already resized
-            while (list.Count <= index)
-            {
-                var elemType = list.GetType().GetGenericArguments()[0];
-                list.Add(Activator.CreateInstance(elemType));
-                diagnostics?.Trace($"Extended list with new {elemType.Name} at index {index}");
             }
         }
 
-        private static (string prop, int? index) ParseSegment(string segment)
+        private static Array ResizeArray(Array oldArr, Type elemType, int required)
         {
-            var open = segment.IndexOf('[');
-            if (open < 0) return (segment, null);
-            var close = segment.IndexOf(']');
-            var prop = segment.Substring(0, open);
-            var indexStr = segment.Substring(open + 1, close - open - 1);
-            if (!int.TryParse(indexStr, out int index)) throw new FormatException($"Invalid index: {segment}");
-            return (prop, index);
+            int newLen = Math.Max(oldArr.Length * 2, required);
+            var newArr = Array.CreateInstance(elemType, newLen);
+            Array.Copy(oldArr, newArr, oldArr.Length);
+            return newArr;
+        }
+
+        private static object CreateInstanceSafely(Type t)
+        {
+            if (t.IsValueType)
+                return Activator.CreateInstance(t)!;
+            if (t.GetConstructor(Type.EmptyTypes) != null && t != typeof(string))
+                return Activator.CreateInstance(t)!;
+            throw new InvalidOperationException($"Cannot dynamically create an instance of type '{t.FullName}'.");
+        }
+
+        private static object? ConvertValue(object? value, Type targetType)
+        {
+            if (value == null) return null;
+            var realType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            return realType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, realType);
+        }
+
+        private static (string prop, int? index) ParseSegment(string segment, Type currentType)
+        {
+            if (segment.EndsWith("]") && segment.Contains("["))
+            {
+                var open = segment.IndexOf('[');
+                var close = segment.IndexOf(']');
+                var name = segment.Substring(0, open);
+                var idx = int.Parse(segment.Substring(open + 1, close - open - 1));
+                return (MapName(name, currentType), idx);
+            }
+            return (MapName(segment, currentType), null);
+        }
+
+        private static string MapName(string jsonProp, Type type)
+        {
+            switch (jsonProp)
+            {
+                case "_id": return "Id";
+                case "_updated": return "Updated";
+                case "effect": return "EffectType";
+                default:
+                    if (type.GetProperty(jsonProp) != null)
+                        return jsonProp;
+                    return char.ToUpperInvariant(jsonProp[0]) + jsonProp.Substring(1);
+            }
         }
     }
 }
