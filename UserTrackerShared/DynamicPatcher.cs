@@ -162,6 +162,10 @@ namespace UserTrackerShared
         {
             if (t.IsValueType)
                 return Activator.CreateInstance(t)!;
+
+            if (t == typeof(string))
+                return string.Empty;
+
             if (t.GetConstructor(Type.EmptyTypes) != null && t != typeof(string))
                 return Activator.CreateInstance(t)!;
             throw new InvalidOperationException($"Cannot dynamically create an instance of type '{t.FullName}'.");
