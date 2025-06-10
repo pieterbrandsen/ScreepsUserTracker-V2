@@ -17,18 +17,18 @@ namespace UserTracker.Tests.Helper
                         return objGroundResource;
                     break;
                 case "creep":
-                    roomHistory.Creeps.OwnedCreeps.TryGetValue(type, out var objOwnedCreep);
+                    roomHistory.Creeps.OwnedCreeps.TryGetValue(id, out var objOwnedCreep);
                     if (objOwnedCreep != null)
                         return objOwnedCreep;
-                    roomHistory.Creeps.EnemyCreeps.TryGetValue(type, out var objEnemyCreep);
+                    roomHistory.Creeps.EnemyCreeps.TryGetValue(id, out var objEnemyCreep);
                     if (objEnemyCreep != null)
                         return objEnemyCreep;
-                    roomHistory.Creeps.OtherCreeps.TryGetValue(type, out var objOtherCreep);
+                    roomHistory.Creeps.OtherCreeps.TryGetValue(id, out var objOtherCreep);
                     if (objOtherCreep != null)
                         return objOtherCreep;
                     break;
                 case "powerCreep":
-                    roomHistory.Creeps.PowerCreeps.TryGetValue(type, out var objPowerCreep);
+                    roomHistory.Creeps.PowerCreeps.TryGetValue(id, out var objPowerCreep);
                     if (objPowerCreep != null)
                         return objPowerCreep;
                     break;

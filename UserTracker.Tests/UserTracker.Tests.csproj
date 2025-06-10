@@ -10,12 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="App.Live.Config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -39,12 +33,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="App.Live.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\UserTracker.Tests.Shared\UserTracker.Tests.Shared.csproj" />
     <ProjectReference Include="..\UserTrackerScreepsApi\UserTrackerScreepsApi.csproj" />
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
     <ProjectReference Include="..\UserTrackerStates\UserTrackerStates.csproj" />

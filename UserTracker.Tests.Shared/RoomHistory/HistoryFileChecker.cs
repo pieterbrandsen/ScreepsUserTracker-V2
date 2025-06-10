@@ -15,18 +15,17 @@ namespace UserTracker.Tests.RoomHistory
         private static (long, HashSet<string>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
         {
             var seenProperties = new HashSet<string>();
-            var changesProcessed = 0;
+            long changesProcessed = 0;
             var ids = history.TypeMap.Keys.ToArray();
             for (int y = 0; y < ids.Length; y++)
             {
                 var id = ids[y];
-                if (string.IsNullOrEmpty(id)) continue;
-
                 var obj = GetObjectFromHistory.GetById(history, id);
-                if (obj == null) continue;
+                if (obj == null) throw new Exception("obj was null");
+                if (history.HistoryChangesDictionary == null) throw new Exception("history.HistoryChangesDictionary was null");
 
-                history.PropertiesListDictionary.TryGetValue(id, out var historyChanges);
-                if (historyChanges == null) continue;
+                history.HistoryChangesDictionary.TryGetValue(id, out var historyChanges);
+                if (historyChanges == null) throw new Exception("historyChanges was null");
                 var originalChanges = GetObjectChangesInTick.GetById(jTokenTick, id);
 
                 var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count);
@@ -57,7 +56,7 @@ namespace UserTracker.Tests.RoomHistory
                         if (historyChanges.TryGetValue(matchedKey, out var val))
                         {
                             var convertedVal = val != null ? val.ToString() : "null";
-                            var convertedKV = kv.Value != null ? kv.Value.ToString() : "null";
+                            var convertedKV = kv.Value?.ToString() ?? "null";
 
                             if (!convertedKV.Equals(convertedVal))
                             {
@@ -78,7 +77,9 @@ namespace UserTracker.Tests.RoomHistory
         {
             var seenProperties = new HashSet<string>();
             long changesProcessed = 0;
+            return (changesProcessed, seenProperties);
             var roomHistory = new ScreepsRoomHistory();
+            roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
             var roomHistoryDTO = new ScreepsRoomHistoryDTO();
 
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
@@ -100,9 +101,9 @@ namespace UserTracker.Tests.RoomHistory
                     if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                     {
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
-                        //var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
-                        //changesProcessed += vChangesProcessed;
-                        //seenProperties.UnionWith(vSeenProcessed);
+                        var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
+                        changesProcessed += vChangesProcessed;
+                        seenProperties.UnionWith(vSeenProcessed);
                     }
                     roomHistoryDTO.Update(roomHistory);
                 }

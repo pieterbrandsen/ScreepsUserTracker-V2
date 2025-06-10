@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 using System.Timers;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared.Helpers;
@@ -21,8 +20,8 @@ namespace UserTracker.HistoryFileTesterConsole
         private long _seenProperties = 0;
         private Dictionary<string, long> _seenPropertiesDict = new Dictionary<string, long>();
         private long _totalChanges = 0;
-        private long _originalSeenPropertiesChanges = 0;
         private long _originalTotalChanges = 0;
+        private long _originalSeenPropertiesChanges = 0;
         private int _fileProcessedCount = 0;
 
         private ConcurrentBag<long> _totalChangesToBeWritten = new();
@@ -31,6 +30,35 @@ namespace UserTracker.HistoryFileTesterConsole
         private ConcurrentBag<string> _linesToBeWrittenBadErrors = new();
         private ConcurrentBag<string> _linesToBeWrittenProperties = new();
         private IEnumerable<string> _files;
+
+        private HashSet<string> _goodFiles = new HashSet<string>();
+        private HashSet<string> _badFiles = new HashSet<string>();
+        private ConcurrentDictionary<string, int> _badFileErrorCounts = new ConcurrentDictionary<string, int>();
+
+        private void LoadExistingErrorCounts(string path)
+        {
+            if (!File.Exists(path)) return;
+
+            var blocks = File.ReadAllText(path)
+                             .Split(new[] { Environment.NewLine + Environment.NewLine },
+                                    StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var block in blocks)
+            {
+                var lines = block.Split(new[] { Environment.NewLine },
+                                        StringSplitOptions.None);
+                if (lines.Length < 2) continue;  // must have at least one error line + count
+
+                var countLine = lines[^1];
+                if (!countLine.StartsWith("Count:")) continue;  // skip malformed
+                if (!int.TryParse(countLine.Substring("Count:".Length).Trim(), out int count))
+                    continue;
+
+                var errorText = string.Join(Environment.NewLine, lines.Take(lines.Length - 1));
+
+                _badFileErrorCounts[errorText] = count;
+            }
+        }
 
         public HistoryFolderClass(string basePath, string readFolder)
         {
@@ -56,15 +84,18 @@ namespace UserTracker.HistoryFileTesterConsole
             if (!File.Exists(_seenPropertiesPath))
                 File.Create(_seenPropertiesPath).Close();
 
-            HashSet<string> goodFilesText = new HashSet<string>(File.ReadLines(_goodFilesPath));
-            HashSet<string> badFilesText = new HashSet<string>(File.ReadLines(_badFilesPath));
+            _goodFiles = new HashSet<string>(File.ReadLines(_goodFilesPath));
+            _badFiles = new HashSet<string>(File.ReadLines(_badFilesPath)).Where(f=>!_goodFiles.Contains(f)).ToHashSet();
+            File.WriteAllLines(_badFilesPath, _badFiles);
+
+            LoadExistingErrorCounts(_badFilesErrorsPath);
             var seenPropertiesLines = File.ReadLines(_seenPropertiesPath);
             foreach (var line in seenPropertiesLines)
             {
                 var keyValueSplit = line.Split(" : ");
                 var key = keyValueSplit[0].Trim();
                 var value = int.Parse(keyValueSplit[1].Trim());
-               _seenPropertiesDict[key] = value;
+                _seenPropertiesDict[key] = value;
             }
 
 
@@ -79,15 +110,15 @@ namespace UserTracker.HistoryFileTesterConsole
                     .SelectMany(subdir => Directory.EnumerateFiles(subdir)))
                 .OrderBy(File.GetCreationTimeUtc)
                 .Where(file =>
-                (HistoryConfigSettingsState.InluceGoodFiles && goodFilesText.Contains(file))
-                || (HistoryConfigSettingsState.IncludeBadFiles && badFilesText.Contains(file))
-                || (HistoryConfigSettingsState.IncludeUnknownFiles && !goodFilesText.Contains(file) && !badFilesText.Contains(file)))
+                (HistoryConfigSettingsState.InluceGoodFiles && _goodFiles.Contains(file))
+                || (HistoryConfigSettingsState.IncludeBadFiles && _badFiles.Contains(file))
+                || (HistoryConfigSettingsState.IncludeUnknownFiles && !_goodFiles.Contains(file) && !_badFiles.Contains(file)))
                 .ToList();
 
             var filesCount = _files.Count();
             Console.WriteLine($"Found {filesCount} files to parse in {readFolder}, started at {DateTime.Now.ToLongTimeString()}");
 
-            Timer? onSave = new Timer(60 * 1000);
+            Timer? onSave = new Timer(10 * 1000);
             onSave.Elapsed += OnSaveTimer;
             onSave.AutoReset = true;
             onSave.Enabled = true;
@@ -101,10 +132,14 @@ namespace UserTracker.HistoryFileTesterConsole
             writeStopwatch.Start();
 
 
-            _fileProcessedCount += _linesToBeWrittenBad.Count + _linesToBeWrittenGood.Count;
+            var newGoodFilesCount = _linesToBeWrittenGood.Count;
+            var badFilesCount = _linesToBeWrittenBad.Count;
+            _fileProcessedCount += newGoodFilesCount + badFilesCount;
+
             using StreamWriter goodWriter = new StreamWriter(_goodFilesPath, true);
             while (_linesToBeWrittenGood.TryTake(out var file))
             {
+                if (_goodFiles.Contains(file)) continue;
                 goodWriter.WriteLine(file);
             }
             var goodWriteTime = writeStopwatch.Elapsed;
@@ -112,14 +147,24 @@ namespace UserTracker.HistoryFileTesterConsole
             using StreamWriter badWriter = new StreamWriter(_badFilesPath, true);
             while (_linesToBeWrittenBad.TryTake(out var file))
             {
+                if (_badFiles.Contains(file)) continue;
                 badWriter.WriteLine(file);
             }
             var badWriteTime = writeStopwatch.Elapsed;
 
-            using StreamWriter badErrorsWriter = new StreamWriter(_badFilesErrorsPath, true);
-            while (_linesToBeWrittenBadErrors.TryTake(out var error))
+            using (var writer = new StreamWriter(_badFilesErrorsPath, append: false))
             {
-                badErrorsWriter.WriteLine(error);
+                var sorted = _badFileErrorCounts
+                             .OrderByDescending(kvp => kvp.Value)
+                             .ThenBy(kvp => kvp.Key, StringComparer.Ordinal);
+
+                foreach (var kv in sorted)
+                {
+                    writer.WriteLine(kv.Key);
+                    writer.WriteLine($"Count: {kv.Value}");
+                    writer.WriteLine();
+                    writer.WriteLine();
+                }
             }
             var badErrorWriteTime = writeStopwatch.Elapsed;
 
@@ -161,8 +206,12 @@ namespace UserTracker.HistoryFileTesterConsole
 
             writeStopwatch.Stop();
             Console.WriteLine();
-            Console.WriteLine($"Write times: Good {goodWriteTime.TotalMilliseconds} ms, Bad {badWriteTime.TotalMilliseconds - goodWriteTime.TotalMilliseconds} ms, Bad Errors {badErrorWriteTime.TotalMilliseconds - badWriteTime.TotalMilliseconds} ms, SeenProperties {seenPropertiesWriteTime.TotalMilliseconds - badErrorWriteTime.TotalMilliseconds} TotalLines {totalWriteTime.TotalMilliseconds - seenPropertiesWriteTime.TotalMilliseconds} ms at {DateTime.Now.ToLongTimeString()}");
-            Console.WriteLine($"Changes processed {_totalChanges - _originalTotalChanges} ({changesProcessedThisSync}), SeenProperties {_seenProperties - _originalSeenPropertiesChanges} ({newSeenProperties}) in {_fileProcessedCount} ({filesChangesProcessedThisSync}) files (out of {_files.Count()} files)");
+            //Console.WriteLine($"Write times: Good {Math.Round(goodWriteTime.TotalMilliseconds, 2)}ms, Bad {Math.Round(badWriteTime.TotalMilliseconds - goodWriteTime.TotalMilliseconds, 2)}ms, Bad Errors {Math.Round(badErrorWriteTime.TotalMilliseconds - badWriteTime.TotalMilliseconds, 2)}ms, SeenProperties {Math.Round(seenPropertiesWriteTime.TotalMilliseconds - badErrorWriteTime.TotalMilliseconds, 2)}ms TotalLines {Math.Round(totalWriteTime.TotalMilliseconds - seenPropertiesWriteTime.TotalMilliseconds, 2)}ms at {DateTime.Now.ToLongTimeString()}");
+            Console.WriteLine($"//====== {DateTime.Now.ToLongTimeString()}");
+            Console.WriteLine($"Writing files took {Math.Round(seenPropertiesWriteTime.TotalMilliseconds, 2)}ms");
+            Console.WriteLine($"Changes processed {changesProcessedThisSync} in {newGoodFilesCount} good files, {badFilesCount} new bad files");
+            Console.WriteLine($"{newSeenProperties} new properties, total seen properties now {_seenProperties}");
+            Console.WriteLine($"Progress {_fileProcessedCount}/{_files.Count()} files, total changes now {_totalChanges}");
             _isWriting = false;
         }
 
@@ -181,9 +230,14 @@ namespace UserTracker.HistoryFileTesterConsole
             catch (Exception e)
             {
                 _linesToBeWrittenBad.Add(file);
-                _linesToBeWrittenBadErrors.Add(e.Message + Environment.NewLine + e.StackTrace);
+                _badFileErrorCounts.AddOrUpdate(
+                   e.Message + Environment.NewLine + e.StackTrace,
+                   addValue: 1,
+                   updateValueFactory: (key, oldValue) => oldValue + 1
+                );
                 if (HistoryConfigSettingsState.ThrowOnBadFile)
                 {
+                    Console.WriteLine($"Error processing file {file}: {e.Message}");
                     throw;
                 }
             }
@@ -193,7 +247,7 @@ namespace UserTracker.HistoryFileTesterConsole
 
         public async Task Start()
         {
-            var processorCount = Environment.ProcessorCount;
+            var processorCount = Environment.ProcessorCount * 2;
             switch (HistoryConfigSettingsState.LoopStrategy)
             {
                 case "for":
@@ -215,7 +269,7 @@ namespace UserTracker.HistoryFileTesterConsole
                     var filesList = _files.ToList();
                     var parallelOptions = new ParallelOptions
                     {
-                        MaxDegreeOfParallelism = Environment.ProcessorCount * 2
+                        MaxDegreeOfParallelism = processorCount
                     };
 
                     await Parallel.ForEachAsync(filesList, parallelOptions, async (file, ct) =>

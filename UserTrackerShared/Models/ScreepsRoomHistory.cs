@@ -1000,7 +1000,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("tick")]
         public decimal Tick { get; set; }
     }
@@ -1018,7 +1018,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("decayTime")]
         public decimal DecayTime { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("tick")]
         public decimal Tick { get; set; }
     }
@@ -1042,7 +1042,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureContainer : StoredStructure
@@ -1058,7 +1058,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureRoad : DurableStructure
@@ -1072,7 +1072,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureRampart : DurableStructure
@@ -1086,7 +1086,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("hitsTarget")]
         public decimal HitsTarget { get; set; }
         [JsonProperty("isPublic")]
@@ -1104,7 +1104,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureController : DurableStructure
@@ -1138,7 +1138,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("isPowerEnabled")]
         public bool IsPowerEnabled { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("_upgraded")]
         public decimal _upgraded { get; set; }
         [JsonProperty("newField")]
@@ -1222,7 +1222,7 @@ namespace UserTrackerShared.Models
     public class StructurePowerSpawn : StoredStructure
     {
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
     }
@@ -1238,7 +1238,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("npc")]
         public bool Npc { get; set; }
         [JsonProperty("marketData")]
@@ -1262,7 +1262,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("strongholdId")]
         public string StrongholdId { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
         [JsonProperty("actionLog")]
         public ActionLog ActionLog { get; set; }
         [JsonProperty("decayTime")]
@@ -1289,7 +1289,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("decayTime")]
         public decimal DecayTime { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureSource : PositionedStructure
@@ -1337,7 +1337,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("nextRegenerationTime")]
         public decimal NextRegenerationTime { get; set; }
         [JsonProperty("effects")]
-        public Effect[] Effects { get; set; } = [];
+        public Dictionary<string, Effect> Effects { get; set; }
     }
 
     public class StructureExtractor : DurableStructure
@@ -1460,11 +1460,6 @@ namespace UserTrackerShared.Models
         public Structures Structures { get; set; } = new Structures();
         public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, string> UserMap { get; set; } = new Dictionary<string, string>();
-        public Dictionary<
-            string,
-            Dictionary<string, object>
-        > PropertiesListDictionary
-        { get; set; } =
-            new Dictionary<string, Dictionary<string, object>>();
+        public Dictionary<string, Dictionary<string, object?>>? HistoryChangesDictionary { get; set; }
     }
 }
