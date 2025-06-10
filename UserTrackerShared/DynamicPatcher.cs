@@ -82,12 +82,14 @@ namespace UserTrackerShared
                 int.TryParse(dictionaryKeyName, out int dictionaryIndex);
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
                 HandleArrayProperty(current, prop, propValue, propType, propName, idx, isLast, ref obj, value);
+                return;
             }
             else if (simplifiedType == SimplifiedTypeNameEnum.List)
             {
                 int.TryParse(dictionaryKeyName, out int dictionaryIndex);
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
                 HandleListProperty(current, prop, propValue, propType, propName, idx, isLast, ref obj, value);
+                return;
             }
             else
             {
@@ -97,8 +99,6 @@ namespace UserTrackerShared
             if (dictionaryKeyName == null)
             {
                 return;
-                if (simplifiedType == SimplifiedTypeNameEnum.Dictionary) dictionaryKeyName = propName;
-                else return;
             }
 
             if (dictionaryKeyName != null)

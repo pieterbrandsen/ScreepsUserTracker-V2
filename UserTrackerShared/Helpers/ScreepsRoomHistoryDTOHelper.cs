@@ -106,7 +106,7 @@ namespace UserTrackerShared.Helpers
             {
                 structuresDTO.Mineral.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            if (structures.Deposit != null)
+            if (structures.Deposits != null)
             {
                 structuresDTO.Deposit.Count += 1m / ConfigSettingsState.TicksInFile;
             }

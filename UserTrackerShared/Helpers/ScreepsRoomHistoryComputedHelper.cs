@@ -48,37 +48,50 @@ namespace UserTrackerShared.Helpers
                 case "creep":
                     var hasController = roomHistory.Structures.Controller != null;
                     var isOwnCreep = hasController && (roomHistory.Structures.Controller.User == user || roomHistory.Structures.Controller.Reservation?.User == user);
-                    Creep creep;
-                    if (hasController && isOwnCreep)
+                    Creep? creep = null;
+                    roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out Creep? owCreep);
+                    roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out Creep? eCreep);
+                    roomHistory.Creeps.OtherCreeps.TryGetValue(key, out Creep? otCreep);
+                    if (owCreep != null) creep = owCreep;
+                    else if (eCreep != null) creep = eCreep;
+                    else if (otCreep != null) creep = otCreep;
+
+                    if (creep == null)
                     {
-                        if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out creep))
+                        if (hasController && isOwnCreep)
                         {
-                            creep = new Creep();
-                            roomHistory.Creeps.OwnedCreeps[key] = creep;
+                            if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out creep))
+                            {
+                                creep = new Creep();
+                                roomHistory.Creeps.OwnedCreeps[key] = creep;
+                            }
                         }
-                    }
-                    else if (hasController && !isOwnCreep)
-                    {
-                        if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out creep))
+                        else if (hasController && !isOwnCreep)
                         {
-                            creep = new Creep();
-                            roomHistory.Creeps.EnemyCreeps[key] = creep;
+                            if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out creep))
+                            {
+                                creep = new Creep();
+                                roomHistory.Creeps.EnemyCreeps[key] = creep;
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
+                        else
                         {
-                            creep = new Creep();
-                            roomHistory.Creeps.OtherCreeps[key] = creep;
+                            if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
+                            {
+                                creep = new Creep();
+                                roomHistory.Creeps.OtherCreeps[key] = creep;
+                            }
                         }
                     }
                     DynamicPatcher.ApplyPatch(creep, changes);
                     break;
                 case "deposit":
-                    var deposit = roomHistory.Structures.Deposit ?? new StructureDeposit();
+                    if (!roomHistory.Structures.Deposits.TryGetValue(key, out var deposit))
+                    {
+                        deposit = new StructureDeposit();
+                        roomHistory.Structures.Deposits[key] = deposit;
+                    }
                     DynamicPatcher.ApplyPatch(deposit, changes);
-                    roomHistory.Structures.Deposit = deposit;
                     break;
                 case "energy":
                     if (!roomHistory.GroundResources.TryGetValue(key, out var resource))
@@ -308,8 +321,7 @@ namespace UserTrackerShared.Helpers
                     roomHistory.Creeps.OtherCreeps.Remove(key);
                     break;
                 case "deposit":
-                    if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == key)
-                        roomHistory.Structures.Deposit = null;
+                    roomHistory.Structures.Deposits.Remove(key);
                     break;
                 case "energy":
                     roomHistory.GroundResources.Remove(key);

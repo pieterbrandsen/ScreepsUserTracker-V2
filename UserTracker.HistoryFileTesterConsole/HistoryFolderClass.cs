@@ -238,6 +238,7 @@ namespace UserTracker.HistoryFileTesterConsole
                 if (HistoryConfigSettingsState.ThrowOnBadFile)
                 {
                     Console.WriteLine($"Error processing file {file}: {e.Message}");
+                    //HistoryFileChecker.ParseFile(file);
                     throw;
                 }
             }

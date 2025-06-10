@@ -41,8 +41,8 @@ namespace UserTracker.Tests.Helper
                         return roomHistory.Structures.Mineral;
                     break;
                 case "deposit":
-                    if (roomHistory.Structures.Deposit != null && roomHistory.Structures.Deposit.Id == id)
-                        return roomHistory.Structures.Deposit;
+                    if (roomHistory.Structures.Deposits.TryGetValue(id, out var objDeposit))
+                        return objDeposit;
                     break;
                 case "constructedWall":
                     roomHistory.Structures.Walls.TryGetValue(id, out var objWall);

@@ -1403,7 +1403,8 @@ namespace UserTrackerShared.Models
     {
         public StructureController Controller { get; set; }
         public StructureMineral Mineral { get; set; }
-        public StructureDeposit Deposit { get; set; }
+        public Dictionary<string, StructureDeposit> Deposits { get; set; } = 
+            new Dictionary<string, StructureDeposit>();
         public Dictionary<string, StructureWall> Walls { get; set; } =
             new Dictionary<string, StructureWall>();
         public Dictionary<string, StructureConstructionSite> ConstructionSites { get; set; } =
