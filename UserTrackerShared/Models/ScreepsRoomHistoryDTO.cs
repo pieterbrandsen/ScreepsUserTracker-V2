@@ -476,16 +476,19 @@ namespace UserTrackerShared.Models
                 var groundResourceObj = his.GroundResources[groundResourceKeys[gr]];
                 if (groundResourceObj == null) continue;
 
-                PropertyInfo property = groundResourceObj.GetType().GetProperty(groundResourceObj.ResourceType);
+                var resourceType = groundResourceObj.ResourceType;
+                PropertyInfo? property = groundResourceObj.GetType().GetProperty(resourceType);
+                if (property == null) property = groundResourceObj.GetType().GetProperty(char.ToUpperInvariant(resourceType[0]) + resourceType.Substring(1));
+
                 long toBeAddedAmount = Convert.ToInt64(property.GetValue(groundResourceObj));
                 decimal currentAmount = 0;
 
-                if (GroundResources.TryGetValue(groundResourceObj.ResourceType, out var existingGroundResource))
+                if (GroundResources.TryGetValue(resourceType, out var existingGroundResource))
                 {
                     currentAmount = existingGroundResource;
                 }
 
-                GroundResources[groundResourceObj.ResourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
+                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
             }
         }
         public void ProcessCreeps(ScreepsRoomHistory his)
