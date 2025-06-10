@@ -2,6 +2,11 @@
 namespace UserTrackerShared.Models
 {
     #region Base
+    public class DecayTime
+    {
+        [JsonProperty("timestamp")]
+        public long Timestamp { get; set; }
+    }
     public class Effect
     {
         [JsonProperty("effect")]
@@ -882,6 +887,8 @@ namespace UserTrackerShared.Models
         public decimal _damageToApply { get; set; }
         [JsonProperty("ticksToLive")]
         public decimal TicksToLive { get; set; }
+        [JsonProperty("userSummoned")]
+        public string? UserSummoned { get; set; }
     }
 
     public class PowerCreep : BaseCreep
@@ -1287,7 +1294,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
         [JsonProperty("decayTime")]
-        public decimal DecayTime { get; set; }
+        public DecayTime DecayTime { get; set; }
         [JsonProperty("effects")]
         public Dictionary<string, Effect> Effects { get; set; }
     }

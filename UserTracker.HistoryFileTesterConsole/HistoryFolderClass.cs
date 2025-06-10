@@ -118,7 +118,7 @@ namespace UserTracker.HistoryFileTesterConsole
             var filesCount = _files.Count();
             Console.WriteLine($"Found {filesCount} files to parse in {readFolder}, started at {DateTime.Now.ToLongTimeString()}");
 
-            Timer? onSave = new Timer(10 * 1000);
+            Timer? onSave = new Timer(60 * 1000);
             onSave.Elapsed += OnSaveTimer;
             onSave.AutoReset = true;
             onSave.Enabled = true;

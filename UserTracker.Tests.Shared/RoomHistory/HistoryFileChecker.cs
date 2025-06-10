@@ -77,7 +77,6 @@ namespace UserTracker.Tests.RoomHistory
         {
             var seenProperties = new HashSet<string>();
             long changesProcessed = 0;
-            return (changesProcessed, seenProperties);
             var roomHistory = new ScreepsRoomHistory();
             roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
             var roomHistoryDTO = new ScreepsRoomHistoryDTO();

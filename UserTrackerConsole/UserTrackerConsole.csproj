@@ -6,6 +6,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+    <!-- Use server‐optimized GC instead of workstation -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!-- Allow background/concurrent GC to overlap gen 0/1 collections -->
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+
+    <!-- Pin the number of heaps to the number of logical procs (default) -->
+    <!-- You can also hard-set: e.g. <GCHeapCount>4</GCHeapCount> -->
+    <GCCpuGroup>false</GCCpuGroup>
+
+    <!-- Never hold onto empty pages when trimming -->
+    <GCTrimCommitThreshold>0</GCTrimCommitThreshold>
+
+    <!-- Occasionally compact the Large Object Heap on Gen 2 collections -->
+    <UseLargeObjectHeapCompaction>true</UseLargeObjectHeapCompaction>
+
+    <!-- Reduce latency mode if you need deterministic pauses (0–5) -->
+    <!-- 1–2 for very low latency at the cost of throughput -->
+    <GCLatencyLevel>0</GCLatencyLevel>
   </PropertyGroup>
 
   <PropertyGroup>
