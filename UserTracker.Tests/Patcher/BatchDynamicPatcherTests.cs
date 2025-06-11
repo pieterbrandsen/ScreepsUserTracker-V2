@@ -32,7 +32,7 @@ namespace UserTracker.Tests.Patcher
         [MemberData(nameof(FilesData), MemberType = typeof(BatchDynamicPatcherTests))]
         public void FilesData_RunWithoutFail(string path)
         {
-            HistoryFileChecker.ParseFile(path);
+            Assert.DoesNotThrow(() => HistoryFileChecker.ParseFile(path));
         }
     }
 }

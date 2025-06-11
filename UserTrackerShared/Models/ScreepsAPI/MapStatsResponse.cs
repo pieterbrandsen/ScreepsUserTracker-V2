@@ -6,16 +6,16 @@ namespace UserTrackerShared.Models.ScreepsAPI
     public class MapStatRoomOwn
     {
         [JsonProperty("user")]
-        public string User { get; set; }
+        public required string User { get; set; }
         [JsonProperty("level")]
         public int Level { get; set; }
     }
     public class MapStatRoomSign
     {
         [JsonProperty("user")]
-        public string User { get; set; }
+        public required string User { get; set; }
         [JsonProperty("text")]
-        public string Text { get; set; }
+        public required string Text { get; set; }
         [JsonProperty("time")]
         public long Time { get; set; }
         [JsonProperty("datetime")]
@@ -25,32 +25,32 @@ namespace UserTrackerShared.Models.ScreepsAPI
     public class MapStatRoom
     {
         [JsonProperty("status")]
-        public string Status { get; set; }
+        public required string Status { get; set; }
         [JsonProperty("respawnArea")]
         public long? RespawnArea { get; set; }
         [JsonProperty("own")]
-        public MapStatRoomOwn Own { get; set; }
+        public required MapStatRoomOwn Own { get; set; }
         [JsonProperty("sign")]
-        public MapStatRoomSign Sign { get; set; }
+        public required MapStatRoomSign Sign { get; set; }
         [JsonProperty("decorations")]
-        public object Decorations { get; set; }
+        public required object Decorations { get; set; }
         [JsonProperty("isPowerEnabled")]
         public bool IsPowerEnabled { get; set; }
     }
     public class MapStatUserBadge
     {
         [JsonProperty("type")]
-        public object Type { get; set; }
+        public required object Type { get; set; }
         [JsonProperty("color1")]
-        public string Color1 { get; set; }
+        public required string Color1 { get; set; }
         [JsonProperty("color2")]
-        public string Color2 { get; set; }
+        public required string Color2 { get; set; }
         [JsonProperty("color3")]
-        public string Color3 { get; set; }
+        public required string Color3 { get; set; }
         [JsonProperty("param")]
         public int Param { get; set; }
         [JsonProperty("decoration")]
-        public string Decoration { get; set; }
+        public required string Decoration { get; set; }
         [JsonProperty("flip")]
         public bool Flip { get; set; }
     }
@@ -61,10 +61,10 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("gameTime")]
         public long GameTime { get; set; }
         [JsonProperty("stats")]
-        public Dictionary<string, MapStatRoom> Rooms { get; set; } = new Dictionary<string, MapStatRoom>();
+        public required Dictionary<string, MapStatRoom> Rooms { get; set; } = new Dictionary<string, MapStatRoom>();
         [JsonProperty("decorations")]
-        public object Decorations { get; set; }
+        public required object Decorations { get; set; }
         [JsonProperty("users")]
-        public Dictionary<string, ScreepsUser> Users { get; set; } = new Dictionary<string, ScreepsUser>();
+        public required Dictionary<string, ScreepsUser> Users { get; set; } = new Dictionary<string, ScreepsUser>();
     }
 }

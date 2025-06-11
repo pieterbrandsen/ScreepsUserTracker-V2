@@ -47,7 +47,7 @@ namespace UserTrackerShared.Helpers
                     break;
                 case "creep":
                     var hasController = roomHistory.Structures.Controller != null;
-                    var isOwnCreep = hasController && (roomHistory.Structures.Controller.User == user || roomHistory.Structures.Controller.Reservation?.User == user);
+                    var isOwnCreep = hasController && (roomHistory.Structures.Controller?.User == user || roomHistory.Structures.Controller.Reservation?.User == user);
                     Creep? creep = null;
                     roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out Creep? owCreep);
                     roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out Creep? eCreep);
@@ -58,29 +58,32 @@ namespace UserTrackerShared.Helpers
 
                     if (creep == null)
                     {
-                        if (hasController && isOwnCreep)
+                        if (hasController)
                         {
-                            if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out creep))
+                            if (isOwnCreep)
                             {
-                                creep = new Creep();
-                                roomHistory.Creeps.OwnedCreeps[key] = creep;
+                                if (!roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out creep))
+                                {
+                                    creep = new Creep();
+                                    roomHistory.Creeps.OwnedCreeps[key] = creep;
+                                }
+                            }
+                            else
+                            {
+                                if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out creep))
+                                {
+                                    creep = new Creep();
+                                    roomHistory.Creeps.EnemyCreeps[key] = creep;
+                                }
                             }
                         }
-                        else if (hasController && !isOwnCreep)
+                    }
+                    else
+                    {
+                        if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
                         {
-                            if (!roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out creep))
-                            {
-                                creep = new Creep();
-                                roomHistory.Creeps.EnemyCreeps[key] = creep;
-                            }
-                        }
-                        else
-                        {
-                            if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
-                            {
-                                creep = new Creep();
-                                roomHistory.Creeps.OtherCreeps[key] = creep;
-                            }
+                            creep = new Creep();
+                            roomHistory.Creeps.OtherCreeps[key] = creep;
                         }
                     }
                     DynamicPatcher.ApplyPatch(creep, changes);
@@ -427,9 +430,8 @@ namespace UserTrackerShared.Helpers
             foreach (var tickObj in tickObjects)
             {
                 var id = GetLastPathSegment(tickObj.Path).ToString();
-                if (id == "undefined") continue;
 
-                if (tickObj.HasValues && tickObj is JObject obj)
+                if (tickObj.HasValues && tickObj is JObject obj && id == "undefined")
                 {
                     var changes = new Dictionary<string, object?>();
                     JsonHelper.FlattenJson(tickObj, new StringBuilder(), changes);

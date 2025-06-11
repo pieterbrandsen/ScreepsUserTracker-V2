@@ -8,7 +8,7 @@ namespace UserTrackerShared.Models.Screen
 {
     public abstract class ScreenPart
     {
-        public ScreenPart(bool enabled, int width, int startHeight, int height)
+        protected ScreenPart(bool enabled, int width, int startHeight, int height)
         {
             Enabled = enabled;
             Width = width;

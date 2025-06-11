@@ -125,7 +125,7 @@ namespace UserTrackerShared.States
                 var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
 
-                DBClient.WritePerformanceData(new PerformanceClassDTO
+                DBClient.WritePerformanceData(new PerformanceClassDto
                 {
                     Shard = Name,
                     TicksBehind = ticksBehind,
@@ -149,7 +149,7 @@ namespace UserTrackerShared.States
         }
         private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
-            _= StartUpdate();
+            _ = StartUpdate();
         }
     }
 }

@@ -16,12 +16,12 @@ namespace UserTrackerShared
 
             UpdateSize();
 
-            CheckAndUpdateSizeTimer = new System.Timers.Timer();
-            CheckAndUpdateSizeTimer.Interval = 5000;
-            CheckAndUpdateSizeTimer.Elapsed += CheckAndUpdateSize;
-            CheckAndUpdateSizeTimer.Enabled = true;
-            CheckAndUpdateSizeTimer.AutoReset = true;
-            CheckAndUpdateSizeTimer.Start();
+            var checkAndUpdateSizeTimer = new System.Timers.Timer();
+            checkAndUpdateSizeTimer.Interval = 5000;
+            checkAndUpdateSizeTimer.Elapsed += CheckAndUpdateSize;
+            checkAndUpdateSizeTimer.Enabled = true;
+            checkAndUpdateSizeTimer.AutoReset = true;
+            checkAndUpdateSizeTimer.Start();
 
             IsEnabled = true;
             TitlePart.Draw();
@@ -33,10 +33,9 @@ namespace UserTrackerShared
         public static string Name { get; set; } = "User Tracker Screen";
         public static int Width { get; set; }
         public static int Height { get; set; }
-        public static TitleScreenPart TitlePart = new TitleScreenPart(false, 0, 0, 0);
-        public static LogScreenPart LogsPart = new LogScreenPart(false, 0, 0, 0);
-        public static FooterScreenPart FooterPart = new FooterScreenPart(false, 0, 0, 0);
-        public static System.Timers.Timer? CheckAndUpdateSizeTimer = new System.Timers.Timer();
+        public static readonly TitleScreenPart TitlePart { get; set; } = new TitleScreenPart(false, 0, 0, 0);
+        public static readonly LogScreenPart LogsPart { get; set; } = new LogScreenPart(false, 0, 0, 0);
+        public static readonly FooterScreenPart FooterPart { get; set; } = new FooterScreenPart(false, 0, 0, 0);
 
         public static void UpdateSize()
         {
@@ -82,6 +81,7 @@ namespace UserTrackerShared
             }
             catch (Exception)
             {
+                // Accepted
             }
         }
         public static void WriteDivider(int location)

@@ -13,6 +13,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int Ok { get; set; }
 
         [JsonProperty("token")]
-        public string Token { get; set; }
+        public required string Token { get; set; }
     }
 }

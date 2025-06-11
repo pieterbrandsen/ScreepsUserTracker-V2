@@ -11,7 +11,7 @@ namespace UserTracker.Tests.Helper
 {
     public static class GetObjectChangesInTick
     {
-        private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
+        private static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object?> dict)
         {
             switch (token)
             {
@@ -43,9 +43,9 @@ namespace UserTracker.Tests.Helper
             }
         }
 
-        public static Dictionary<string, object> GetById(JToken tick, string id)
+        public static Dictionary<string, object?> GetById(JToken tick, string id)
         {
-            var dict = new Dictionary<string, object>();
+            var dict = new Dictionary<string, object?>();
             if (tick is JObject jTick && jTick.TryGetValue(id, out var idToken))
             {
                 FlattenJson(idToken, new StringBuilder(), dict);

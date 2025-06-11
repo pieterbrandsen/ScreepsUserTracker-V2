@@ -2,7 +2,7 @@
 
 namespace UserTrackerShared.Helpers
 {
-    public static class ScreepsRoomHistoryDTOHelper
+    public static class ScreepsRoomHistoryDtoHelper
     {
         private static void UpdateStore(Store currentStore, Store store)
         {
@@ -108,124 +108,130 @@ namespace UserTrackerShared.Helpers
             }
             if (structures.Deposits != null)
             {
-                structuresDTO.Deposit.Count += 1m / ConfigSettingsState.TicksInFile;
+                foreach (var deposit in structures.Deposits.Select(x => x.Value))
+                {
+                    structuresDTO.Deposit.Count += 1m / ConfigSettingsState.TicksInFile;
+                }
             }
             foreach (var wall in structures.Walls)
             {
                 structuresDTO.Wall.Count += 1m / ConfigSettingsState.TicksInFile;
                 structuresDTO.Wall.Hits += wall.Value.Hits / ConfigSettingsState.TicksInFile;
             }
-            foreach (var constructionSite in structures.ConstructionSites)
+            foreach (var constructionSite in structures.ConstructionSites.Select(x => x.Value))
             {
                 structuresDTO.ConstructionSite.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.ConstructionSite.Progress += constructionSite.Value.Progress / ConfigSettingsState.TicksInFile;
-                structuresDTO.ConstructionSite.ProgressTotal += constructionSite.Value.ProgressTotal / ConfigSettingsState.TicksInFile;
+                structuresDTO.ConstructionSite.Progress += constructionSite.Progress / ConfigSettingsState.TicksInFile;
+                structuresDTO.ConstructionSite.ProgressTotal += constructionSite.ProgressTotal / ConfigSettingsState.TicksInFile;
 
                 var typeBeingBuild = constructionSite.Value.StructureType;
-                var current = structuresDTO.ConstructionSite.TypesBuilding.ContainsKey(typeBeingBuild) ? structuresDTO.ConstructionSite.TypesBuilding[typeBeingBuild] : 0;
+                if (!structuresDTO.ConstructionSite.TypesBuilding.TryGetValue(typeBeingBuild, out var current))
+                {
+                    current = 0;
+                }
                 structuresDTO.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInFile;
             }
-            foreach (var container in structures.Containers)
+            foreach (var container in structures.Containers.Select(x => x.Value))
             {
                 structuresDTO.Container.Count += 1m / ConfigSettingsState.TicksInFile;
 
                 if (container.Value.Store != null)
                 {
-                    UpdateStore(structuresDTO.Container.Store, container.Value.Store);
+                    UpdateStore(structuresDTO.Container.Store, container.Store);
                 }
             }
-            foreach (var extension in structures.Extensions)
+            foreach (var extension in structures.Extensions.Select(x => x.Value))
             {
                 structuresDTO.Extension.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Extension.Energy += extension.Value.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Extension.EnergyCapacity += extension.Value.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Extension.Energy += extension.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Extension.EnergyCapacity += extension.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
-            foreach (var extractor in structures.Extractors)
+            foreach (var extractor in structures.Extractors.Select(x => x.Value))
             {
                 structuresDTO.Extractor.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var factory in structures.Factories)
+            foreach (var factory in structures.Factories.Select(x => x.Value))
             {
                 structuresDTO.Factory.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var invderCore in structures.InvaderCores)
+            foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
             {
                 structuresDTO.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var invderCore in structures.InvaderCores)
+            foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
             {
                 structuresDTO.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var keeperLair in structures.KeeperLairs)
+            foreach (var keeperLair in structures.KeeperLairs.Select(x => x.Value))
             {
                 structuresDTO.KeeperLair.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var lab in structures.Labs)
+            foreach (var lab in structures.Labs.Select(x => x.Value))
             {
                 structuresDTO.Lab.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var link in structures.Links)
+            foreach (var link in structures.Links.Select(x => x.Value))
             {
                 structuresDTO.Link.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Link.Energy += link.Value.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Link.EnergyCapacity += link.Value.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Link.Energy += link.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Link.EnergyCapacity += link.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
-            foreach (var observer in structures.Observers)
+            foreach (var observer in structures.Observers.Select(x => x.Value))
             {
                 structuresDTO.Observer.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var portal in structures.Portals)
+            foreach (var portal in structures.Portals.Select(x => x.Value))
             {
                 structuresDTO.Portal.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var powerBank in structures.PowerBanks)
+            foreach (var powerBank in structures.PowerBanks.Select(x => x.Value))
             {
                 structuresDTO.PowerBank.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var powerSpawns in structures.PowerSpawns)
+            foreach (var powerSpawns in structures.PowerSpawns.Select(x => x.Value))
             {
                 structuresDTO.PowerSpawn.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var rampart in structures.Ramparts)
+            foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
-            foreach (var road in structures.Roads)
+            foreach (var road in structures.Roads.Select(x => x.Value))
             {
                 structuresDTO.Road.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var ruin in structures.Ruins)
+            foreach (var ruin in structures.Ruins.Select(x => x.Value))
             {
                 structuresDTO.Ruin.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var rampart in structures.Ramparts)
+            foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
-            foreach (var source in structures.Sources)
+            foreach (var source in structures.Sources.Select(x => x.Value))
             {
                 structuresDTO.Source.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Source.Energy += source.Value.Energy / ConfigSettingsState.TicksInFile;
-                structuresDTO.Source.EnergyCapacity += source.Value.EnergyCapacity / ConfigSettingsState.TicksInFile;
+                structuresDTO.Source.Energy += source.Energy / ConfigSettingsState.TicksInFile;
+                structuresDTO.Source.EnergyCapacity += source.EnergyCapacity / ConfigSettingsState.TicksInFile;
             }
-            foreach (var rampart in structures.Ramparts)
+            foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
                 structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
-            foreach (var spawn in structures.Spawns)
+            foreach (var spawn in structures.Spawns.Select(x => x.Value))
             {
                 structuresDTO.Spawn.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var storage in structures.Storages)
+            foreach (var storage in structures.Storages.Select(x => x.Value))
             {
                 structuresDTO.Storage.Count += 1m / ConfigSettingsState.TicksInFile;
 
                 if (storage.Value.Store != null)
                 {
-                    UpdateStore(structuresDTO.Storage.Store, storage.Value.Store);
+                    UpdateStore(structuresDTO.Storage.Store, storage.Store);
                 }
             }
             foreach (var terminal in structures.Terminals)
@@ -237,27 +243,27 @@ namespace UserTrackerShared.Helpers
                     UpdateStore(structuresDTO.Terminal.Store, terminal.Value.Store);
                 }
             }
-            foreach (var tombstone in structures.Tombstones)
+            foreach (var tombstone in structures.Tombstones.Select(x => x.Value))
             {
                 structuresDTO.Tombstone.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var tower in structures.Towers)
             {
                 structuresDTO.Tower.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Tower.Energy += tower.Value.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDTO.Tower.Energy += tower.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
-            foreach (var nuker in structures.Nukers)
+            foreach (var nuker in structures.Nukers.Select(x => x.Value))
             {
                 structuresDTO.Nuker.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var nuke in structures.Nukes)
+            foreach (var nuke in structures.Nukes.Select(x => x.Value))
             {
                 structuresDTO.Nuke.Count += 1m / ConfigSettingsState.TicksInFile;
             }
 
             return structuresDTO;
         }
-        public class IntentMapDTO
+        public class IntentMapDto
         {
             public decimal Harvest { get; set; } = 0;
             public decimal Build { get; set; } = 0;
@@ -285,7 +291,7 @@ namespace UserTrackerShared.Helpers
         }
         public static CreepDTO ConvertCreeps(List<BaseCreep> creeps, CreepDTO creepsDTO)
         {
-            var intentMap = new IntentMapDTO();
+            var intentMap = new IntentMapDto();
             var creepsDTOBodyPart = new CountByPartDTO();
             foreach (var creep in creeps)
             {
@@ -347,9 +353,8 @@ namespace UserTrackerShared.Helpers
                 }
             }
         }
-        public static IntentMapDTO ComputeExtraIntentPower(BodyPart[] body, CountByPartDTO countByPart, IntentMapDTO intentMap)
+        public static IntentMapDto ComputeExtraIntentPower(BodyPart[] body, CountByPartDTO countByPart, IntentMapDto intentMap)
         {
-            var bodyDict = new Dictionary<string, long>();
             foreach (var bodyPart in body)
             {
                 if (bodyPart.Hits == 0) continue;
@@ -461,7 +466,7 @@ namespace UserTrackerShared.Helpers
             }
             return intentMap;
         }
-        public static void ConvertActiongLog(ActionLog actionLog, ActionLogDTO actionLogDTO, CountByPartDTO body, IntentMapDTO intentPowerMap, decimal? creep_oldFatigue)
+        public static void ConvertActiongLog(ActionLog actionLog, ActionLogDTO actionLogDTO, CountByPartDTO body, IntentMapDto intentPowerMap, decimal? creep_oldFatigue)
         {
             if (actionLog == null) return;
 

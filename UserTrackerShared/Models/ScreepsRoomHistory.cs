@@ -22,9 +22,9 @@ namespace UserTrackerShared.Models
     }
     public class Store
     {
-        [JsonProperty("energy")]
+        [JsonProperty(nameof(energy))]
         public decimal? energy { get; set; }
-        [JsonProperty("power")]
+        [JsonProperty(nameof(power))]
         public decimal? power { get; set; }
         [JsonProperty("h")]
         public decimal? H { get; set; }
@@ -42,13 +42,13 @@ namespace UserTrackerShared.Models
         public decimal? X { get; set; }
         [JsonProperty("g")]
         public decimal? G { get; set; }
-        [JsonProperty("silicon")]
+        [JsonProperty(nameof(silicon))]
         public decimal? silicon { get; set; }
-        [JsonProperty("metal")]
+        [JsonProperty(nameof(metal))]
         public decimal? metal { get; set; }
-        [JsonProperty("biomass")]
+        [JsonProperty(nameof(biomass))]
         public decimal? biomass { get; set; }
-        [JsonProperty("mist")]
+        [JsonProperty(nameof(mist))]
         public decimal? mist { get; set; }
         [JsonProperty("oh")]
         public decimal? OH { get; set; }
@@ -116,79 +116,79 @@ namespace UserTrackerShared.Models
         public decimal? XGH2O { get; set; }
         [JsonProperty("xgho2")]
         public decimal? XGHO2 { get; set; }
-        [JsonProperty("ops")]
+        [JsonProperty(nameof(ops))]
         public decimal? ops { get; set; }
-        [JsonProperty("utrium_bar")]
+        [JsonProperty(nameof(utrium_bar))]
         public decimal? utrium_bar { get; set; }
-        [JsonProperty("lemergium_bar")]
+        [JsonProperty(nameof(lemergium_bar))]
         public decimal? lemergium_bar { get; set; }
-        [JsonProperty("zynthium_bar")]
+        [JsonProperty(nameof(zynthium_bar))]
         public decimal? zynthium_bar { get; set; }
-        [JsonProperty("keanium_bar")]
+        [JsonProperty(nameof(keanium_bar))]
         public decimal? keanium_bar { get; set; }
-        [JsonProperty("ghodium_melt")]
+        [JsonProperty(nameof(ghodium_melt))]
         public decimal? ghodium_melt { get; set; }
-        [JsonProperty("oxidant")]
+        [JsonProperty(nameof(oxidant))]
         public decimal? oxidant { get; set; }
-        [JsonProperty("reductant")]
+        [JsonProperty(nameof(reductant))]
         public decimal? reductant { get; set; }
-        [JsonProperty("purifier")]
+        [JsonProperty(nameof(purifier))]
         public decimal? purifier { get; set; }
-        [JsonProperty("battery")]
+        [JsonProperty(nameof(battery))]
         public decimal? battery { get; set; }
-        [JsonProperty("composite")]
+        [JsonProperty(nameof(composite))]
         public decimal? composite { get; set; }
-        [JsonProperty("crystal")]
+        [JsonProperty(nameof(crystal))]
         public decimal? crystal { get; set; }
-        [JsonProperty("liquid")]
+        [JsonProperty(nameof(liquid))]
         public decimal? liquid { get; set; }
-        [JsonProperty("wire")]
+        [JsonProperty(nameof(wire))]
         public decimal? wire { get; set; }
         [JsonProperty("switch")]
         public decimal? Switch { get; set; }
-        [JsonProperty("transistor")]
+        [JsonProperty(nameof(transistor))]
         public decimal? transistor { get; set; }
-        [JsonProperty("microchip")]
+        [JsonProperty(nameof(microchip))]
         public decimal? microchip { get; set; }
-        [JsonProperty("circuit")]
+        [JsonProperty(nameof(circuit))]
         public decimal? circuit { get; set; }
-        [JsonProperty("device")]
+        [JsonProperty(nameof(device))]
         public decimal? device { get; set; }
-        [JsonProperty("cell")]
+        [JsonProperty(nameof(cell))]
         public decimal? cell { get; set; }
-        [JsonProperty("phlegm")]
+        [JsonProperty(nameof(phlegm))]
         public decimal? phlegm { get; set; }
-        [JsonProperty("tissue")]
+        [JsonProperty(nameof(tissue))]
         public decimal? tissue { get; set; }
-        [JsonProperty("muscle")]
+        [JsonProperty(nameof(muscle))]
         public decimal? muscle { get; set; }
-        [JsonProperty("organoid")]
+        [JsonProperty(nameof(organoid))]
         public decimal? organoid { get; set; }
-        [JsonProperty("organism")]
+        [JsonProperty(nameof(organism))]
         public decimal? organism { get; set; }
-        [JsonProperty("alloy")]
+        [JsonProperty(nameof(alloy))]
         public decimal? alloy { get; set; }
-        [JsonProperty("tube")]
+        [JsonProperty(nameof(tube))]
         public decimal? tube { get; set; }
-        [JsonProperty("fixtures")]
+        [JsonProperty(nameof(fixtures))]
         public decimal? fixtures { get; set; }
-        [JsonProperty("frame")]
+        [JsonProperty(nameof(frame))]
         public decimal? frame { get; set; }
-        [JsonProperty("hydraulics")]
+        [JsonProperty(nameof(hydraulics))]
         public decimal? hydraulics { get; set; }
-        [JsonProperty("machine")]
+        [JsonProperty(nameof(machine))]
         public decimal? machine { get; set; }
-        [JsonProperty("condensate")]
+        [JsonProperty(nameof(condensate))]
         public decimal? condensate { get; set; }
-        [JsonProperty("concentrate")]
+        [JsonProperty(nameof(concentrate))]
         public decimal? concentrate { get; set; }
-        [JsonProperty("extract")]
+        [JsonProperty(nameof(extract))]
         public decimal? extract { get; set; }
-        [JsonProperty("spirit")]
+        [JsonProperty(nameof(spirit))]
         public decimal? spirit { get; set; }
-        [JsonProperty("emanation")]
+        [JsonProperty(nameof(emanation))]
         public decimal? emanation { get; set; }
-        [JsonProperty("essence")]
+        [JsonProperty(nameof(essence))]
         public decimal? essence { get; set; }
         public void Clear()
         {
@@ -490,9 +490,9 @@ namespace UserTrackerShared.Models
     {
         [JsonProperty("nextUpdate")]
         public decimal NextUpdate { get; set; }
-        [JsonProperty("energy")]
+        [JsonProperty(nameof(energy))]
         public StockpileResource energy { get; set; }
-        [JsonProperty("power")]
+        [JsonProperty(nameof(power))]
         public StockpileResource power { get; set; }
         [JsonProperty("h")]
         public StockpileResource H { get; set; }
@@ -510,13 +510,13 @@ namespace UserTrackerShared.Models
         public StockpileResource X { get; set; }
         [JsonProperty("g")]
         public StockpileResource G { get; set; }
-        [JsonProperty("silicon")]
+        [JsonProperty(nameof(silicon))]
         public StockpileResource silicon { get; set; }
-        [JsonProperty("metal")]
+        [JsonProperty(nameof(metal))]
         public StockpileResource metal { get; set; }
-        [JsonProperty("biomass")]
+        [JsonProperty(nameof(biomass))]
         public StockpileResource biomass { get; set; }
-        [JsonProperty("mist")]
+        [JsonProperty(nameof(mist))]
         public StockpileResource mist { get; set; }
         [JsonProperty("oh")]
         public StockpileResource OH { get; set; }
@@ -584,79 +584,79 @@ namespace UserTrackerShared.Models
         public StockpileResource XGH2O { get; set; }
         [JsonProperty("xgho2")]
         public StockpileResource XGHO2 { get; set; }
-        [JsonProperty("ops")]
+        [JsonProperty(nameof(ops))]
         public StockpileResource ops { get; set; }
-        [JsonProperty("utrium_bar")]
+        [JsonProperty(nameof(utrium_bar))]
         public StockpileResource utrium_bar { get; set; }
-        [JsonProperty("lemergium_bar")]
+        [JsonProperty(nameof(lemergium_bar))]
         public StockpileResource lemergium_bar { get; set; }
-        [JsonProperty("zynthium_bar")]
+        [JsonProperty(nameof(zynthium_bar))]
         public StockpileResource zynthium_bar { get; set; }
-        [JsonProperty("keanium_bar")]
+        [JsonProperty(nameof(keanium_bar))]
         public StockpileResource keanium_bar { get; set; }
-        [JsonProperty("ghodium_melt")]
+        [JsonProperty(nameof(ghodium_melt))]
         public StockpileResource ghodium_melt { get; set; }
-        [JsonProperty("oxidant")]
+        [JsonProperty(nameof(oxidant))]
         public StockpileResource oxidant { get; set; }
-        [JsonProperty("reductant")]
+        [JsonProperty(nameof(reductant))]
         public StockpileResource reductant { get; set; }
-        [JsonProperty("purifier")]
+        [JsonProperty(nameof(purifier))]
         public StockpileResource purifier { get; set; }
-        [JsonProperty("battery")]
+        [JsonProperty(nameof(battery))]
         public StockpileResource battery { get; set; }
-        [JsonProperty("composite")]
+        [JsonProperty(nameof(composite))]
         public StockpileResource composite { get; set; }
-        [JsonProperty("crystal")]
+        [JsonProperty(nameof(crystal))]
         public StockpileResource crystal { get; set; }
-        [JsonProperty("liquid")]
+        [JsonProperty(nameof(liquid))]
         public StockpileResource liquid { get; set; }
-        [JsonProperty("wire")]
+        [JsonProperty(nameof(wire))]
         public StockpileResource wire { get; set; }
         [JsonProperty("switch")]
         public StockpileResource Switch { get; set; }
-        [JsonProperty("transistor")]
+        [JsonProperty(nameof(transistor))]
         public StockpileResource transistor { get; set; }
-        [JsonProperty("microchip")]
+        [JsonProperty(nameof(microchip))]
         public StockpileResource microchip { get; set; }
-        [JsonProperty("circuit")]
+        [JsonProperty(nameof(circuit))]
         public StockpileResource circuit { get; set; }
-        [JsonProperty("device")]
+        [JsonProperty(nameof(device))]
         public StockpileResource device { get; set; }
-        [JsonProperty("cell")]
+        [JsonProperty(nameof(cell))]
         public StockpileResource cell { get; set; }
-        [JsonProperty("phlegm")]
+        [JsonProperty(nameof(phlegm))]
         public StockpileResource phlegm { get; set; }
-        [JsonProperty("tissue")]
+        [JsonProperty(nameof(tissue))]
         public StockpileResource tissue { get; set; }
-        [JsonProperty("muscle")]
+        [JsonProperty(nameof(muscle))]
         public StockpileResource muscle { get; set; }
-        [JsonProperty("organoid")]
+        [JsonProperty(nameof(organoid))]
         public StockpileResource organoid { get; set; }
-        [JsonProperty("organism")]
+        [JsonProperty(nameof(organism))]
         public StockpileResource organism { get; set; }
-        [JsonProperty("alloy")]
+        [JsonProperty(nameof(alloy))]
         public StockpileResource alloy { get; set; }
-        [JsonProperty("tube")]
+        [JsonProperty(nameof(tube))]
         public StockpileResource tube { get; set; }
-        [JsonProperty("fixtures")]
+        [JsonProperty(nameof(fixtures))]
         public StockpileResource fixtures { get; set; }
-        [JsonProperty("frame")]
+        [JsonProperty(nameof(frame))]
         public StockpileResource frame { get; set; }
-        [JsonProperty("hydraulics")]
+        [JsonProperty(nameof(hydraulics))]
         public StockpileResource hydraulics { get; set; }
-        [JsonProperty("machine")]
+        [JsonProperty(nameof(machine))]
         public StockpileResource machine { get; set; }
-        [JsonProperty("condensate")]
+        [JsonProperty(nameof(condensate))]
         public StockpileResource condensate { get; set; }
-        [JsonProperty("concentrate")]
+        [JsonProperty(nameof(concentrate))]
         public StockpileResource concentrate { get; set; }
-        [JsonProperty("extract")]
+        [JsonProperty(nameof(extract))]
         public StockpileResource extract { get; set; }
-        [JsonProperty("spirit")]
+        [JsonProperty(nameof(spirit))]
         public StockpileResource spirit { get; set; }
-        [JsonProperty("emanation")]
+        [JsonProperty(nameof(emanation))]
         public StockpileResource emanation { get; set; }
-        [JsonProperty("essence")]
+        [JsonProperty(nameof(essence))]
         public StockpileResource essence { get; set; }
         public void Clear()
         {
@@ -838,7 +838,7 @@ namespace UserTrackerShared.Models
         public bool NotifyWhenAttacked { get; set; }
         [JsonProperty("fatigue")]
         public decimal Fatigue { get; set; }
-        [JsonProperty("_fatigue")]
+        [JsonProperty(nameof(_fatigue))]
         public decimal _fatigue { get; set; }
         [JsonProperty("interRoom")]
         public InterRoom InterRoom { get; set; }
@@ -853,7 +853,7 @@ namespace UserTrackerShared.Models
         public decimal X { get; set; }
         [JsonProperty("y")]
         public decimal Y { get; set; }
-        [JsonProperty("_oldFatigue")]
+        [JsonProperty(nameof(_oldFatigue))]
         public decimal _oldFatigue { get; set; }
     }
 
@@ -863,15 +863,15 @@ namespace UserTrackerShared.Models
         public bool Spawning { get; set; }
         [JsonProperty("memory_move")]
         public MemoryMove Memory_move { get; set; }
-        [JsonProperty("_attack")]
+        [JsonProperty(nameof(_attack))]
         public bool _attack { get; set; }
         [JsonProperty("memory_sourceId")]
         public string Memory_sourceId { get; set; }
         [JsonProperty("strongholdId")]
         public string StrongholdId { get; set; }
-        [JsonProperty("_pull")]
+        [JsonProperty(nameof(_pull))]
         public string _pull { get; set; }
-        [JsonProperty("_pulled")]
+        [JsonProperty(nameof(_pulled))]
         public string _pulled { get; set; }
         [JsonProperty("mission")]
         public string Mission { get; set; }
@@ -879,11 +879,11 @@ namespace UserTrackerShared.Models
         public decimal TombstoneDecay { get; set; }
         [JsonProperty("noCapacityRecalc")]
         public bool NoCapacityRecalc { get; set; }
-        [JsonProperty("noInterShard")]
-        public bool noInterShard { get; set; }
-        [JsonProperty("_healToApply")]
+        [JsonProperty(nameof(noInterShard))]
+        public bool NoInterShard { get; set; }
+        [JsonProperty(nameof(_healToApply))]
         public decimal _healToApply { get; set; }
-        [JsonProperty("_damageToApply")]
+        [JsonProperty(nameof(_damageToApply))]
         public decimal _damageToApply { get; set; }
         [JsonProperty("ticksToLive")]
         public decimal TicksToLive { get; set; }
@@ -913,9 +913,9 @@ namespace UserTrackerShared.Models
         public string Id { get; set; }
         [JsonProperty("type")]
         public string Type { get; set; }
-        [JsonProperty("x")]
+        [JsonProperty(nameof(x))]
         public decimal x { get; set; }
-        [JsonProperty("y")]
+        [JsonProperty(nameof(y))]
         public decimal y { get; set; }
         [JsonProperty("room")]
         public string Room { get; set; }
@@ -988,7 +988,7 @@ namespace UserTrackerShared.Models
     {
         [JsonProperty("off")]
         public bool Off { get; set; }
-        [JsonProperty("_off")]
+        [JsonProperty(nameof(_off))]
         public bool _off { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
@@ -1000,7 +1000,7 @@ namespace UserTrackerShared.Models
         public string Name { get; set; }
         [JsonProperty("off")]
         public bool Off { get; set; }
-        [JsonProperty("_off")]
+        [JsonProperty(nameof(_off))]
         public bool _off { get; set; }
         [JsonProperty("spawning")]
         public Spawning Spawning { get; set; }
@@ -1018,7 +1018,7 @@ namespace UserTrackerShared.Models
         public ActionLog ActionLog { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
-        [JsonProperty("_actionLog")]
+        [JsonProperty(nameof(_actionLog))]
         public ActionLog _actionLog { get; set; }
         [JsonProperty("strongholdId")]
         public string StrongholdId { get; set; }
@@ -1036,7 +1036,7 @@ namespace UserTrackerShared.Models
         public decimal Cooldown { get; set; }
         [JsonProperty("actionLog")]
         public ActionLog ActionLog { get; set; }
-        [JsonProperty("_actionLog")]
+        [JsonProperty(nameof(_actionLog))]
         public ActionLog _actionLog { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
@@ -1134,7 +1134,7 @@ namespace UserTrackerShared.Models
         public Datetime Datetime { get; set; }
         [JsonProperty("safeModeAvailable")]
         public decimal SafeModeAvailable { get; set; }
-        [JsonProperty("_safeModeActivated")]
+        [JsonProperty(nameof(_safeModeActivated))]
         public decimal _safeModeActivated { get; set; }
         [JsonProperty("safeMode")]
         public decimal SafeMode { get; set; }
@@ -1146,7 +1146,7 @@ namespace UserTrackerShared.Models
         public bool IsPowerEnabled { get; set; }
         [JsonProperty("effects")]
         public Dictionary<string, Effect> Effects { get; set; }
-        [JsonProperty("_upgraded")]
+        [JsonProperty(nameof(_upgraded))]
         public decimal _upgraded { get; set; }
         [JsonProperty("newField")]
         public decimal NewField { get; set; }
@@ -1176,7 +1176,7 @@ namespace UserTrackerShared.Models
         public decimal StoreCapacity { get; set; }
         [JsonProperty("actionLog")]
         public ActionLog ActionLog { get; set; }
-        [JsonProperty("_actionLog")]
+        [JsonProperty(nameof(_actionLog))]
         public ActionLog _actionLog { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
@@ -1206,7 +1206,7 @@ namespace UserTrackerShared.Models
         public ActionLog ActionLog { get; set; }
         [JsonProperty("cooldownTime")]
         public decimal CooldownTime { get; set; }
-        [JsonProperty("_actionLog")]
+        [JsonProperty(nameof(_actionLog))]
         public ActionLog _actionLog { get; set; }
         [JsonProperty("effects")]
         public Dictionary<string, Effect> Effects { get; set; }
@@ -1274,11 +1274,11 @@ namespace UserTrackerShared.Models
         public ActionLog ActionLog { get; set; }
         [JsonProperty("decayTime")]
         public decimal DecayTime { get; set; }
-        [JsonProperty("_actionLog")]
+        [JsonProperty(nameof(_actionLog))]
         public ActionLog _actionLog { get; set; }
         [JsonProperty("population")]
         public Dictionary<string, Population> Population { get; set; }
-        [JsonProperty("_spawning")]
+        [JsonProperty(nameof(_spawning))]
         public bool _spawning { get; set; }
         [JsonProperty("spawning")]
         public Spawning Spawning { get; set; }
@@ -1349,7 +1349,7 @@ namespace UserTrackerShared.Models
 
     public class StructureExtractor : DurableStructure
     {
-        [JsonProperty("_cooldown")]
+        [JsonProperty(nameof(_cooldown))]
         public decimal _cooldown { get; set; }
         [JsonProperty("cooldown")]
         public decimal Cooldown { get; set; }
@@ -1381,7 +1381,7 @@ namespace UserTrackerShared.Models
         public decimal DecayTime { get; set; }
         [JsonProperty("cooldownTime")]
         public decimal CooldownTime { get; set; }
-        [JsonProperty("_cooldown")]
+        [JsonProperty(nameof(_cooldown))]
         public decimal _cooldown { get; set; }
         [JsonProperty("_updated")]
         public decimal Updated { get; set; }
@@ -1401,9 +1401,9 @@ namespace UserTrackerShared.Models
     }
     public class Structures
     {
-        public StructureController Controller { get; set; }
-        public StructureMineral Mineral { get; set; }
-        public Dictionary<string, StructureDeposit> Deposits { get; set; } = 
+        public StructureController? Controller { get; set; }
+        public StructureMineral? Mineral { get; set; }
+        public Dictionary<string, StructureDeposit> Deposits { get; set; } =
             new Dictionary<string, StructureDeposit>();
         public Dictionary<string, StructureWall> Walls { get; set; } =
             new Dictionary<string, StructureWall>();

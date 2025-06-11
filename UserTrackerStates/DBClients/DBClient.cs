@@ -31,15 +31,15 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             if (ConfigSettingsState.InfluxDbEnabled)
             {
-                InfluxDBClientState.WritePerformanceData(performanceClassDTO);
+                InfluxDBClientState.WritePerformanceData(PerformanceClassDto);
             }
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
-                GraphiteDBClientState.WritePerformanceData(performanceClassDTO);
+                GraphiteDBClientState.WritePerformanceData(PerformanceClassDto);
             }
         }
 
@@ -69,7 +69,7 @@ namespace UserTrackerStates.DBClients
 
         public static void WriteAdminUtilsData(AdminUtilsResponse data)
         {
-            var dto = new AdminUtilsDTO(data);
+            var dto = new AdminUtilsDto(data);
             if (ConfigSettingsState.InfluxDbEnabled)
             {
                 // InfluxDBClientState.WriteSingleUserdData(user);

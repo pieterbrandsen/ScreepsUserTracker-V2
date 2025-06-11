@@ -26,9 +26,9 @@ namespace UserTrackerShared.Models.ScreepsAPI
     public class AdminUtilsUser
     {
         [JsonProperty("id")]
-        public string Id { get; set; }
+        public required string Id { get; set; }
         [JsonProperty("username")]
-        public string Username { get; set; }
+        public required string Username { get; set; }
         [JsonProperty("gcl")]
         public int Gcl { get; set; }
         [JsonProperty("gclLevel")]
@@ -46,7 +46,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("combinedRCL")]
         public int CombinedRcl { get; set; }
         [JsonProperty("rcl")]
-        public AdminUtilsRcl Rcl { get; set; }
+        public required AdminUtilsRcl Rcl { get; set; }
         [JsonProperty("cpu")]
         public int Cpu { get; set; }
         [JsonProperty("cpuAvailable")]
@@ -98,7 +98,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("maxDeviation")]
         public int MaxDeviation { get; set; }
         [JsonProperty("stages")]
-        public AdminUtilsStages Stages { get; set; }
+        public required AdminUtilsStages Stages { get; set; }
     }
 
     public class AdminUtilsObjects
@@ -116,7 +116,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("activeRooms")]
         public int ActiveRooms { get; set; }
         [JsonProperty("objects")]
-        public AdminUtilsObjects Objects { get; set; }
+        public required AdminUtilsObjects Objects { get; set; }
         [JsonProperty("totalRooms")]
         public int TotalRooms { get; set; }
         [JsonProperty("ownedRooms")]
@@ -124,13 +124,13 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("gametime")]
         public long GameTime { get; set; }
         [JsonProperty("ticks")]
-        public AdminUtilsTicks Ticks { get; set; }
+        public required AdminUtilsTicks Ticks { get; set; }
         [JsonProperty("users")]
-        public List<AdminUtilsUser> Users { get; set; }
+        public required List<AdminUtilsUser> Users { get; set; }
     }
-    public class AdminUtilsDTO
+    public class AdminUtilsDto
     {
-        public AdminUtilsDTO(AdminUtilsResponse response)
+        public AdminUtilsDto(AdminUtilsResponse response)
         {
             ActiveUsers = response.ActiveUsers;
             ActiveRooms = response.ActiveRooms;

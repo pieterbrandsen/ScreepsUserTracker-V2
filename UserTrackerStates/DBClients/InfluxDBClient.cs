@@ -15,24 +15,49 @@ using UserTrackerShared.States;
 
 namespace UserTrackerStates.DBClients
 {
+    public class PointDataParameter
+    {
+        public string Measurement { get; set; }
+        public string Shard { get; set; }
+        public string Room { get; set; }
+        public long Tick { get; set; }
+        public long Timestamp { get; set; }
+        public string Username { get; set; }
+        public string Field { get; set; }
+        public object Value { get; set; }
+
+        public PointDataParameter() { }
+
+        public PointDataParameter(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
+        {
+            Measurement = measurement;
+            Shard = shard;
+            Room = room;
+            Tick = tick;
+            Timestamp = timestamp;
+            Username = username;
+            Field = field;
+            Value = value;
+        }
+    }
     public static class InfluxDBPointHelper
     {
-        public static PointData CreatePoint(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
+        public static PointData CreatePoint(PointDataParameter parameters)
         {
-            var point = PointData.Measurement(measurement)
-                .Tag("shard", shard)
-                .Tag("room", room)
-                .Field(field, value)
-                .Field("tick", tick)
-                .Timestamp(timestamp, WritePrecision.Ms);
-            if (!string.IsNullOrEmpty(username))
+            var point = PointData.Measurement(parameters.Measurement)
+                .Tag("shard", parameters.Shard)
+                .Tag("room", parameters.Room)
+                .Field(parameters.Field, parameters.Value)
+                .Field("tick", parameters.Tick)
+                .Timestamp(parameters.Timestamp, WritePrecision.Ms);
+            if (!string.IsNullOrEmpty(parameters.Username))
             {
-                point = point.Tag("user", username);
+                point = point.Tag("user", parameters.Username);
             }
             return point;
         }
 
-        public static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object> dict)
+        public static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object?> dict)
         {
             switch (token)
             {
@@ -69,16 +94,16 @@ namespace UserTrackerStates.DBClients
     {
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
-        private static InfluxDBClient _client;
-        private static WriteApiAsync _writeApi;
+        private static InfluxDBClient _client = new InfluxDBClient(ConfigSettingsState.InfluxDbHost, ConfigSettingsState.InfluxDbToken);
+        private static WriteApiAsync? _writeApi = null;
         private static bool _isInitialized = false;
         private static bool _isRunning = true;
 
         // Use an unbounded channel for high-performance concurrent writes.
-        private static Channel<(string bucket, PointData point)> _channel;
+        private static Channel<(string bucket, PointData point)>? _channel = null;
 
         // A pool of worker tasks that will process the channel.
-        private static List<Task> _workerTasks;
+        private static List<Task>? _workerTasks;
         private const int WorkerCount = 32;   // Number of concurrent worker tasks; tune per hardware.
 
         // Counters for statistics.
@@ -94,12 +119,8 @@ namespace UserTrackerStates.DBClients
             }
 
             _logger.Information("Initializing InfluxDB client...");
-            string host = ConfigSettingsState.InfluxDbHost;
-            string token = ConfigSettingsState.InfluxDbToken;
-
             try
             {
-                _client = new InfluxDBClient(host, token);
                 _writeApi = _client.GetWriteApiAsync();
                 _isInitialized = true;
                 _logger.Information("InfluxDB client connected to host {Host}", host);
@@ -141,20 +162,26 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                var flattenedData = new Dictionary<string, object>();
+                var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
                 InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData)
+                foreach (var kvp in flattenedData.where(kvp => kvp.Value is long))
                 {
-                    if (kvp.Value is long)
-                    {
-                        var point = InfluxDBPointHelper.CreatePoint(ConfigSettingsState.ServerName, shard, room, tick, timestamp, username, kvp.Key, kvp.Value);
-                        // Increment pending counter when adding a new point.
-                        Interlocked.Increment(ref _pendingPointCount);
-                        _channel.Writer.TryWrite((bucket, point));
-                    }
+                    var pointParameters = new PointDataParameter(
+                        ConfigSettingsState.ServerName,
+                        shard,
+                        room,
+                        tick,
+                        timestamp,
+                        username,
+                        kvp.Key.ToLower(),
+                        kvp.Value);
+                    var point = InfluxDBPointHelper.CreatePoint(pointParameters);
+                    // Increment pending counter when adding a new point.
+                    Interlocked.Increment(ref _pendingPointCount);
+                    _channel.Writer.TryWrite((bucket, point));
                 }
             }
             catch (Exception ex)
@@ -291,20 +318,20 @@ namespace UserTrackerStates.DBClients
             }
             catch (Exception e)
             {
-                _logger.Error(e, $"Error uploading {shard}/{room}/{tick}");
+                _logger.Error(e, string.Format("Error uploading {0}/{1}/{2}", shard, room, tick));
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             try
             {
                 var point = PointData
                             .Measurement(ConfigSettingsState.ServerName)
-                            .Tag("shard", performanceClassDTO.Shard)
-                            .Field("TicksBehind", performanceClassDTO.TicksBehind)
-                            .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
-                            .Field("TotalRooms", performanceClassDTO.TotalRooms)
+                            .Tag("shard", PerformanceClassDto.Shard)
+                            .Field("TicksBehind", PerformanceClassDto.TicksBehind)
+                            .Field("TimeTakenMs", PerformanceClassDto.TimeTakenMs)
+                            .Field("TotalRooms", PerformanceClassDto.TotalRooms)
                             .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
                 InfluxDBClientWriter.AddPoint("history_performance", point);

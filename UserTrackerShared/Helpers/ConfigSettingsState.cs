@@ -12,22 +12,22 @@ namespace UserTrackerShared.Helpers
     {
         public static bool RunningHistoryTested { get; set; }
 
-        public static string ScreepsToken { get; set; }
-        public static string ScreepsHttpsUrl { get; set; }
-        public static string ScreepsHttpUrl { get; set; }
+        public static required string ScreepsToken { get; set; }
+        public static required string ScreepsHttpsUrl { get; set; }
+        public static required string ScreepsHttpUrl { get; set; }
         public static bool ScreepsIsPrivateServer { get; set; }
-        public static string ScreepsUsername { get; set; }
-        public static string ScreepsPassword { get; set; }
-        public static string ScreepsShardName { get; set; }
+        public static required string ScreepsUsername { get; set; }
+        public static required string ScreepsPassword { get; set; }
+        public static required string ScreepsShardName { get; set; }
 
-        public static string ServerName { get; set; }
-        
+        public static required string ServerName { get; set; }
+
         public static bool InfluxDbEnabled { get; set; }
-        public static string InfluxDbHost { get; set; }
-        public static string InfluxDbToken { get; set; }
+        public static required string InfluxDbHost { get; set; }
+        public static required string InfluxDbToken { get; set; }
 
         public static bool GraphiteDbEnabled { get; set; }
-        public static string GraphiteDbHost { get; set; }
+        public static required string GraphiteDbHost { get; set; }
         public static int GraphiteDbPort { get; set; }
 
         public static int PullBackwardsTickAmount { get; set; }
@@ -41,10 +41,12 @@ namespace UserTrackerShared.Helpers
         public static bool WriteHistoryProperties { get; set; }
         public static string? ObjectsFolder { get; set; }
 
-        public static void Init() { 
+        public static void Init()
+        {
             Init(ConfigurationManager.AppSettings);
         }
-        private static void Init(NameValueCollection appsettings) {
+        private static void Init(NameValueCollection appsettings)
+        {
             RunningHistoryTested = Convert.ToBoolean(appsettings["RUNNING_HISTORY_TESTED"]);
 
             ScreepsToken = appsettings["SCREEPS_API_TOKEN"] ?? "";
@@ -70,9 +72,9 @@ namespace UserTrackerShared.Helpers
             GetAllUsers = Convert.ToBoolean(appsettings["GET_ALL_USERS"]);
             StartsShards = Convert.ToBoolean(appsettings["START_SHARDS"]);
             LogsFolder = appsettings["LOGS_FOLDER"] ?? "";
-            if (LogsFolder == "") throw new Exception("No logs folder provided");
+            if (LogsFolder == "") throw new ArgumentException("No logs folder provided");
             ObjectsFolder = appsettings["OBJECTS_FOLDER"] ?? "";
-            if (ObjectsFolder == "") throw new Exception("No objects folder provided");
+            if (ObjectsFolder == "") throw new ArgumentException("No objects folder provided");
 
 
             WriteHistoryFiles = Convert.ToBoolean(appsettings["WRITE_HISTORY_FILES"]);

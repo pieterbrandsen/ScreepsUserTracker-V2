@@ -9,30 +9,6 @@ namespace UserTrackerShared.Helpers
 {
     public static class JsonHelper
     {
-        private static bool AllKeysFollowEachOther(IEnumerable<JProperty> keys)
-        {
-            var indexes = keys
-                .Select(p =>
-                {
-                    bool ok = int.TryParse(p.Name, out int value);
-                    return (ok, value);
-                })
-                .Where(t => t.ok)
-                .Select(t => t.value)
-                .ToList();
-
-            if (indexes.Count <= 1)
-                return true;
-
-            indexes.Sort();
-            for (int i = 1; i < indexes.Count; i++)
-            {
-                if (indexes[i] != indexes[i - 1] + 1)
-                    return false;
-            }
-
-            return true;
-        }
         public static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object?> dict)
         {
             switch (token)

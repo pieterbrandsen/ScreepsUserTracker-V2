@@ -7,7 +7,7 @@ namespace UserTrackerShared
 {
     public static class DynamicPatcher
     {
-        private enum SimplifiedTypeNameEnum
+        private enum SimplifiedTypeName
         {
             Dictionary = 0,
             List = 1,
@@ -20,16 +20,16 @@ namespace UserTrackerShared
 
         public static void ApplyPatch(object target, Dictionary<string, object?> changes)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (changes == null || changes.Count == 0) return;
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(changes == null);
             foreach (var kv in changes)
                 ApplyPatch(target, kv.Key, kv.Value);
         }
 
         public static void ApplyPatch(object target, string path, object? value)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Path cannot be empty");
+            ArgumentNullException.ThrowIfNull(target);
+            ArgumentNullException.ThrowIfNull(string.IsNullOrWhiteSpace(path));
 
             try
             {
@@ -46,12 +46,11 @@ namespace UserTrackerShared
                     if (current is IDictionary dict)
                     {
                         var updatedType = current.GetType();
-                        var updatedSimplifiedType = GetSimplifiedTypeName(updatedType);
                         HandleDictionary(dict, updatedType, dictionaryKeyName ?? propName, isLast, ref current, value);
                         continue;
                     }
                     var prop = GetPropFromCache(type, propName);
-                    HandleProperty(current, prop, prop.GetValue(current), type, null, propName, index, dictionaryKeyName, isLast, ref current, value);
+                    HandleProperty(current, prop, prop.GetValue(current), propName, index, dictionaryKeyName, isLast, ref current, value);
                 }
             }
             catch (Exception ex)
@@ -60,7 +59,7 @@ namespace UserTrackerShared
                 var frame = trace.GetFrames()?.FirstOrDefault(f => f.GetFileLineNumber() > 0);
                 var errorLine = frame?.GetFileLineNumber() ?? -1;
                 var errorFile = frame?.GetFileName() ?? "Unknown";
-                throw new InvalidOperationException($"Error patching object.\nTarget type: '{target?.GetType().FullName}'\nPath: '{path}'\nValue: '{value ?? "null"}'\nException Line: {errorFile}:{errorLine}\nException: {ex.Message}", ex);
+                throw new InvalidOperationException($"Error patching object.\nTarget type: '{target.GetType().FullName}'\nPath: '{path}'\nValue: '{value ?? "null"}'\nException Line: {errorFile}:{errorLine}\nException: {ex.Message}", ex);
             }
         }
         private static PropertyInfo GetPropFromCache(Type type, string propName)
@@ -69,63 +68,58 @@ namespace UserTrackerShared
                  .GetOrAdd(type, t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
                                       .ToDictionary(p => p.Name, p => p))
                  .GetValueOrDefault(propName)
-                 ?? throw new InvalidOperationException($"Property '{propName}' not found on '{type.Name}'"); ;
+                 ?? throw new InvalidOperationException($"Property '{propName}' not found on '{type.Name}'");
         }
 
-        private static void HandleProperty(object current, PropertyInfo prop, object? propValue, Type propType, SimplifiedTypeNameEnum? simplifiedType, string propName, int? index, string? dictionaryKeyName, bool isLast, ref object obj, object? value)
+        private static void HandleProperty(object current, PropertyInfo prop, object? propValue, string propName, int? index, string? dictionaryKeyName, bool isLast, ref object obj, object? value)
         {
-            propType = prop.PropertyType;
-            simplifiedType = GetSimplifiedTypeName(propType);
+            var propType = prop.PropertyType;
+            var simplifiedType = GetSimplifiedTypeName(propType);
 
-            if (simplifiedType == SimplifiedTypeNameEnum.Array)
+            if (simplifiedType == SimplifiedTypeName.Array)
             {
-                int.TryParse(dictionaryKeyName, out int dictionaryIndex);
+                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex))
+                    throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
-                HandleArrayProperty(current, prop, propValue, propType, propName, idx, isLast, ref obj, value);
+                HandleArrayProperty(current, prop, propValue, propType, idx, ref obj, value);
                 return;
             }
-            else if (simplifiedType == SimplifiedTypeNameEnum.List)
+            else if (simplifiedType == SimplifiedTypeName.List)
             {
-                int.TryParse(dictionaryKeyName, out int dictionaryIndex);
+                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex))
+                    throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
-                HandleListProperty(current, prop, propValue, propType, propName, idx, isLast, ref obj, value);
+                HandleListProperty(current, prop, propValue, propType, idx, ref obj, value);
                 return;
             }
             else
             {
-                HandleValueProperty(current, prop, propValue, propType, propName, isLast, ref obj, value);
+                HandleValueProperty(current, prop, propValue, propType, isLast, ref obj, value);
             }
 
-            if (dictionaryKeyName == null)
-            {
-                return;
-            }
 
             if (dictionaryKeyName != null)
             {
-                int idx = -1;
                 if (obj is IDictionary dict)
                 {
                     var updatedType = obj.GetType();
-                    var updatedSimplifiedType = GetSimplifiedTypeName(updatedType);
-                    HandleDictionary(dict, updatedType, dictionaryKeyName, isLast, ref obj, value);
-                    propType = obj.GetType();
+                    HandleDictionary(dict, updatedType, dictionaryKeyName, ref obj);
                 }
                 else if (int.TryParse(dictionaryKeyName, out int dictionaryIndex))
                 {
                     if (propType.IsArray)
                     {
-                        HandleArrayProperty(current, prop, propValue, propType, propName, dictionaryIndex, isLast, ref obj, value);
+                        HandleArrayProperty(current, prop, propValue, propType, dictionaryIndex, ref obj, value);
                     }
                     else
                     {
-                        HandleListProperty(current, prop, propValue, propType, propName, dictionaryIndex, isLast, ref obj, value);
+                        HandleListProperty(current, prop, propValue, propType, propName, dictionaryIndex, ref obj, value);
                     }
                 }
             }
         }
 
-        private static void HandleDictionary(IDictionary dict, Type type, string key, bool isLast, ref object current, object? value)
+        private static void HandleDictionary(IDictionary dict, Type type, string key, ref object current)
         {
             if (!dict.Contains(key) || dict[key] == null)
             {
@@ -141,7 +135,7 @@ namespace UserTrackerShared
         }
 
 
-        private static void HandleArrayProperty(object current, PropertyInfo? prop, object? propValue, Type? propType, string propName, int idx, bool isLast, ref object obj, object? value)
+        private static void HandleArrayProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj, object? value)
         {
             var elemType = propType.GetElementType()!;
             var oldArr = (Array?)propValue ?? Array.CreateInstance(elemType, 0);
@@ -150,20 +144,12 @@ namespace UserTrackerShared
                 ? ResizeArray(oldArr, elemType, required)
                 : oldArr;
 
-            if (isLast)
-            {
-                newArr.SetValue(ConvertValue(value, elemType), idx);
-                prop.SetValue(current, newArr);
-            }
-            else
-            {
-                var next = newArr.GetValue(idx) ?? CreateInstanceSafely(elemType);
-                newArr.SetValue(next, idx);
-                prop.SetValue(current, newArr);
-                obj = next;
-            }
+            var next = newArr.GetValue(idx) ?? CreateInstanceSafely(elemType);
+            newArr.SetValue(next, idx);
+            prop.SetValue(current, newArr);
+            obj = next;
         }
-        private static void HandleListProperty(object current, PropertyInfo? prop, object? propValue, Type? propType, string propName, int idx, bool isLast, ref object obj, object? value)
+        private static void HandleListProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj, object? value)
         {
             var elemType = propType.GetGenericArguments()[0];
             var listType = typeof(List<>).MakeGenericType(elemType);
@@ -173,24 +159,16 @@ namespace UserTrackerShared
               ? ResizeList(list, elemType, idx + 1)
               : list;
 
-            if (isLast)
+            object? currentElem = list[idx];
+            object next = currentElem ?? CreateInstanceSafely(elemType);
+            if (currentElem == null)
             {
-                list[idx] = ConvertValue(value, elemType);
+                list[idx] = next;
                 prop.SetValue(current, list);
             }
-            else
-            {
-                object? currentElem = list[idx];
-                object next = currentElem ?? CreateInstanceSafely(elemType);
-                if (currentElem == null)
-                {
-                    list[idx] = next;
-                    prop.SetValue(current, list);
-                }
-                obj = next;
-            }
+            obj = next;
         }
-        private static void HandleValueProperty(object current, PropertyInfo? prop, object? propValue, Type? propType, string propName, bool isLast, ref object obj, object? value)
+        private static void HandleValueProperty(object current, PropertyInfo prop, object? propValue, Type propType, bool isLast, ref object obj, object? value)
         {
             if (isLast)
             {
@@ -211,7 +189,7 @@ namespace UserTrackerShared
         private static Array ResizeArray(Array oldArr, Type elemType, int required)
         {
             var oldLen = oldArr.Length;
-            if (oldLen + 1 < required) throw new IndexOutOfRangeException("Index was not direct one up of current size");
+            if (oldLen + 1 < required) throw new ArgumentOutOfRangeException(nameof(required), "Index must be exactly one greater than the current size.");
             var newArr = Array.CreateInstance(elemType, required);
             Array.Copy(oldArr, newArr, oldArr.Length);
             return newArr;
@@ -220,7 +198,7 @@ namespace UserTrackerShared
         private static IList ResizeList(IList oldList, Type elemType, int required)
         {
             var oldLen = oldList.Count;
-            if (oldLen + 1 < required) throw new IndexOutOfRangeException("Index was not direct one up of current size");
+            if (oldLen + 1 < required) throw new ArgumentOutOfRangeException(nameof(required), "Index must be exactly one greater than the current size.");
             for (int i = 0; i <= oldLen; i++)
                 oldList.Add(elemType.IsValueType ? CreateInstanceSafely(elemType) : null!);
             return oldList;
@@ -246,24 +224,24 @@ namespace UserTrackerShared
             return realType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, realType);
         }
 
-        private static SimplifiedTypeNameEnum GetSimplifiedTypeName(Type type)
+        private static SimplifiedTypeName GetSimplifiedTypeName(Type type)
         {
             if (type.IsGenericType)
             {
                 var genericType = type.GetGenericTypeDefinition();
                 if (genericType == typeof(Dictionary<,>))
-                    return SimplifiedTypeNameEnum.Dictionary;
+                    return SimplifiedTypeName.Dictionary;
                 if (genericType == typeof(List<>) || genericType == typeof(IList<>))
-                    return SimplifiedTypeNameEnum.List;
+                    return SimplifiedTypeName.List;
             }
             if (type.IsArray)
-                return SimplifiedTypeNameEnum.Array;
-            return SimplifiedTypeNameEnum.Other;
+                return SimplifiedTypeName.Array;
+            return SimplifiedTypeName.Other;
         }
 
         private static (string prop, int? index, string? dictionaryKey) ParseSegment(string segment, Type currentType)
         {
-            if (segment.EndsWith("]") && segment.Contains("["))
+            if (segment.EndsWith(']') && segment.Contains('['))
             {
                 var open = segment.IndexOf('[');
                 var close = segment.IndexOf(']');
@@ -271,7 +249,7 @@ namespace UserTrackerShared
                 var idx = int.Parse(segment.Substring(open + 1, close - open - 1));
                 return (MapName(name, currentType), idx, null);
             }
-            if (segment.Contains(">"))
+            if (segment.Contains('>'))
             {
                 var open = segment.IndexOf('>');
                 var name = segment.Substring(0, open);

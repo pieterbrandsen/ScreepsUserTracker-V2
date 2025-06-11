@@ -80,6 +80,7 @@ namespace UserTrackerStates.DBClients
         public void Dispose()
         {
             Flush();
+            GC.SuppressFinalize(this);
         }
     }
     public static class GraphiteDBClientWriter
@@ -87,7 +88,7 @@ namespace UserTrackerStates.DBClients
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
         private static bool _isInitialized = false;
-        private static GraphiteBatchClient _client;
+        private static GraphiteBatchClient _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, ConfigSettingsState.GraphiteDbPort);
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
@@ -101,8 +102,6 @@ namespace UserTrackerStates.DBClients
             }
 
             _logger.Information("Initializing GraphiteDB client...");
-
-            _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, ConfigSettingsState.GraphiteDbPort);
 
             try
             {
@@ -209,15 +208,15 @@ namespace UserTrackerStates.DBClients
             }
             catch (Exception e)
             {
-                _logger.Error(e, $"Error uploading {shard}/{room}/{tick}");
+                _logger.Error(e, string.Format("Error uploading {0}/{1}/{2}", shard, room, tick));
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.performance.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.performance.{PerformanceClassDto.Shard}.", PerformanceClassDto, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {
@@ -255,7 +254,7 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WriteAdminUtilsData(AdminUtilsDTO data)
+        public static void WriteAdminUtilsData(AdminUtilsDto data)
         {
             try
             {
