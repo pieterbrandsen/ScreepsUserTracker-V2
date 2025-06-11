@@ -91,177 +91,177 @@ namespace UserTrackerShared.Helpers
             currentStore.emanation = (currentStore.emanation ?? 0) + (store.emanation / ConfigSettingsState.TicksInFile ?? 0);
             currentStore.essence = (currentStore.essence ?? 0) + (store.essence / ConfigSettingsState.TicksInFile ?? 0);
         }
-        public static StructuresDTO ConvertStructures(Structures structures, StructuresDTO structuresDTO)
+        public static StructuresDto ConvertStructures(Structures structures, StructuresDto structuresDto)
         {
             if (structures.Controller != null)
             {
-                structuresDTO.Controller.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Controller.Level += structures.Controller.Level / ConfigSettingsState.TicksInFile;
-                structuresDTO.Controller.Progress += structures.Controller.Progress / ConfigSettingsState.TicksInFile;
-                structuresDTO.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInFile;
-                structuresDTO.Controller.UserId = structures.Controller.User;
-                structuresDTO.Controller.ReservationUserId = structures.Controller.Reservation?.User ?? "";
+                structuresDto.Controller.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Controller.Level += structures.Controller.Level / ConfigSettingsState.TicksInFile;
+                structuresDto.Controller.Progress += structures.Controller.Progress / ConfigSettingsState.TicksInFile;
+                structuresDto.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInFile;
+                structuresDto.Controller.UserId = structures.Controller.User;
+                structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User ?? "";
             }
             if (structures.Mineral != null)
             {
-                structuresDTO.Mineral.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Mineral.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (structures.Deposits != null)
             {
                 foreach (var deposit in structures.Deposits.Select(x => x.Value))
                 {
-                    structuresDTO.Deposit.Count += 1m / ConfigSettingsState.TicksInFile;
+                    structuresDto.Deposit.Count += 1m / ConfigSettingsState.TicksInFile;
                 }
             }
             foreach (var wall in structures.Walls)
             {
-                structuresDTO.Wall.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Wall.Hits += wall.Value.Hits / ConfigSettingsState.TicksInFile;
+                structuresDto.Wall.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Wall.Hits += wall.Value.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var constructionSite in structures.ConstructionSites.Select(x => x.Value))
             {
-                structuresDTO.ConstructionSite.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.ConstructionSite.Progress += constructionSite.Progress / ConfigSettingsState.TicksInFile;
-                structuresDTO.ConstructionSite.ProgressTotal += constructionSite.ProgressTotal / ConfigSettingsState.TicksInFile;
+                structuresDto.ConstructionSite.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.ConstructionSite.Progress += constructionSite.Progress / ConfigSettingsState.TicksInFile;
+                structuresDto.ConstructionSite.ProgressTotal += constructionSite.ProgressTotal / ConfigSettingsState.TicksInFile;
 
-                var typeBeingBuild = constructionSite.Value.StructureType;
-                if (!structuresDTO.ConstructionSite.TypesBuilding.TryGetValue(typeBeingBuild, out var current))
+                var typeBeingBuild = constructionSite.StructureType;
+                if (!structuresDto.ConstructionSite.TypesBuilding.TryGetValue(typeBeingBuild, out var current))
                 {
                     current = 0;
                 }
-                structuresDTO.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInFile;
+                structuresDto.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInFile;
             }
             foreach (var container in structures.Containers.Select(x => x.Value))
             {
-                structuresDTO.Container.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Container.Count += 1m / ConfigSettingsState.TicksInFile;
 
-                if (container.Value.Store != null)
+                if (container.Store != null)
                 {
-                    UpdateStore(structuresDTO.Container.Store, container.Store);
+                    UpdateStore(structuresDto.Container.Store, container.Store);
                 }
             }
             foreach (var extension in structures.Extensions.Select(x => x.Value))
             {
-                structuresDTO.Extension.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Extension.Energy += extension.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Extension.EnergyCapacity += extension.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDto.Extension.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Extension.Energy += extension.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDto.Extension.EnergyCapacity += extension.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var extractor in structures.Extractors.Select(x => x.Value))
             {
-                structuresDTO.Extractor.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Extractor.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var factory in structures.Factories.Select(x => x.Value))
             {
-                structuresDTO.Factory.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Factory.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
             {
-                structuresDTO.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
             {
-                structuresDTO.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.InvaderCore.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var keeperLair in structures.KeeperLairs.Select(x => x.Value))
             {
-                structuresDTO.KeeperLair.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.KeeperLair.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var lab in structures.Labs.Select(x => x.Value))
             {
-                structuresDTO.Lab.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Lab.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var link in structures.Links.Select(x => x.Value))
             {
-                structuresDTO.Link.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Link.Energy += link.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
-                structuresDTO.Link.EnergyCapacity += link.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDto.Link.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Link.Energy += link.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDto.Link.EnergyCapacity += link.StoreCapacityResource?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var observer in structures.Observers.Select(x => x.Value))
             {
-                structuresDTO.Observer.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Observer.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var portal in structures.Portals.Select(x => x.Value))
             {
-                structuresDTO.Portal.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Portal.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var powerBank in structures.PowerBanks.Select(x => x.Value))
             {
-                structuresDTO.PowerBank.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.PowerBank.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var powerSpawns in structures.PowerSpawns.Select(x => x.Value))
             {
-                structuresDTO.PowerSpawn.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.PowerSpawn.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
-                structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var road in structures.Roads.Select(x => x.Value))
             {
-                structuresDTO.Road.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Road.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var ruin in structures.Ruins.Select(x => x.Value))
             {
-                structuresDTO.Ruin.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Ruin.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
-                structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var source in structures.Sources.Select(x => x.Value))
             {
-                structuresDTO.Source.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Source.Energy += source.Energy / ConfigSettingsState.TicksInFile;
-                structuresDTO.Source.EnergyCapacity += source.EnergyCapacity / ConfigSettingsState.TicksInFile;
+                structuresDto.Source.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Source.Energy += source.Energy / ConfigSettingsState.TicksInFile;
+                structuresDto.Source.EnergyCapacity += source.EnergyCapacity / ConfigSettingsState.TicksInFile;
             }
             foreach (var rampart in structures.Ramparts.Select(x => x.Value))
             {
-                structuresDTO.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInFile;
             }
             foreach (var spawn in structures.Spawns.Select(x => x.Value))
             {
-                structuresDTO.Spawn.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Spawn.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var storage in structures.Storages.Select(x => x.Value))
             {
-                structuresDTO.Storage.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Storage.Count += 1m / ConfigSettingsState.TicksInFile;
 
-                if (storage.Value.Store != null)
+                if (storage.Store != null)
                 {
-                    UpdateStore(structuresDTO.Storage.Store, storage.Store);
+                    UpdateStore(structuresDto.Storage.Store, storage.Store);
                 }
             }
             foreach (var terminal in structures.Terminals)
             {
-                structuresDTO.Terminal.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Terminal.Count += 1m / ConfigSettingsState.TicksInFile;
 
                 if (terminal.Value.Store != null)
                 {
-                    UpdateStore(structuresDTO.Terminal.Store, terminal.Value.Store);
+                    UpdateStore(structuresDto.Terminal.Store, terminal.Value.Store);
                 }
             }
             foreach (var tombstone in structures.Tombstones.Select(x => x.Value))
             {
-                structuresDTO.Tombstone.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Tombstone.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var tower in structures.Towers)
+            foreach (var tower in structures.Towers.Select(x=>x.Value))
             {
-                structuresDTO.Tower.Count += 1m / ConfigSettingsState.TicksInFile;
-                structuresDTO.Tower.Energy += tower.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
+                structuresDto.Tower.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Tower.Energy += tower.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
             }
             foreach (var nuker in structures.Nukers.Select(x => x.Value))
             {
-                structuresDTO.Nuker.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Nuker.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             foreach (var nuke in structures.Nukes.Select(x => x.Value))
             {
-                structuresDTO.Nuke.Count += 1m / ConfigSettingsState.TicksInFile;
+                structuresDto.Nuke.Count += 1m / ConfigSettingsState.TicksInFile;
             }
 
-            return structuresDTO;
+            return structuresDto;
         }
         public class IntentMapDto
         {
@@ -289,36 +289,36 @@ namespace UserTrackerShared.Helpers
                 RangedHeal = 0;
             }
         }
-        public static CreepDTO ConvertCreeps(List<BaseCreep> creeps, CreepDTO creepsDTO)
+        public static CreepDto ConvertCreeps(List<BaseCreep> creeps, CreepDto creepsDto)
         {
             var intentMap = new IntentMapDto();
-            var creepsDTOBodyPart = new CountByPartDTO();
+            var creepsDtoBodyPart = new CountByPartDto();
             foreach (var creep in creeps)
             {
-                creepsDTO.Count += 1m / ConfigSettingsState.TicksInFile;
-                ConvertBody(creep.Body, creepsDTOBodyPart);
-                ComputeExtraIntentPower(creep.Body, creepsDTOBodyPart, intentMap);
-                ConvertActiongLog(creep.ActionLog, creepsDTO.ActionLog, creepsDTOBodyPart, intentMap, creep._oldFatigue);
+                creepsDto.Count += 1m / ConfigSettingsState.TicksInFile;
+                ConvertBody(creep.Body, creepsDtoBodyPart);
+                ComputeExtraIntentPower(creep.Body, creepsDtoBodyPart, intentMap);
+                ConvertActiongLog(creep.ActionLog, creepsDto.ActionLog, creepsDtoBodyPart, intentMap, creep._oldFatigue);
                 if (creep.Store != null)
                 {
-                    UpdateStore(creepsDTO.Store, creep.Store);
+                    UpdateStore(creepsDto.Store, creep.Store);
                 }
 
-                creepsDTO.BodyParts.Move += creepsDTOBodyPart.Move / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Work += creepsDTOBodyPart.Work / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Carry += creepsDTOBodyPart.Carry / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Attack += creepsDTOBodyPart.Attack / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.RangedAttack += creepsDTOBodyPart.RangedAttack / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Tough += creepsDTOBodyPart.Tough / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Heal += creepsDTOBodyPart.Heal / ConfigSettingsState.TicksInFile;
-                creepsDTO.BodyParts.Claim += creepsDTOBodyPart.Claim / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Move += creepsDtoBodyPart.Move / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Work += creepsDtoBodyPart.Work / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Carry += creepsDtoBodyPart.Carry / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Attack += creepsDtoBodyPart.Attack / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.RangedAttack += creepsDtoBodyPart.RangedAttack / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Tough += creepsDtoBodyPart.Tough / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Heal += creepsDtoBodyPart.Heal / ConfigSettingsState.TicksInFile;
+                creepsDto.BodyParts.Claim += creepsDtoBodyPart.Claim / ConfigSettingsState.TicksInFile;
 
-                creepsDTOBodyPart.Clear();
+                creepsDtoBodyPart.Clear();
                 intentMap.Clear();
             }
-            return creepsDTO;
+            return creepsDto;
         }
-        public static void ConvertBody(BodyPart[] body, CountByPartDTO bodyParts)
+        public static void ConvertBody(BodyPart[] body, CountByPartDto bodyParts)
         {
             foreach (var bodyPart in body)
             {
@@ -353,7 +353,7 @@ namespace UserTrackerShared.Helpers
                 }
             }
         }
-        public static IntentMapDto ComputeExtraIntentPower(BodyPart[] body, CountByPartDTO countByPart, IntentMapDto intentMap)
+        public static IntentMapDto ComputeExtraIntentPower(BodyPart[] body, CountByPartDto countByPart, IntentMapDto intentMap)
         {
             foreach (var bodyPart in body)
             {
@@ -466,7 +466,7 @@ namespace UserTrackerShared.Helpers
             }
             return intentMap;
         }
-        public static void ConvertActiongLog(ActionLog actionLog, ActionLogDTO actionLogDTO, CountByPartDTO body, IntentMapDto intentPowerMap, decimal? creep_oldFatigue)
+        public static void ConvertActiongLog(ActionLog actionLog, ActionLogDto actionLogDto, CountByPartDto body, IntentMapDto intentPowerMap, decimal? creep_oldFatigue)
         {
             if (actionLog == null) return;
 
@@ -477,106 +477,106 @@ namespace UserTrackerShared.Helpers
             #region Damage
             if (actionLog.Attacked != null)
             {
-                actionLogDTO.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Attacked.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attacked.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Attack != null)
             {
-                actionLogDTO.Attack.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Attack.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attack.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attack.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedAttack != null)
             {
-                actionLogDTO.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.RangedAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 10 + intentPowerMap.RangedAttack * 10)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 10 + intentPowerMap.RangedAttack * 10)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedMassAttack != null)
             {
-                actionLogDTO.RangedMassAttack.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.RangedMassAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 4 + intentPowerMap.RangedAttack * 4)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedMassAttack.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedMassAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 4 + intentPowerMap.RangedAttack * 4)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Heal
             if (actionLog.Heal != null)
             {
-                actionLogDTO.Heal.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Heal.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Heal.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Heal.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Healed != null)
             {
-                actionLogDTO.Healed.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Healed.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Healed.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Healed.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedHeal != null)
             {
-                actionLogDTO.RangedHeal.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.RangedHeal.Heal += Convert.ToInt64(Math.Round(healCount * 4 + intentPowerMap.RangedHeal * 4)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedHeal.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedHeal.Heal += Convert.ToInt64(Math.Round(healCount * 4 + intentPowerMap.RangedHeal * 4)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Inflow
             if (actionLog.Harvest != null)
             {
-                actionLogDTO.Harvest.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Harvest.Inflow += Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2));
+                actionLogDto.Harvest.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Harvest.Inflow += Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2));
             }
             #endregion
             #region Outflow
             if (actionLog.Repair != null)
             {
-                actionLogDTO.Repair.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Repair.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Repair.Effect += Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap.Repair * 100)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Repair.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Repair.Outflow += workCount / ConfigSettingsState.TicksInFile;
+                actionLogDto.Repair.Effect += Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap.Repair * 100)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Build != null)
             {
-                actionLogDTO.Build.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Build.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDTO.Build.Effect += Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap.Build * 5)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Build.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Build.Outflow += workCount / ConfigSettingsState.TicksInFile;
+                actionLogDto.Build.Effect += Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap.Build * 5)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.UpgradeController != null)
             {
-                actionLogDTO.UpgradeController.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDTO.UpgradeController.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDTO.UpgradeController.Effect += Convert.ToInt64(Math.Round(workCount + intentPowerMap.UpgradeController)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.UpgradeController.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.UpgradeController.Outflow += workCount / ConfigSettingsState.TicksInFile;
+                actionLogDto.UpgradeController.Effect += Convert.ToInt64(Math.Round(workCount + intentPowerMap.UpgradeController)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Generic
-            actionLogDTO.Move.Count += creep_oldFatigue == 0 ? 1m : 0m / ConfigSettingsState.TicksInFile;
+            actionLogDto.Move.Count += creep_oldFatigue == 0 ? 1m : 0m / ConfigSettingsState.TicksInFile;
             if (actionLog.Say != null)
             {
-                actionLogDTO.Say.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Say.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.ReserveController != null)
             {
-                actionLogDTO.ReserveController.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.ReserveController.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Produce != null)
             {
-                actionLogDTO.Produce.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Produce.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.TransferEnergy != null)
             {
-                actionLogDTO.TransferEnergy.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.TransferEnergy.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.AttackController != null)
             {
-                actionLogDTO.AttackController.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.AttackController.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RunReaction != null)
             {
-                actionLogDTO.RunReaction.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.RunReaction.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.ReverseReaction != null)
             {
-                actionLogDTO.ReverseReaction.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.ReverseReaction.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Spawned != null)
             {
-                actionLogDTO.Spawned.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Spawned.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Power != null)
             {
-                actionLogDTO.Power.Count += 1m / ConfigSettingsState.TicksInFile;
+                actionLogDto.Power.Count += 1m / ConfigSettingsState.TicksInFile;
             }
             #endregion
         }

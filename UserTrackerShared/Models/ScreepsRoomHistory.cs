@@ -879,7 +879,7 @@ namespace UserTrackerShared.Models
         public decimal TombstoneDecay { get; set; }
         [JsonProperty("noCapacityRecalc")]
         public bool NoCapacityRecalc { get; set; }
-        [JsonProperty(nameof(noInterShard))]
+        [JsonProperty("noInterShard")]
         public bool NoInterShard { get; set; }
         [JsonProperty(nameof(_healToApply))]
         public decimal _healToApply { get; set; }

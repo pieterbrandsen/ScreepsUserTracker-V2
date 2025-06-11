@@ -11,9 +11,9 @@ using System.Configuration;
 
 namespace UserTracker.Tests.States
 {
-    public class ScreepsRoomHistoryDTOFileTests
+    public class ScreepsRoomHistoryDtoFileTests
     {
-        public ScreepsRoomHistoryDTOFileTests()
+        public ScreepsRoomHistoryDtoFileTests()
         {
             var configFileMap = new ExeConfigurationFileMap
             {
@@ -29,10 +29,10 @@ namespace UserTracker.Tests.States
             return JObject.Load(jsonReader);
         }
 
-        private ScreepsRoomHistoryDTO ProcessHistory(JObject roomData)
+        private ScreepsRoomHistoryDto ProcessHistory(JObject roomData)
         {
             var roomHistory = new ScreepsRoomHistory();
-            var roomHistoryDTO = new ScreepsRoomHistoryDTO();
+            var roomHistoryDto = new ScreepsRoomHistoryDto();
 
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
@@ -54,11 +54,11 @@ namespace UserTracker.Tests.States
                     {
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                     }
-                    roomHistoryDTO.Update(roomHistory);
+                    roomHistoryDto.Update(roomHistory);
                 }
             }
 
-            return roomHistoryDTO;
+            return roomHistoryDto;
         }
 
         [Fact]

@@ -12,22 +12,22 @@ namespace UserTrackerShared.Helpers
     {
         public static bool RunningHistoryTested { get; set; }
 
-        public static required string ScreepsToken { get; set; }
-        public static required string ScreepsHttpsUrl { get; set; }
-        public static required string ScreepsHttpUrl { get; set; }
+        public static string? ScreepsToken { get; set; }
+        public static string? ScreepsHttpsUrl { get; set; }
+        public static string? ScreepsHttpUrl { get; set; }
         public static bool ScreepsIsPrivateServer { get; set; }
-        public static required string ScreepsUsername { get; set; }
-        public static required string ScreepsPassword { get; set; }
-        public static required string ScreepsShardName { get; set; }
+        public static string? ScreepsUsername { get; set; }
+        public static string? ScreepsPassword { get; set; }
+        public static string? ScreepsShardName { get; set; }
 
-        public static required string ServerName { get; set; }
+        public static string? ServerName { get; set; }
 
         public static bool InfluxDbEnabled { get; set; }
-        public static required string InfluxDbHost { get; set; }
-        public static required string InfluxDbToken { get; set; }
+        public static string? InfluxDbHost { get; set; }
+        public static string? InfluxDbToken { get; set; }
 
         public static bool GraphiteDbEnabled { get; set; }
-        public static required string GraphiteDbHost { get; set; }
+        public static string? GraphiteDbHost { get; set; }
         public static int GraphiteDbPort { get; set; }
 
         public static int PullBackwardsTickAmount { get; set; }

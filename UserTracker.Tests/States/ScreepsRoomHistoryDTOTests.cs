@@ -7,9 +7,9 @@ using Xunit;
 
 namespace UserTracker.Tests.Models
 {
-    public class ScreepsRoomHistoryDTOTests
+    public class ScreepsRoomHistoryDtoTests
     {
-        public ScreepsRoomHistoryDTOTests()
+        public ScreepsRoomHistoryDtoTests()
         {
             var configFileMap = new ExeConfigurationFileMap
             {
@@ -22,7 +22,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void InitializationTest()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
 
             Assert.Equal(0, dto.TimeStamp);
             Assert.Equal(0, dto.Base);
@@ -35,7 +35,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessGroundResources_EmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 GroundResources = new Dictionary<string, GroundResource>()
@@ -49,7 +49,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessGroundResources_NonEmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 GroundResources = new Dictionary<string, GroundResource>
@@ -67,7 +67,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessCreeps_EmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Creeps = new Creeps()
@@ -84,7 +84,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessCreeps_NonEmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Creeps = new Creeps
@@ -108,7 +108,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessStructures_EmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Structures = new Structures()
@@ -124,7 +124,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessStructures_NonEmptyDictionary()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Structures = new Structures
@@ -145,7 +145,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void Update_ValidScreepsRoomHistory()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 TimeStamp = 123456789,
@@ -188,7 +188,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ClearAllTest()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             dto.GroundResources["energy"] = 1000;
             dto.Creeps.OwnedCreeps.Count = 1;
             dto.Structures.Controller.Level = 1;
@@ -203,7 +203,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void PropertyTests()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
 
             dto.TimeStamp = 123456789;
             dto.Base = 987654321;
@@ -217,7 +217,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessGroundResources_NullValues()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 GroundResources = new Dictionary<string, GroundResource>
@@ -234,7 +234,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessStructures_NullValues()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Structures = new Structures
@@ -252,7 +252,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessGroundResources_ExtremelyLargeValues()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 GroundResources = new Dictionary<string, GroundResource>
@@ -274,7 +274,7 @@ namespace UserTracker.Tests.Models
         [Fact]
         public void ProcessStructures_ExtremelyLargeValues()
         {
-            var dto = new ScreepsRoomHistoryDTO();
+            var dto = new ScreepsRoomHistoryDto();
             var history = new ScreepsRoomHistory
             {
                 Structures = new Structures

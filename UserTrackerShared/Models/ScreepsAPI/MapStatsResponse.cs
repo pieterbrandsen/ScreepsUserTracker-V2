@@ -61,10 +61,10 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("gameTime")]
         public long GameTime { get; set; }
         [JsonProperty("stats")]
-        public required Dictionary<string, MapStatRoom> Rooms { get; set; } = new Dictionary<string, MapStatRoom>();
+        public Dictionary<string, MapStatRoom> Rooms { get; set; } = new Dictionary<string, MapStatRoom>();
         [JsonProperty("decorations")]
-        public required object Decorations { get; set; }
+        public object? Decorations { get; set; }
         [JsonProperty("users")]
-        public required Dictionary<string, ScreepsUser> Users { get; set; } = new Dictionary<string, ScreepsUser>();
+        public Dictionary<string, ScreepsUser> Users { get; set; } = new Dictionary<string, ScreepsUser>();
     }
 }

@@ -33,9 +33,9 @@ namespace UserTrackerShared
         public static string Name { get; set; } = "User Tracker Screen";
         public static int Width { get; set; }
         public static int Height { get; set; }
-        public static readonly TitleScreenPart TitlePart { get; set; } = new TitleScreenPart(false, 0, 0, 0);
-        public static readonly LogScreenPart LogsPart { get; set; } = new LogScreenPart(false, 0, 0, 0);
-        public static readonly FooterScreenPart FooterPart { get; set; } = new FooterScreenPart(false, 0, 0, 0);
+        public static TitleScreenPart TitlePart { get; set; } = new TitleScreenPart(false, 0, 0, 0);
+        public static LogScreenPart LogsPart { get; set; } = new LogScreenPart(false, 0, 0, 0);
+        public static FooterScreenPart FooterPart { get; set; } = new FooterScreenPart(false, 0, 0, 0);
 
         public static void UpdateSize()
         {

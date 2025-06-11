@@ -21,7 +21,7 @@ namespace UserTrackerShared
         public static void ApplyPatch(object target, Dictionary<string, object?> changes)
         {
             ArgumentNullException.ThrowIfNull(target);
-            ArgumentNullException.ThrowIfNull(changes == null);
+            ArgumentNullException.ThrowIfNull(changes);
             foreach (var kv in changes)
                 ApplyPatch(target, kv.Key, kv.Value);
         }
@@ -29,7 +29,7 @@ namespace UserTrackerShared
         public static void ApplyPatch(object target, string path, object? value)
         {
             ArgumentNullException.ThrowIfNull(target);
-            ArgumentNullException.ThrowIfNull(string.IsNullOrWhiteSpace(path));
+            ArgumentNullException.ThrowIfNull(path);
 
             try
             {
@@ -46,7 +46,7 @@ namespace UserTrackerShared
                     if (current is IDictionary dict)
                     {
                         var updatedType = current.GetType();
-                        HandleDictionary(dict, updatedType, dictionaryKeyName ?? propName, isLast, ref current, value);
+                        HandleDictionary(dict, updatedType, dictionaryKeyName ?? propName, ref current);
                         continue;
                     }
                     var prop = GetPropFromCache(type, propName);
@@ -78,7 +78,7 @@ namespace UserTrackerShared
 
             if (simplifiedType == SimplifiedTypeName.Array)
             {
-                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex))
+                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex) && !index.HasValue)
                     throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
                 HandleArrayProperty(current, prop, propValue, propType, idx, ref obj, value);
@@ -86,7 +86,7 @@ namespace UserTrackerShared
             }
             else if (simplifiedType == SimplifiedTypeName.List)
             {
-                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex))
+                if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex) && !index.HasValue)
                     throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
                 HandleListProperty(current, prop, propValue, propType, idx, ref obj, value);
@@ -113,7 +113,7 @@ namespace UserTrackerShared
                     }
                     else
                     {
-                        HandleListProperty(current, prop, propValue, propType, propName, dictionaryIndex, ref obj, value);
+                        HandleListProperty(current, prop, propValue, propType, dictionaryIndex, ref obj, value);
                     }
                 }
             }

@@ -19,7 +19,7 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             if (ConfigSettingsState.InfluxDbEnabled)
             {

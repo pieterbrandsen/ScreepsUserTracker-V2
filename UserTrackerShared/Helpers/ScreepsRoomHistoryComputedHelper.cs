@@ -77,13 +77,13 @@ namespace UserTrackerShared.Helpers
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
+                        else
                         {
-                            creep = new Creep();
-                            roomHistory.Creeps.OtherCreeps[key] = creep;
+                            if (!roomHistory.Creeps.OtherCreeps.TryGetValue(key, out creep))
+                            {
+                                creep = new Creep();
+                                roomHistory.Creeps.OtherCreeps[key] = creep;
+                            }
                         }
                     }
                     DynamicPatcher.ApplyPatch(creep, changes);
@@ -431,7 +431,7 @@ namespace UserTrackerShared.Helpers
             {
                 var id = GetLastPathSegment(tickObj.Path).ToString();
 
-                if (tickObj.HasValues && tickObj is JObject obj && id == "undefined")
+                if (tickObj.HasValues && tickObj is JObject obj && id != "undefined")
                 {
                     var changes = new Dictionary<string, object?>();
                     JsonHelper.FlattenJson(tickObj, new StringBuilder(), changes);

@@ -184,7 +184,7 @@ namespace UserTrackerStates.DBClients
     public static class GraphiteDBClientState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
-        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
             {

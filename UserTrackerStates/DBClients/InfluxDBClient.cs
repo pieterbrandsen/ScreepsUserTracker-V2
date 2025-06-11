@@ -123,7 +123,7 @@ namespace UserTrackerStates.DBClients
             {
                 _writeApi = _client.GetWriteApiAsync();
                 _isInitialized = true;
-                _logger.Information("InfluxDB client connected to host {Host}", host);
+                _logger.Information(string.Format("InfluxDB client connected to host {0}", ConfigSettingsState.InfluxDbHost));
             }
             catch (Exception ex)
             {
@@ -167,7 +167,7 @@ namespace UserTrackerStates.DBClients
                 _serializer.Serialize(writer, obj);
                 InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData.where(kvp => kvp.Value is long))
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long))
                 {
                     var pointParameters = new PointDataParameter(
                         ConfigSettingsState.ServerName,
@@ -261,7 +261,7 @@ namespace UserTrackerStates.DBClients
     public static class InfluxDBClientState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
-        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDTO screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
             {

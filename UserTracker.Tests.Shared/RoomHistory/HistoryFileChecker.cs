@@ -78,7 +78,7 @@ namespace UserTracker.Tests.RoomHistory
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
             roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
-            var roomHistoryDTO = new ScreepsRoomHistoryDTO();
+            var roomHistoryDto = new ScreepsRoomHistoryDto();
 
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
@@ -103,7 +103,7 @@ namespace UserTracker.Tests.RoomHistory
                         changesProcessed += vChangesProcessed;
                         seenProperties = seenProperties.Concat(vSeenProcessed).ToList();
                     }
-                    roomHistoryDTO.Update(roomHistory);
+                    roomHistoryDto.Update(roomHistory);
                 }
             }
 

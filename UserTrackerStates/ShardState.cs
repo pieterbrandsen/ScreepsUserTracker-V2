@@ -86,7 +86,7 @@ namespace UserTrackerShared.States
                 var semaphore = new SemaphoreSlim(Rooms.Count);
                 var tasks = new List<Task>();
 
-                var reservedRoomsByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDTO>();
+                var reservedRoomsByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
                 var userLocks = new ConcurrentDictionary<string, object>();
                 foreach (var room in Rooms)
                 {
@@ -115,9 +115,9 @@ namespace UserTrackerShared.States
                 }
                 await Task.WhenAll(tasks);
 
-                foreach (var historyDTO in reservedRoomsByUser)
+                foreach (var historyDto in reservedRoomsByUser)
                 {
-                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDTO.Value.TimeStamp, historyDTO.Value);
+                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDto.Value.TimeStamp, historyDto.Value);
                 }
 
 
