@@ -10,6 +10,10 @@ namespace UserTrackerShared.Helpers
     {
         public static ILogger GetLogger(LogCategory category)
         {
+            if (ConfigSettingsState.LogsFolder == null)
+            {
+                throw new InvalidOperationException("Logs folder is not configured.");
+            }
             string logDirectory = Path.Combine(ConfigSettingsState.LogsFolder, category.ToString().ToLower());
             Directory.CreateDirectory(logDirectory);
 

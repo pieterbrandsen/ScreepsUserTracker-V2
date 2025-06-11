@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace UserTrackerShared.Models
 {
-    public class PerformanceClassDTO
+    public class PerformanceClassDto
     {
-        public string Shard { get; set; }
+        public required string Shard { get; set; }
         public long TicksBehind { get; set; }
         public long TimeTakenMs { get; set; }
         public int TotalRooms { get; set; }
-        public ConcurrentDictionary<int, int> ResultCodes { get; set; }
+        public required ConcurrentDictionary<int, int> ResultCodes { get; set; }
     }
 }

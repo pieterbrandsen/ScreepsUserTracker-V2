@@ -212,11 +212,11 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             try
             {
-                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.performance.{performanceClassDTO.Shard}.", performanceClassDTO, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+                GraphiteDBClientWriter.UploadData($"history.{ConfigSettingsState.ServerName}.performance.{PerformanceClassDto.Shard}.", PerformanceClassDto, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
             }
             catch (Exception e)
             {

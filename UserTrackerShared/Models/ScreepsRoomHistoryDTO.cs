@@ -493,15 +493,15 @@ namespace UserTrackerShared.Models
         }
         public void ProcessCreeps(ScreepsRoomHistory his)
         {
-            Creeps.OwnedCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
-            Creeps.EnemyCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.EnemyCreeps.Values.ToList<BaseCreep>(), Creeps.EnemyCreeps);
-            Creeps.OtherCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.OtherCreeps.Values.ToList<BaseCreep>(), Creeps.OtherCreeps);
+            Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
+            Creeps.EnemyCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.EnemyCreeps.Values.ToList<BaseCreep>(), Creeps.EnemyCreeps);
+            Creeps.OtherCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.OtherCreeps.Values.ToList<BaseCreep>(), Creeps.OtherCreeps);
 
-            Creeps.PowerCreeps = ScreepsRoomHistoryDTOHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
+            Creeps.PowerCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
         }
         public void ProcessStructures(ScreepsRoomHistory his)
         {
-            Structures = ScreepsRoomHistoryDTOHelper.ConvertStructures(his.Structures, Structures);
+            Structures = ScreepsRoomHistoryDtoHelper.ConvertStructures(his.Structures, Structures);
         }
 
         public void Update(ScreepsRoomHistory his)

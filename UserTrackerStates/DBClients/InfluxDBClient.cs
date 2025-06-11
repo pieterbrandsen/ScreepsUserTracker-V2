@@ -322,16 +322,16 @@ namespace UserTrackerStates.DBClients
             }
         }
 
-        public static void WritePerformanceData(PerformanceClassDTO performanceClassDTO)
+        public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             try
             {
                 var point = PointData
                             .Measurement(ConfigSettingsState.ServerName)
-                            .Tag("shard", performanceClassDTO.Shard)
-                            .Field("TicksBehind", performanceClassDTO.TicksBehind)
-                            .Field("TimeTakenMs", performanceClassDTO.TimeTakenMs)
-                            .Field("TotalRooms", performanceClassDTO.TotalRooms)
+                            .Tag("shard", PerformanceClassDto.Shard)
+                            .Field("TicksBehind", PerformanceClassDto.TicksBehind)
+                            .Field("TimeTakenMs", PerformanceClassDto.TimeTakenMs)
+                            .Field("TotalRooms", PerformanceClassDto.TotalRooms)
                             .Timestamp(DateTime.UtcNow, WritePrecision.Ns);
 
                 InfluxDBClientWriter.AddPoint("history_performance", point);

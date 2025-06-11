@@ -12,25 +12,31 @@ namespace UserTrackerShared.Helpers
         private static readonly string KeysDirectoryPath = @$"{ConfigSettingsState.ObjectsFolder}\Keys";
 
         private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
-        private static readonly ConcurrentDictionary<string, JObject> KeyCache = new();
 
-        private static Timer? _backgroundFlushTimer;
-        public static bool StopFlushing;
-        public static bool IsFlushing;
+        private static bool _isFlushing;
+        private static bool _isInitialized;
+        public static void EnsureInitialized()
+        {
+            if (_isInitialized) return;
+            _isInitialized = true;
+            Init();
+        }
 
-        static FileWriterManager()
+        static void Init()
         {
             Directory.CreateDirectory(HistoryDirectoryPath);
             Directory.CreateDirectory(KeysDirectoryPath);
 
-            _backgroundFlushTimer = new Timer(10 * 1000);
-            _backgroundFlushTimer.Elapsed += OnBackgroundFlushTimer;
-            _backgroundFlushTimer.AutoReset = true;
-            _backgroundFlushTimer.Enabled = true;
+            var backgroundFlushTimer = new Timer(10 * 1000);
+            backgroundFlushTimer.Elapsed += OnBackgroundFlushTimer;
+            backgroundFlushTimer.AutoReset = true;
+            backgroundFlushTimer.Enabled = true;
         }
 
         public static void GenerateHistoryFile(JObject roomData)
         {
+            EnsureInitialized();
+
             var room = "";
             roomData.TryGetValue("room", out JToken? jTokenRoom);
             if (jTokenRoom != null) room = jTokenRoom.Value<string>();
@@ -47,52 +53,48 @@ namespace UserTrackerShared.Helpers
             });
         }
 
+        private static async Task WriteHistoryFile(string key, SemaphoreSlim semaphore)
+        {
+            try
+            {
+                if (HistoryCache.TryRemove(key, out JObject? obj))
+                {
+                    if (obj == null) return;
+                    var charArr = new char[] { '/', '\\' };
+                    string[] parts = key.Split(charArr, StringSplitOptions.RemoveEmptyEntries);
+
+                    string tickDir = Path.Combine(HistoryDirectoryPath, parts[0]);
+                    if (!Directory.Exists(tickDir))
+                    {
+                        Directory.CreateDirectory(tickDir);
+                    }
+                    string filePath = Path.Combine(HistoryDirectoryPath, $"{key}.json");
+
+                    var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
+
+                    try
+                    {
+                        await File.WriteAllTextAsync(filePath, json);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
+            }
+        }
+
         private static async void OnBackgroundFlushTimer(Object? source, ElapsedEventArgs? e)
         {
-            if (IsFlushing || StopFlushing) return;
-            IsFlushing = true;
+            if (_isFlushing) return;
+            _isFlushing = true;
             try
             {
                 SemaphoreSlim semaphore = new SemaphoreSlim(10000); // Limit concurrent writes to avoid overloading the disk
-
-                IEnumerable<string> keyKeys;
-                lock (KeyCache)
-                {
-                    keyKeys = KeyCache.Keys.ToArray();
-                }
-
-                var keysTasks = new List<Task>();
-                foreach (var key in keyKeys)
-                {
-                    await semaphore.WaitAsync(); // Throttle writes
-                    keysTasks.Add(Task.Run(async () =>
-                    {
-                        try
-                        {
-                            if (KeyCache.TryRemove(key, out JObject obj))
-                            {
-                                if (obj == null) return;
-                                string filePath = Path.Combine(KeysDirectoryPath, $"{key}.json");
-
-                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-                                try
-                                {
-                                    await File.WriteAllTextAsync(filePath, json);
-                                }
-                                finally
-                                {
-                                    semaphore.Release();
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
-                        }
-                    }));
-                }
-                await Task.WhenAll(keysTasks);
-
 
                 IEnumerable<string> historyKeys;
                 lock (HistoryCache)
@@ -105,39 +107,7 @@ namespace UserTrackerShared.Helpers
                 foreach (var key in historyKeys)
                 {
                     await semaphore.WaitAsync(); // Throttle writes
-                    historyTasks.Add(Task.Run(async () =>
-                    {
-                        try
-                        {
-                            if (HistoryCache.TryRemove(key, out JObject obj))
-                            {
-                                if (obj == null) return;
-                                string[] parts = key.Split(new char[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-
-                                string tickDir = Path.Combine(HistoryDirectoryPath, parts[0]);
-                                if (!Directory.Exists(tickDir))
-                                {
-                                    Directory.CreateDirectory(tickDir);
-                                }
-                                string filePath = Path.Combine(HistoryDirectoryPath, $"{key}.json");
-
-                                var json = JsonConvert.SerializeObject(obj, Formatting.Indented);
-
-                                try
-                                {
-                                    await File.WriteAllTextAsync(filePath, json);
-                                }
-                                finally
-                                {
-                                    semaphore.Release();
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Screen.AddLog($"Error writing file for key {key}: {ex.Message}");
-                        }
-                    }));
+                    historyTasks.Add(WriteHistoryFile(key, semaphore));
                 }
                 await Task.WhenAll(historyTasks);
             }
@@ -145,7 +115,7 @@ namespace UserTrackerShared.Helpers
             {
                 Console.WriteLine($"Unexpected error in BackgroundFlush: {ex.Message}");
             }
-            IsFlushing = false;
+            _isFlushing = false;
         }
     }
 }
