@@ -3,8 +3,8 @@ using UserTrackerShared.Helpers;
 
 namespace UserTrackerShared.Models
 {
-    #region Base DTO
-    public class DamageActionDTO
+    #region Base Dto
+    public class DamageActionDto
     {
         public decimal Count { get; set; } = 0;
         public decimal Damage { get; set; } = 0;
@@ -14,7 +14,7 @@ namespace UserTrackerShared.Models
             Damage = 0;
         }
     }
-    public class HealActionDTO
+    public class HealActionDto
     {
         public decimal Count { get; set; } = 0;
         public decimal Heal { get; set; } = 0;
@@ -24,7 +24,7 @@ namespace UserTrackerShared.Models
             Heal = 0;
         }
     }
-    public class InflowActionDTO
+    public class InflowActionDto
     {
         public decimal Count { get; set; } = 0;
         public decimal Inflow { get; set; } = 0;
@@ -34,7 +34,7 @@ namespace UserTrackerShared.Models
             Inflow = 0;
         }
     }
-    public class OutlflowActionDTO
+    public class OutlflowActionDto
     {
         public decimal Count { get; set; } = 0;
         public decimal Outflow { get; set; } = 0;
@@ -46,7 +46,7 @@ namespace UserTrackerShared.Models
             Effect = 0;
         }
     }
-    public class GenericActionDTO
+    public class GenericActionDto
     {
         public decimal Count { get; set; } = 0;
         public void Clear()
@@ -54,29 +54,29 @@ namespace UserTrackerShared.Models
             Count = 0;
         }
     }
-    public class ActionLogDTO
+    public class ActionLogDto
     {
-        public DamageActionDTO Attacked { get; set; } = new DamageActionDTO();
-        public DamageActionDTO Attack { get; set; } = new DamageActionDTO();
-        public DamageActionDTO RangedAttack { get; set; } = new DamageActionDTO();
-        public DamageActionDTO RangedMassAttack { get; set; } = new DamageActionDTO();
-        public HealActionDTO RangedHeal { get; set; } = new HealActionDTO();
-        public HealActionDTO Healed { get; set; } = new HealActionDTO();
-        public HealActionDTO Heal { get; set; } = new HealActionDTO();
-        public InflowActionDTO Harvest { get; set; } = new InflowActionDTO();
-        public OutlflowActionDTO Repair { get; set; } = new OutlflowActionDTO();
-        public OutlflowActionDTO Build { get; set; } = new OutlflowActionDTO();
-        public OutlflowActionDTO UpgradeController { get; set; } = new OutlflowActionDTO();
-        public GenericActionDTO Move { get; set; } = new GenericActionDTO();
-        public GenericActionDTO Say { get; set; } = new GenericActionDTO();
-        public GenericActionDTO ReserveController { get; set; } = new GenericActionDTO();
-        public GenericActionDTO Produce { get; set; } = new GenericActionDTO();
-        public GenericActionDTO TransferEnergy { get; set; } = new GenericActionDTO();
-        public GenericActionDTO AttackController { get; set; } = new GenericActionDTO();
-        public GenericActionDTO RunReaction { get; set; } = new GenericActionDTO();
-        public GenericActionDTO ReverseReaction { get; set; } = new GenericActionDTO();
-        public GenericActionDTO Spawned { get; set; } = new GenericActionDTO();
-        public GenericActionDTO Power { get; set; } = new GenericActionDTO();
+        public DamageActionDto Attacked { get; set; } = new DamageActionDto();
+        public DamageActionDto Attack { get; set; } = new DamageActionDto();
+        public DamageActionDto RangedAttack { get; set; } = new DamageActionDto();
+        public DamageActionDto RangedMassAttack { get; set; } = new DamageActionDto();
+        public HealActionDto RangedHeal { get; set; } = new HealActionDto();
+        public HealActionDto Healed { get; set; } = new HealActionDto();
+        public HealActionDto Heal { get; set; } = new HealActionDto();
+        public InflowActionDto Harvest { get; set; } = new InflowActionDto();
+        public OutlflowActionDto Repair { get; set; } = new OutlflowActionDto();
+        public OutlflowActionDto Build { get; set; } = new OutlflowActionDto();
+        public OutlflowActionDto UpgradeController { get; set; } = new OutlflowActionDto();
+        public GenericActionDto Move { get; set; } = new GenericActionDto();
+        public GenericActionDto Say { get; set; } = new GenericActionDto();
+        public GenericActionDto ReserveController { get; set; } = new GenericActionDto();
+        public GenericActionDto Produce { get; set; } = new GenericActionDto();
+        public GenericActionDto TransferEnergy { get; set; } = new GenericActionDto();
+        public GenericActionDto AttackController { get; set; } = new GenericActionDto();
+        public GenericActionDto RunReaction { get; set; } = new GenericActionDto();
+        public GenericActionDto ReverseReaction { get; set; } = new GenericActionDto();
+        public GenericActionDto Spawned { get; set; } = new GenericActionDto();
+        public GenericActionDto Power { get; set; } = new GenericActionDto();
         public void Clear()
         {
             Attacked.Clear();
@@ -102,7 +102,7 @@ namespace UserTrackerShared.Models
             Power.Clear();
         }
     }
-    public class CountByPartDTO
+    public class CountByPartDto
     {
         public decimal Move { get; set; } = 0;
         public decimal Work { get; set; } = 0;
@@ -125,12 +125,12 @@ namespace UserTrackerShared.Models
         }
     }
 
-    public class CreepDTO
+    public class CreepDto
     {
         public decimal Count { get; set; } = 0;
-        public Store Store = new Store();
-        public CountByPartDTO BodyParts = new CountByPartDTO();
-        public ActionLogDTO ActionLog { get; set; } = new ActionLogDTO();
+        public Store Store { get; set; } = new Store();
+        public CountByPartDto BodyParts { get; set; } = new CountByPartDto();
+        public ActionLogDto ActionLog { get; set; } = new ActionLogDto();
 
         public void Clear()
         {
@@ -140,7 +140,7 @@ namespace UserTrackerShared.Models
             ActionLog.Clear();
         }
     }
-    public class BaseStructureDTO
+    public class BaseStructureDto
     {
         public decimal Count { get; set; } = 0;
         public void Clear()
@@ -149,8 +149,8 @@ namespace UserTrackerShared.Models
         }
     }
     #endregion
-    #region Structures DTO
-    public class StructureControllerDTO : BaseStructureDTO
+    #region Structures Dto
+    public class StructureControllerDto : BaseStructureDto
     {
         public decimal Level { get; set; } = 0;
         public decimal Progress { get; set; } = 0;
@@ -166,21 +166,21 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureMineralDTO : BaseStructureDTO
+    public class StructureMineralDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureDepositDTO : BaseStructureDTO
+    public class StructureDepositDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureWallDTO : BaseStructureDTO
+    public class StructureWallDto : BaseStructureDto
     {
         public decimal Hits { get; set; } = 0;
         public new void Clear()
@@ -189,7 +189,7 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureConstructionSiteDTO : BaseStructureDTO
+    public class StructureConstructionSiteDto : BaseStructureDto
     {
         public decimal Progress { get; set; } = 0;
         public decimal ProgressTotal { get; set; } = 0;
@@ -202,16 +202,16 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureContainerDTO : BaseStructureDTO
+    public class StructureContainerDto : BaseStructureDto
     {
-        public Store Store = new Store();
+        public Store Store { get; set; } = new Store();
         public new void Clear()
         {
             Store.Clear();
             base.Clear();
         }
     }
-    public class StructureExtensionDTO : BaseStructureDTO
+    public class StructureExtensionDto : BaseStructureDto
     {
         public decimal Energy { get; set; } = 0;
         public decimal EnergyCapacity { get; set; } = 0;
@@ -222,42 +222,42 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureExtractorDTO : BaseStructureDTO
+    public class StructureExtractorDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureFactoryDTO : BaseStructureDTO
+    public class StructureFactoryDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureInvaderCoreDTO : BaseStructureDTO
+    public class StructureInvaderCoreDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureKeeperLairDTO : BaseStructureDTO
+    public class StructureKeeperLairDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureLabDTO : BaseStructureDTO
+    public class StructureLabDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureLinkDTO : BaseStructureDTO
+    public class StructureLinkDto : BaseStructureDto
     {
         public decimal Energy { get; set; } = 0;
         public decimal EnergyCapacity { get; set; } = 0;
@@ -268,35 +268,35 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureObserverDTO : BaseStructureDTO
+    public class StructureObserverDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructurePortalDTO : BaseStructureDTO
+    public class StructurePortalDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructurePowerBankDTO : BaseStructureDTO
+    public class StructurePowerBankDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructurePowerSpawnDTO : BaseStructureDTO
+    public class StructurePowerSpawnDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureRampartDTO : BaseStructureDTO
+    public class StructureRampartDto : BaseStructureDto
     {
         public decimal Hits { get; set; } = 0;
         public new void Clear()
@@ -305,21 +305,21 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureRoadDTO : BaseStructureDTO
+    public class StructureRoadDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureRuinDTO : BaseStructureDTO
+    public class StructureRuinDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureSourceDTO : BaseStructureDTO
+    public class StructureSourceDto : BaseStructureDto
     {
         public decimal Energy { get; set; } = 0;
         public decimal EnergyCapacity { get; set; } = 0;
@@ -330,55 +330,55 @@ namespace UserTrackerShared.Models
             base.Clear();
         }
     }
-    public class StructureSpawnDTO : BaseStructureDTO
+    public class StructureSpawnDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureStorageDTO : BaseStructureDTO
+    public class StructureStorageDto : BaseStructureDto
     {
-        public Store Store = new Store();
-        public new void Clear()
-        {
-            base.Clear();
-        }
-
-    }
-    public class StructureTerminalDTO : BaseStructureDTO
-    {
-        public Store Store = new Store();
+        public Store Store { get; set; } = new Store();
         public new void Clear()
         {
             base.Clear();
         }
 
     }
-    public class StructureTombstoneDTO : BaseStructureDTO
+    public class StructureTerminalDto : BaseStructureDto
+    {
+        public Store Store { get; set; } = new Store();
+        public new void Clear()
+        {
+            base.Clear();
+        }
+
+    }
+    public class StructureTombstoneDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureTowerDTO : BaseStructureDTO
+    public class StructureTowerDto : BaseStructureDto
     {
         public decimal Energy { get; set; } = 0;
-        public void Clear()
+        public new void Clear()
         {
             Energy = 0;
             base.Clear();
         }
     }
-    public class StructureNukerDTO : BaseStructureDTO
+    public class StructureNukerDto : BaseStructureDto
     {
         public new void Clear()
         {
             base.Clear();
         }
     }
-    public class StructureNukeDTO : BaseStructureDTO
+    public class StructureNukeDto : BaseStructureDto
     {
         public new void Clear()
         {
@@ -386,13 +386,13 @@ namespace UserTrackerShared.Models
         }
     }
     #endregion
-    #region Groups DTO
-    public class CreepsDTO
+    #region Groups Dto
+    public class CreepsDto
     {
-        public CreepDTO OwnedCreeps { get; set; } = new CreepDTO();
-        public CreepDTO EnemyCreeps { get; set; } = new CreepDTO();
-        public CreepDTO OtherCreeps { get; set; } = new CreepDTO();
-        public CreepDTO PowerCreeps { get; set; } = new CreepDTO();
+        public CreepDto OwnedCreeps { get; set; } = new CreepDto();
+        public CreepDto EnemyCreeps { get; set; } = new CreepDto();
+        public CreepDto OtherCreeps { get; set; } = new CreepDto();
+        public CreepDto PowerCreeps { get; set; } = new CreepDto();
 
         public void Clear()
         {
@@ -402,37 +402,37 @@ namespace UserTrackerShared.Models
             PowerCreeps.Clear();
         }
     }
-    public class StructuresDTO
+    public class StructuresDto
     {
-        public StructureControllerDTO Controller { get; set; } = new StructureControllerDTO();
-        public StructureMineralDTO Mineral { get; set; } = new StructureMineralDTO();
-        public StructureDepositDTO Deposit { get; set; } = new StructureDepositDTO();
+        public StructureControllerDto Controller { get; set; } = new StructureControllerDto();
+        public StructureMineralDto Mineral { get; set; } = new StructureMineralDto();
+        public StructureDepositDto Deposit { get; set; } = new StructureDepositDto();
 
-        public StructureWallDTO Wall { get; set; } = new StructureWallDTO();
-        public StructureConstructionSiteDTO ConstructionSite { get; set; } = new StructureConstructionSiteDTO();
-        public StructureContainerDTO Container { get; set; } = new StructureContainerDTO();
-        public StructureExtensionDTO Extension { get; set; } = new StructureExtensionDTO();
-        public StructureExtractorDTO Extractor { get; set; } = new StructureExtractorDTO();
-        public StructureFactoryDTO Factory { get; set; } = new StructureFactoryDTO();
-        public StructureInvaderCoreDTO InvaderCore { get; set; } = new StructureInvaderCoreDTO();
-        public StructureKeeperLairDTO KeeperLair { get; set; } = new StructureKeeperLairDTO();
-        public StructureLabDTO Lab { get; set; } = new StructureLabDTO();
-        public StructureLinkDTO Link { get; set; } = new StructureLinkDTO();
-        public StructureObserverDTO Observer { get; set; } = new StructureObserverDTO();
-        public StructurePortalDTO Portal { get; set; } = new StructurePortalDTO();
-        public StructurePowerBankDTO PowerBank { get; set; } = new StructurePowerBankDTO();
-        public StructurePowerSpawnDTO PowerSpawn { get; set; } = new StructurePowerSpawnDTO();
-        public StructureRampartDTO Rampart { get; set; } = new StructureRampartDTO();
-        public StructureRoadDTO Road { get; set; } = new StructureRoadDTO();
-        public StructureRuinDTO Ruin { get; set; } = new StructureRuinDTO();
-        public StructureSourceDTO Source { get; set; } = new StructureSourceDTO();
-        public StructureSpawnDTO Spawn { get; set; } = new StructureSpawnDTO();
-        public StructureStorageDTO Storage { get; set; } = new StructureStorageDTO();
-        public StructureTerminalDTO Terminal { get; set; } = new StructureTerminalDTO();
-        public StructureTombstoneDTO Tombstone { get; set; } = new StructureTombstoneDTO();
-        public StructureTowerDTO Tower { get; set; } = new StructureTowerDTO();
-        public StructureNukerDTO Nuker { get; set; } = new StructureNukerDTO();
-        public StructureNukeDTO Nuke { get; set; } = new StructureNukeDTO();
+        public StructureWallDto Wall { get; set; } = new StructureWallDto();
+        public StructureConstructionSiteDto ConstructionSite { get; set; } = new StructureConstructionSiteDto();
+        public StructureContainerDto Container { get; set; } = new StructureContainerDto();
+        public StructureExtensionDto Extension { get; set; } = new StructureExtensionDto();
+        public StructureExtractorDto Extractor { get; set; } = new StructureExtractorDto();
+        public StructureFactoryDto Factory { get; set; } = new StructureFactoryDto();
+        public StructureInvaderCoreDto InvaderCore { get; set; } = new StructureInvaderCoreDto();
+        public StructureKeeperLairDto KeeperLair { get; set; } = new StructureKeeperLairDto();
+        public StructureLabDto Lab { get; set; } = new StructureLabDto();
+        public StructureLinkDto Link { get; set; } = new StructureLinkDto();
+        public StructureObserverDto Observer { get; set; } = new StructureObserverDto();
+        public StructurePortalDto Portal { get; set; } = new StructurePortalDto();
+        public StructurePowerBankDto PowerBank { get; set; } = new StructurePowerBankDto();
+        public StructurePowerSpawnDto PowerSpawn { get; set; } = new StructurePowerSpawnDto();
+        public StructureRampartDto Rampart { get; set; } = new StructureRampartDto();
+        public StructureRoadDto Road { get; set; } = new StructureRoadDto();
+        public StructureRuinDto Ruin { get; set; } = new StructureRuinDto();
+        public StructureSourceDto Source { get; set; } = new StructureSourceDto();
+        public StructureSpawnDto Spawn { get; set; } = new StructureSpawnDto();
+        public StructureStorageDto Storage { get; set; } = new StructureStorageDto();
+        public StructureTerminalDto Terminal { get; set; } = new StructureTerminalDto();
+        public StructureTombstoneDto Tombstone { get; set; } = new StructureTombstoneDto();
+        public StructureTowerDto Tower { get; set; } = new StructureTowerDto();
+        public StructureNukerDto Nuker { get; set; } = new StructureNukerDto();
+        public StructureNukeDto Nuke { get; set; } = new StructureNukeDto();
         public void Clear()
         {
             Controller.Clear();
@@ -466,7 +466,7 @@ namespace UserTrackerShared.Models
         }
     }
     #endregion
-    public class ScreepsRoomHistoryDTO
+    public class ScreepsRoomHistoryDto
     {
         public void ProcessGroundResources(ScreepsRoomHistory his)
         {
@@ -477,8 +477,9 @@ namespace UserTrackerShared.Models
                 if (groundResourceObj == null) continue;
 
                 var resourceType = groundResourceObj.ResourceType;
-                PropertyInfo? property = groundResourceObj.GetType().GetProperty(resourceType);
-                if (property == null) property = groundResourceObj.GetType().GetProperty(char.ToUpperInvariant(resourceType[0]) + resourceType.Substring(1));
+                PropertyInfo? property = groundResourceObj.GetType()
+                    .GetProperty(resourceType) ?? groundResourceObj.GetType().GetProperty(char.ToUpperInvariant(resourceType[0]) + resourceType.Substring(1));
+                if (property == null) continue;
 
                 long toBeAddedAmount = Convert.ToInt64(property.GetValue(groundResourceObj));
                 decimal currentAmount = 0;
@@ -510,7 +511,6 @@ namespace UserTrackerShared.Models
             Base = his.Base;
             Tick = his.Tick;
 
-            //ClearAll();
             ProcessGroundResources(his);
             ProcessCreeps(his);
             ProcessStructures(his);
@@ -526,7 +526,7 @@ namespace UserTrackerShared.Models
         public long Base { get; set; }
         public long Tick { get; set; }
         public Dictionary<string, decimal> GroundResources { get; set; } = new Dictionary<string, decimal>();
-        public CreepsDTO Creeps { get; set; } = new CreepsDTO();
-        public StructuresDTO Structures { get; set; } = new StructuresDTO();
+        public CreepsDto Creeps { get; set; } = new CreepsDto();
+        public StructuresDto Structures { get; set; } = new StructuresDto();
     }
 }
