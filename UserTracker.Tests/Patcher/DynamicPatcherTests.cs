@@ -41,7 +41,7 @@ namespace UserTracker.Tests.Patcher
             catch { }
 
             // Fallback: string comparison
-            return x.ToString().Trim() == y.ToString().Trim();
+            return x.ToString() == y.ToString();
         }
 
         public static IEnumerable<object[]> ArrayData()
@@ -76,23 +76,42 @@ namespace UserTracker.Tests.Patcher
 
         public static IEnumerable<object[]> MultipleArrayData()
         {
+            var values_ab = new object[] { "a", "b" };
+            var values_5_5 = new object[] { 5, 5 };
+
+            var stringLevel1 = new[] { "Array[0].String", "Array[1].String" };
+            var intLevel1 = new[] { "Array[0].Int", "Array[1].Int" };
+            var longLevel1 = new[] { "Array[0].Long", "Array[1].Long" };
+
+            var stringLevel2 = new[] { "Array[0].Array[0].String", "Array[0].Array[1].String" };
+            var intLevel2 = new[] { "Array[0].Array[0].Int", "Array[0].Array[1].Int" };
+            var longLevel2 = new[] { "Array[0].Array[0].Long", "Array[0].Array[1].Long" };
+
+            var stringLevel3 = new[] { "Array[0].Array[0].Array[0].String", "Array[0].Array[0].Array[1].String" };
+            var intLevel3 = new[] { "Array[0].Array[0].Array[0].Int", "Array[0].Array[0].Array[1].Int" };
+            var longLevel3 = new[] { "Array[0].Array[0].Array[0].Long", "Array[0].Array[0].Array[1].Long" };
+
+            var stringMismatch = new[] { "Array[0].Array[0].Array[3].String", "Array[0].Array[0].Array[1].String" };
+            var intMismatch = new[] { "Array[0].Array[0].Array[3].Int", "Array[0].Array[0].Array[1].Int" };
+            var longMismatch = new[] { "Array[0].Array[0].Array[3].Long", "Array[0].Array[0].Array[1].Long" };
+
             return new List<object[]>
             {
-                new object[] { new string[] { "Array[0].String", "Array[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Array[0].Int", "Array[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Array[0].Long", "Array[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel1, values_ab },
+                new object[] { intLevel1, values_5_5 },
+                new object[] { longLevel1, values_5_5 },
 
-                new object[] { new string[] { "Array[0].Array[0].String", "Array[0].Array[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Array[0].Array[0].Int", "Array[0].Array[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Array[0].Array[0].Long", "Array[0].Array[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel2, values_ab },
+                new object[] { intLevel2, values_5_5 },
+                new object[] { longLevel2, values_5_5 },
 
-                new object[] { new string[] { "Array[0].Array[0].Array[0].String", "Array[0].Array[0].Array[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Array[0].Array[0].Array[0].Int", "Array[0].Array[0].Array[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Array[0].Array[0].Array[0].Long", "Array[0].Array[0].Array[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel3, values_ab },
+                new object[] { intLevel3, values_5_5 },
+                new object[] { longLevel3, values_5_5 },
 
-                new object[] { new string[] { "Array[0].Array[0].Array[3].String", "Array[0].Array[0].Array[1].String" }, new object[] { "a", "b" }, false },
-                new object[] { new string[] { "Array[0].Array[0].Array[3].Int", "Array[0].Array[0].Array[1].Int" }, new object[] {5,5 }, false },
-                new object[] { new string[] { "Array[0].Array[0].Array[3].Long", "Array[0].Array[0].Array[1].Long" }, new object[] { 5,5 }, false },
+                new object[] { stringMismatch, values_ab, false },
+                new object[] { intMismatch, values_5_5, false },
+                new object[] { longMismatch, values_5_5, false },
             };
         }
 
@@ -124,23 +143,42 @@ namespace UserTracker.Tests.Patcher
 
         public static IEnumerable<object[]> MultipleListData()
         {
+            var values_ab = new object[] { "a", "b" };
+            var values_5_5 = new object[] { 5, 5 };
+
+            var stringLevel1 = new[] { "List[0].String", "List[1].String" };
+            var intLevel1 = new[] { "List[0].Int", "List[1].Int" };
+            var longLevel1 = new[] { "List[0].Long", "List[1].Long" };
+
+            var stringLevel2 = new[] { "List[0].List[0].String", "List[0].List[1].String" };
+            var intLevel2 = new[] { "List[0].List[0].Int", "List[0].List[1].Int" };
+            var longLevel2 = new[] { "List[0].List[0].Long", "List[0].List[1].Long" };
+
+            var stringLevel3 = new[] { "List[0].List[0].List[0].String", "List[0].List[0].List[1].String" };
+            var intLevel3 = new[] { "List[0].List[0].List[0].Int", "List[0].List[0].List[1].Int" };
+            var longLevel3 = new[] { "List[0].List[0].List[0].Long", "List[0].List[0].List[1].Long" };
+
+            var stringMismatch = new[] { "List[0].List[0].List[3].String", "List[0].List[0].List[1].String" };
+            var intMismatch = new[] { "List[0].List[0].List[3].Int", "List[0].List[0].List[1].Int" };
+            var longMismatch = new[] { "List[0].List[0].List[3].Long", "List[0].List[0].List[1].Long" };
+
             return new List<object[]>
             {
-                new object[] { new string[] { "List[0].String", "List[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "List[0].Int", "List[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "List[0].Long", "List[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel1, values_ab },
+                new object[] { intLevel1, values_5_5 },
+                new object[] { longLevel1, values_5_5 },
 
-                new object[] { new string[] { "List[0].List[0].String", "List[0].List[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "List[0].List[0].Int", "List[0].List[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "List[0].List[0].Long", "List[0].List[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel2, values_ab },
+                new object[] { intLevel2, values_5_5 },
+                new object[] { longLevel2, values_5_5 },
 
-                new object[] { new string[] { "List[0].List[0].List[0].String", "List[0].List[0].List[1].String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "List[0].List[0].List[0].Int", "List[0].List[0].List[1].Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "List[0].List[0].List[0].Long", "List[0].List[0].List[1].Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel3, values_ab },
+                new object[] { intLevel3, values_5_5 },
+                new object[] { longLevel3, values_5_5 },
 
-                new object[] { new string[] { "List[0].List[0].List[3].String", "List[0].List[0].List[1].String" }, new object[] { "a", "b" }, false },
-                new object[] { new string[] { "List[0].List[0].List[3].Int", "List[0].List[0].List[1].Int" }, new object[] {5,5 }, false },
-                new object[] { new string[] { "List[0].List[0].List[3].Long", "List[0].List[0].List[1].Long" }, new object[] { 5,5 }, false },
+                new object[] { stringMismatch, values_ab, false },
+                new object[] { intMismatch, values_5_5, false },
+                new object[] { longMismatch, values_5_5, false },
             };
         }
 
@@ -172,23 +210,42 @@ namespace UserTracker.Tests.Patcher
 
         public static IEnumerable<object[]> MultipleDictionaryData()
         {
+            var values_ab = new object[] { "a", "b" };
+            var values_5_5 = new object[] { 5, 5 };
+
+            var stringLevel1 = new[] { "Dictionary.Key.String", "Dictionary.Key.String" };
+            var intLevel1 = new[] { "Dictionary.Key.Int", "Dictionary.Key.Int" };
+            var longLevel1 = new[] { "Dictionary.Key.Long", "Dictionary.Key.Long" };
+
+            var stringLevel2 = new[] { "Dictionary.Key.Dictionary.Key.String", "Dictionary.Key.Dictionary.Key2.String" };
+            var intLevel2 = new[] { "Dictionary.Key.Dictionary.Key.Int", "Dictionary.Key.Dictionary.Key2.Int" };
+            var longLevel2 = new[] { "Dictionary.Key.Dictionary.Key.Long", "Dictionary.Key.Dictionary.Key2.Long" };
+
+            var stringLevel3 = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.String", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.String" };
+            var intLevel3 = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.Int", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.Int" };
+            var longLevel3 = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.Long", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.Long" };
+
+            var stringMismatch = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.String", "Dictionary.Key.Dictionary.Key.Dictionary.String" };
+            var intMismatch = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.Int", "Dictionary.Key.Dictionary.Key.Dictionary.Int" };
+            var longMismatch = new[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.Long", "Dictionary.Key.Dictionary.Key.Dictionary.Long" };
+
             return new List<object[]>
             {
-                new object[] { new string[] { "Dictionary.Key.String", "Dictionary.Key.String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Dictionary.Key.Int", "Dictionary.Key.Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Dictionary.Key.Long", "Dictionary.Key.Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel1, values_ab },
+                new object[] { intLevel1, values_5_5 },
+                new object[] { longLevel1, values_5_5 },
 
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.String", "Dictionary.Key.Dictionary.Key2.String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Int", "Dictionary.Key.Dictionary.Key2.Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Long", "Dictionary.Key.Dictionary.Key2.Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel2, values_ab },
+                new object[] { intLevel2, values_5_5 },
+                new object[] { longLevel2, values_5_5 },
 
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.String", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.String" }, new object[] { "a", "b" } },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.Int", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.Int" }, new object[] {5,5 } },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.Long", "Dictionary.Key.Dictionary.Key.Dictionary.Key2.Long" }, new object[] { 5,5 } },
+                new object[] { stringLevel3, values_ab },
+                new object[] { intLevel3, values_5_5 },
+                new object[] { longLevel3, values_5_5 },
 
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.String", "Dictionary.Key.Dictionary.Key.Dictionary.String" }, new object[] { "a", "b" }, false },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.Int", "Dictionary.Key.Dictionary.Key.Dictionary.Int" }, new object[] {5,5 }, false },
-                new object[] { new string[] { "Dictionary.Key.Dictionary.Key.Dictionary.Key.3.Long", "Dictionary.Key.Dictionary.Key.Dictionary.Long" }, new object[] { 5,5 }, false },
+                new object[] { stringMismatch, values_ab, false },
+                new object[] { intMismatch, values_5_5, false },
+                new object[] { longMismatch, values_5_5, false },
             };
         }
 
