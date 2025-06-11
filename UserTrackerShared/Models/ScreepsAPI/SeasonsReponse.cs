@@ -10,9 +10,9 @@ namespace UserTrackerShared.Models.ScreepsAPI
     public class Season
     {
         [JsonProperty("_id")]
-        public string Id { get; set; }
+        public required string Id { get; set; }
         [JsonProperty("name")]
-        public string Name { get; set; }
+        public required string Name { get; set; }
     }
     public class SeasonsReponse
     {
@@ -20,6 +20,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int Ok { get; set; }
 
         [JsonProperty("seasons")]
-        public List<Season> Seasons { get; set; }
+        public required List<Season> Seasons { get; set; }
     }
 }

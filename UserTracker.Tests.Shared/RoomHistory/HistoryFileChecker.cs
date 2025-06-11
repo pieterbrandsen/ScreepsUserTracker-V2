@@ -20,8 +20,7 @@ namespace UserTracker.Tests.RoomHistory
             for (int y = 0; y < ids.Length; y++)
             {
                 var id = ids[y];
-                var obj = GetObjectFromHistory.GetById(history, id);
-                if (obj == null) throw new Exception("obj was null");
+                var obj = GetObjectFromHistory.GetById(history, id) ?? throw new Exception("obj was null");
                 if (history.HistoryChangesDictionary == null) throw new Exception("history.HistoryChangesDictionary was null");
 
                 history.HistoryChangesDictionary.TryGetValue(id, out var historyChanges);

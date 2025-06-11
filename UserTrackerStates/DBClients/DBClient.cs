@@ -69,7 +69,7 @@ namespace UserTrackerStates.DBClients
 
         public static void WriteAdminUtilsData(AdminUtilsResponse data)
         {
-            var dto = new AdminUtilsDTO(data);
+            var dto = new AdminUtilsDto(data);
             if (ConfigSettingsState.InfluxDbEnabled)
             {
                 // InfluxDBClientState.WriteSingleUserdData(user);

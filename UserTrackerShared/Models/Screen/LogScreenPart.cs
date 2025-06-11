@@ -7,15 +7,14 @@ namespace UserTrackerShared.Models.Screen
     {
         public LogScreenPart(bool enabled, int width, int startHeight, int height) : base(enabled, width, startHeight, height)
         {
-            _updateTimer = new Timer(100);
-            _updateTimer.Elapsed += OnUpdateTimer;
-            _updateTimer.AutoReset = true;
-            _updateTimer.Enabled = true;
+            var updateTimer = new Timer(100);
+            updateTimer.Elapsed += OnUpdateTimer;
+            updateTimer.AutoReset = true;
+            updateTimer.Enabled = true;
         }
-        private Timer? _updateTimer;
         private bool isRenderingLogs = false;
-        public bool HasNewLogs = false;
-        public List<string> LogEntries = new List<string>();
+        public bool HasNewLogs { get; set; } = false;
+        public List<string> LogEntries { get; set; } = new List<string>();
 
         private void OnUpdateTimer(Object? source, ElapsedEventArgs e)
         {

@@ -12,6 +12,6 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("ok")]
         public int Ok { get; set; }
         [JsonProperty("user")]
-        public ScreepsUser User { get; set; }
+        public required ScreepsUser User { get; set; }
     }
 }

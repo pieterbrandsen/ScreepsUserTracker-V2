@@ -6,7 +6,7 @@ namespace UserTracker.Tests.Helper
 {
     public class GetObjectFromHistory
     {
-        public static object GetById(ScreepsRoomHistory roomHistory, string id)
+        public static object? GetById(ScreepsRoomHistory roomHistory, string id)
         {
             var type = roomHistory.TypeMap[id];
             switch (type)
