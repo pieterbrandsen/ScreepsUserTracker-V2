@@ -11,7 +11,7 @@ namespace UserTrackerShared.Helpers.Tests
 {
     public static class AssertHistoryHelper
     {
-        public static (long, Dictionary<string, long>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
+        public static (long, Dictionary<string, long>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string? filePath = "notSupplied")
         {
             var seenProperties = new Dictionary<string, long>();
             long changesProcessed = 0;

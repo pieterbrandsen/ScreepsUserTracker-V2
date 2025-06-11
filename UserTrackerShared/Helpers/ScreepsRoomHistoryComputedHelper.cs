@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Text;
+using UserTrackerShared.Helpers.Tests;
 using UserTrackerShared.Models;
 
 namespace UserTrackerShared.Helpers
@@ -463,6 +464,11 @@ namespace UserTrackerShared.Helpers
             {
                 var objChanges = objChangesKvp.Value;
                 roomHistory = UpdateRoomHistory(objChangesKvp.Key, roomHistory, objChanges);
+            }
+
+            if (ConfigSettingsState.LiveAssertRoomHistory)
+            {
+                AssertHistoryHelper.AssertHistory(roomHistory, tickObject);
             }
 
             return roomHistory;

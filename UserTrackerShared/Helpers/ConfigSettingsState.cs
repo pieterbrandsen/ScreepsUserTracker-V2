@@ -40,6 +40,7 @@ namespace UserTrackerShared.Helpers
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
         public static string ObjectsFolder { get; set; } = string.Empty;
+        public static bool LiveAssertRoomHistory { get; set; }
 
         public static void Init()
         {
@@ -79,6 +80,7 @@ namespace UserTrackerShared.Helpers
 
             WriteHistoryFiles = Convert.ToBoolean(appSettings["WRITE_HISTORY_FILES"]);
             WriteHistoryProperties = Convert.ToBoolean(appSettings["WRITE_HISTORY_PROPERTIES"]);
+            LiveAssertRoomHistory = Convert.ToBoolean(appSettings["LIVE_ASSERT_ROOM_HISTORY"]);
         }
         public static void InitTest(AppSettingsSection appSettingsSection)
         {
