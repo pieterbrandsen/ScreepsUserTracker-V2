@@ -21,22 +21,22 @@ namespace UserTrackerScreepsApi
         public static async Task<T?> ReadAndConvertStream<T>(HttpContent httpContent)
         {
             using Stream responseStream = await httpContent.ReadAsStreamAsync().ConfigureAwait(false);
-            using StreamReader reader = new StreamReader(responseStream);
-            using JsonTextReader jsonReader = new JsonTextReader(reader);
+            using StreamReader reader = new(responseStream);
+            using JsonTextReader jsonReader = new(reader);
 
-            JsonSerializer serializer = new JsonSerializer();
+            JsonSerializer serializer = new();
             return serializer.Deserialize<T>(jsonReader);
         }
     }
     public static class ScreepsAPI
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
-        private static SemaphoreSlim _normalThrottler = new SemaphoreSlim(1);
-        private static SemaphoreSlim _filesThrottler = new SemaphoreSlim(500);
+        private static readonly SemaphoreSlim _normalThrottler = new(1);
+        private static readonly SemaphoreSlim _filesThrottler = new(500);
 
-        private static HttpClient _normalHttpClient = new HttpClient();
+        private static readonly HttpClient _normalHttpClient = new();
 
-        private static HttpClient _filesHttpClient = new(new SocketsHttpHandler
+        private static readonly HttpClient _filesHttpClient = new(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
@@ -94,13 +94,13 @@ namespace UserTrackerScreepsApi
             return clone;
         }
 
-        public static string ScreepsAPIUrl = ConfigSettingsState.ScreepsHttpsUrl;
-        public static string ScreepsAPIHTTPUrl = ConfigSettingsState.ScreepsHttpUrl;
+        public static string ScreepsAPIUrl => ConfigSettingsState.ScreepsHttpsUrl;
+        public static string ScreepsAPIHTTPUrl => ConfigSettingsState.ScreepsHttpUrl;
         public static string ScreepsAPIToken => ConfigSettingsState.ScreepsToken;
 
         private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false)
         {
-            var reqUrl = "";
+            string reqUrl;
             if (isHistoryRequest)
             {
                 reqUrl = ScreepsAPIHTTPUrl + path;
@@ -111,7 +111,7 @@ namespace UserTrackerScreepsApi
             }
             if (method == HttpMethod.Post && httpContent == null)
             {
-                throw new ArgumentNullException("No HttpContent provided");
+                throw new ArgumentNullException(nameof(httpContent));
             }
 
             try
@@ -177,7 +177,7 @@ namespace UserTrackerScreepsApi
             var path = $"/api/auth/signin?email={username}&password={password}";
             var body = new StringContent("", Encoding.UTF8, "application/json");
 
-            var (Result, Status) = await ExecuteRequestAsync<SignInResponse>(HttpMethod.Post, path, body);
+            var (Result, _) = await ExecuteRequestAsync<SignInResponse>(HttpMethod.Post, path, body);
             return Result;
         }
 
@@ -185,7 +185,7 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/api/game/time?shard={shard}";
 
-            var (Result, Status) = await ExecuteRequestAsync<TimeResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<TimeResponse>(HttpMethod.Get, path);
             return Result;
         }
 
@@ -193,7 +193,7 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/api/leaderboard/seasons";
 
-            var (Result, Status) = await ExecuteRequestAsync<SeasonsReponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<SeasonsReponse>(HttpMethod.Get, path);
             return Result;
         }
 
@@ -201,7 +201,7 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/api/leaderboard/list?limit={limit}&mode={mode}&offset={offset}&season={season}";
 
-            var (Result, Status) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
         public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
@@ -285,7 +285,7 @@ namespace UserTrackerScreepsApi
         {
             var path = $"/api/leaderboard/find?mode={mode}&username={username}";
 
-            var (Result, Status) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
 
@@ -307,7 +307,7 @@ namespace UserTrackerScreepsApi
         {
             var path = "/stats";
 
-            var (Result, Status) = await ExecuteRequestAsync<AdminUtilsResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<AdminUtilsResponse>(HttpMethod.Get, path);
             return Result;
         }
 
@@ -341,7 +341,7 @@ namespace UserTrackerScreepsApi
         {
             mapStatsResponse ??= new MapStatsResponse();
 
-            HashSet<string> rooms = new HashSet<string>();
+            HashSet<string> rooms = [];
             int layerSize = 10;
 
             int min = startIndex;
