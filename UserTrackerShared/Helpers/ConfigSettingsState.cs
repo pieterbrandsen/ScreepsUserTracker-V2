@@ -12,73 +12,73 @@ namespace UserTrackerShared.Helpers
     {
         public static bool RunningHistoryTested { get; set; }
 
-        public static string? ScreepsToken { get; set; }
-        public static string? ScreepsHttpsUrl { get; set; }
-        public static string? ScreepsHttpUrl { get; set; }
+        public static string ScreepsToken { get; set; } = string.Empty;
+        public static string ScreepsHttpsUrl { get; set; } = string.Empty;
+        public static string ScreepsHttpUrl { get; set; } = string.Empty;
         public static bool ScreepsIsPrivateServer { get; set; }
-        public static string? ScreepsUsername { get; set; }
-        public static string? ScreepsPassword { get; set; }
-        public static string? ScreepsShardName { get; set; }
+        public static string ScreepsUsername { get; set; } = string.Empty;
+        public static string ScreepsPassword { get; set; } = string.Empty;
+        public static string ScreepsShardName { get; set; } = string.Empty;
 
-        public static string? ServerName { get; set; }
+        public static string ServerName { get; set; } = string.Empty;
 
         public static bool InfluxDbEnabled { get; set; }
-        public static string? InfluxDbHost { get; set; }
-        public static string? InfluxDbToken { get; set; }
+        public static string InfluxDbHost { get; set; } = string.Empty;
+        public static string InfluxDbToken { get; set; } = string.Empty;
 
         public static bool GraphiteDbEnabled { get; set; }
-        public static string? GraphiteDbHost { get; set; }
+        public static string GraphiteDbHost { get; set; } = string.Empty;
         public static int GraphiteDbPort { get; set; }
 
         public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
         public static bool StartsShards { get; set; }
-        public static string? LogsFolder { get; set; }
+        public static string LogsFolder { get; set; } = string.Empty;
 
 
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
-        public static string? ObjectsFolder { get; set; }
+        public static string ObjectsFolder { get; set; } = string.Empty;
 
         public static void Init()
         {
             Init(ConfigurationManager.AppSettings);
         }
-        private static void Init(NameValueCollection appsettings)
+        private static void Init(NameValueCollection appSettings)
         {
-            RunningHistoryTested = Convert.ToBoolean(appsettings["RUNNING_HISTORY_TESTED"]);
+            RunningHistoryTested = Convert.ToBoolean(appSettings["RUNNING_HISTORY_TESTED"]);
 
-            ScreepsToken = appsettings["SCREEPS_API_TOKEN"] ?? "";
-            ScreepsHttpsUrl = appsettings["SCREEPS_API_HTTPS_URL"] ?? "";
-            ScreepsHttpUrl = appsettings["SCREEPS_API_HTTP_URL"] ?? "";
+            ScreepsToken = appSettings["SCREEPS_API_TOKEN"] ?? "";
+            ScreepsHttpsUrl = appSettings["SCREEPS_API_HTTPS_URL"] ?? "";
+            ScreepsHttpUrl = appSettings["SCREEPS_API_HTTP_URL"] ?? "";
             ScreepsIsPrivateServer = ScreepsHttpsUrl != "https://screeps.com";
-            ScreepsUsername = appsettings["SCREEPS_API_USERNAME"] ?? "";
-            ScreepsPassword = appsettings["SCREEPS_API_PASSWORD"] ?? "";
-            ScreepsShardName = appsettings["SCREEPS_SHARDNAME"] ?? "";
+            ScreepsUsername = appSettings["SCREEPS_API_USERNAME"] ?? "";
+            ScreepsPassword = appSettings["SCREEPS_API_PASSWORD"] ?? "";
+            ScreepsShardName = appSettings["SCREEPS_SHARDNAME"] ?? "";
 
-            ServerName = appsettings["SERVER_NAME"] ?? "";
+            ServerName = appSettings["SERVER_NAME"] ?? "";
 
-            InfluxDbEnabled = Convert.ToBoolean(appsettings["INFLUXDB_ENABLED"]);
-            InfluxDbHost = appsettings["INFLUXDB_HOST"] ?? "";
-            InfluxDbToken = appsettings["INFLUXDB_TOKEN"] ?? "";
+            InfluxDbEnabled = Convert.ToBoolean(appSettings["INFLUXDB_ENABLED"]);
+            InfluxDbHost = appSettings["INFLUXDB_HOST"] ?? "";
+            InfluxDbToken = appSettings["INFLUXDB_TOKEN"] ?? "";
 
-            GraphiteDbEnabled = Convert.ToBoolean(appsettings["GRAPHITE_ENABLED"]);
-            GraphiteDbHost = appsettings["GRAPHITE_HOST"] ?? "";
-            GraphiteDbPort = Convert.ToInt32(appsettings["GRAPHITE_PORT"] ?? "");
+            GraphiteDbEnabled = Convert.ToBoolean(appSettings["GRAPHITE_ENABLED"]);
+            GraphiteDbHost = appSettings["GRAPHITE_HOST"] ?? "";
+            GraphiteDbPort = Convert.ToInt32(appSettings["GRAPHITE_PORT"] ?? "");
 
-            PullBackwardsTickAmount = Convert.ToInt32(appsettings["PULL_BACKWARDS_TICK_AMOUNT"]);
-            TicksInFile = Convert.ToInt32(appsettings["TICKS_IN_FILE"]);
-            GetAllUsers = Convert.ToBoolean(appsettings["GET_ALL_USERS"]);
-            StartsShards = Convert.ToBoolean(appsettings["START_SHARDS"]);
-            LogsFolder = appsettings["LOGS_FOLDER"] ?? "";
+            PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
+            TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);
+            GetAllUsers = Convert.ToBoolean(appSettings["GET_ALL_USERS"]);
+            StartsShards = Convert.ToBoolean(appSettings["START_SHARDS"]);
+            LogsFolder = appSettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new ArgumentException("No logs folder provided");
-            ObjectsFolder = appsettings["OBJECTS_FOLDER"] ?? "";
+            ObjectsFolder = appSettings["OBJECTS_FOLDER"] ?? "";
             if (ObjectsFolder == "") throw new ArgumentException("No objects folder provided");
 
 
-            WriteHistoryFiles = Convert.ToBoolean(appsettings["WRITE_HISTORY_FILES"]);
-            WriteHistoryProperties = Convert.ToBoolean(appsettings["WRITE_HISTORY_PROPERTIES"]);
+            WriteHistoryFiles = Convert.ToBoolean(appSettings["WRITE_HISTORY_FILES"]);
+            WriteHistoryProperties = Convert.ToBoolean(appSettings["WRITE_HISTORY_PROPERTIES"]);
         }
         public static void InitTest(AppSettingsSection appSettingsSection)
         {

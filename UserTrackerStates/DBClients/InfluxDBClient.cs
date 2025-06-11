@@ -24,11 +24,9 @@ namespace UserTrackerStates.DBClients
         public long Timestamp { get; set; }
         public string Username { get; set; }
         public string Field { get; set; }
-        public object Value { get; set; }
+        public object? Value { get; set; }
 
-        public PointDataParameter() { }
-
-        public PointDataParameter(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object value)
+        public PointDataParameter(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object? value)
         {
             Measurement = measurement;
             Shard = shard;
@@ -123,7 +121,8 @@ namespace UserTrackerStates.DBClients
             {
                 _writeApi = _client.GetWriteApiAsync();
                 _isInitialized = true;
-                _logger.Information(string.Format("InfluxDB client connected to host {0}", ConfigSettingsState.InfluxDbHost));
+                var message = string.Format("InfluxDB client connected to host {0}", ConfigSettingsState.InfluxDbHost);
+                _logger.Information(message);
             }
             catch (Exception ex)
             {
@@ -155,7 +154,7 @@ namespace UserTrackerStates.DBClients
         {
             // Increment pending counter when adding a new point.
             Interlocked.Increment(ref _pendingPointCount);
-            _channel.Writer.TryWrite((bucket, point));
+            _channel?.Writer.TryWrite((bucket, point));
         }
 
         public static void UploadData(string shard, string room, long tick, long timestamp, string username, string bucket, object obj)
@@ -181,7 +180,7 @@ namespace UserTrackerStates.DBClients
                     var point = InfluxDBPointHelper.CreatePoint(pointParameters);
                     // Increment pending counter when adding a new point.
                     Interlocked.Increment(ref _pendingPointCount);
-                    _channel.Writer.TryWrite((bucket, point));
+                    _channel?.Writer.TryWrite((bucket, point));
                 }
             }
             catch (Exception ex)
@@ -194,6 +193,7 @@ namespace UserTrackerStates.DBClients
         {
             while (_isRunning)
             {
+                if (_channel == null || _writeApi == null) continue;
                 // Create a temporary dictionary to group points per bucket.
                 var batchDict = new Dictionary<string, List<PointData>>();
                 int batchCount = 0;
@@ -251,7 +251,8 @@ namespace UserTrackerStates.DBClients
         public static void Stop()
         {
             _isRunning = false;
-            _channel.Writer.Complete();
+            _channel?.Writer.Complete();
+            if (_workerTasks == null) return;
             Task.WaitAll(_workerTasks.ToArray());
             _logger.Information("Worker tasks stopped.");
         }
@@ -318,7 +319,8 @@ namespace UserTrackerStates.DBClients
             }
             catch (Exception e)
             {
-                _logger.Error(e, string.Format("Error uploading {0}/{1}/{2}", shard, room, tick));
+                var message = string.Format("Error uploading {0}/{1}/{2}", shard, room, tick);
+                _logger.Error(e, message);
             }
         }
 

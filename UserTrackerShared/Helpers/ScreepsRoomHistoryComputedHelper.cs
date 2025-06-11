@@ -47,7 +47,7 @@ namespace UserTrackerShared.Helpers
                     break;
                 case "creep":
                     var hasController = roomHistory.Structures.Controller != null;
-                    var isOwnCreep = hasController && (roomHistory.Structures.Controller?.User == user || roomHistory.Structures.Controller.Reservation?.User == user);
+                    var isOwnCreep = hasController && (roomHistory.Structures.Controller?.User == user || roomHistory.Structures.Controller?.Reservation?.User == user);
                     Creep? creep = null;
                     roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out Creep? owCreep);
                     roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out Creep? eCreep);

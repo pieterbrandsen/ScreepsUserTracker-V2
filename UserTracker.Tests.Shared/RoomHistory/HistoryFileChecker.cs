@@ -1,12 +1,9 @@
-﻿using FluentAssertions;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Buffers;
-using System.Threading.Tasks;
 using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
-using UserTrackerStates.DBClients;
 
 namespace UserTracker.Tests.RoomHistory
 {
@@ -50,21 +47,18 @@ namespace UserTracker.Tests.RoomHistory
 
                     // Check if any variation exists in historyChanges
                     var matchedKey = variations.FirstOrDefault(key => historyChanges.ContainsKey(key));
-                    if (matchedKey != null)
+                    if (matchedKey != null && historyChanges.TryGetValue(matchedKey, out var val))
                     {
-                        if (historyChanges.TryGetValue(matchedKey, out var val))
+                        var convertedVal = val != null ? val.ToString() : "null";
+                        var convertedKV = kv.Value?.ToString() ?? "null";
+
+                        if (!convertedKV.Equals(convertedVal))
                         {
-                            var convertedVal = val != null ? val.ToString() : "null";
-                            var convertedKV = kv.Value?.ToString() ?? "null";
-
-                            if (!convertedKV.Equals(convertedVal))
-                            {
-                                throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",", variations)} : {convertedKV} vs {convertedVal}");
-                            }
-                            changesProcessed += 1;
-                            seenProperties.Add(matchedKey);
-
+                            throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",", variations)} : {convertedKV} vs {convertedVal}");
                         }
+                        changesProcessed += 1;
+                        seenProperties.Add(matchedKey);
+
                     }
                 }
             }
@@ -84,10 +78,6 @@ namespace UserTracker.Tests.RoomHistory
             if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
             roomData.TryGetValue("base", out JToken? jTokenBase);
             if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
-
-            var room = "";
-            roomData.TryGetValue("room", out JToken? jTokenRoom);
-            if (jTokenRoom != null) room = jTokenRoom.Value<string>() ?? "";
 
             if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
             {

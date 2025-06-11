@@ -125,7 +125,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                var flattenedData = new Dictionary<string, object>();
+                var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
                 InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
@@ -149,7 +149,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-                var flattenedData = new Dictionary<string, object>();
+                var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
                 InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
@@ -208,7 +208,8 @@ namespace UserTrackerStates.DBClients
             }
             catch (Exception e)
             {
-                _logger.Error(e, string.Format("Error uploading {0}/{1}/{2}", shard, room, tick));
+                var errorMessage = string.Format("Error uploading {0}/{1}/{2}", shard, room, tick);
+                _logger.Error(e, errorMessage);
             }
         }
 

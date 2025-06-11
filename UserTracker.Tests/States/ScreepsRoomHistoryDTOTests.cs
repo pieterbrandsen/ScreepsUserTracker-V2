@@ -222,7 +222,6 @@ namespace UserTracker.Tests.Models
             {
                 GroundResources = new Dictionary<string, GroundResource>
                 {
-                    { "energy", null }
                 }
             };
 

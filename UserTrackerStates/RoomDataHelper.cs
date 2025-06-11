@@ -49,7 +49,7 @@ namespace UserTrackerShared.Helpers
                             }
                         }
 
-                        if (roomHistory.Structures.Controller?.Reservation != null)
+                        if (roomHistory.Structures?.Controller?.Reservation?.User != null)
                         {
                             isReservedRoom = true;
                             var userKey = roomHistory.Structures.Controller.Reservation.User;

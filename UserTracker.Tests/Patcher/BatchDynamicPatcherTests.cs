@@ -17,7 +17,7 @@ namespace UserTracker.Tests.Patcher
             var historyFilesLocation = cfg.AppSettings.Settings["HISTORY_BASE_PATH"]?.Value;
             if (string.IsNullOrEmpty(historyFilesLocation)) throw new Exception("Missing base path");
 
-            int.TryParse(cfg.AppSettings.Settings["MAX_FILES"]?.Value, out int maxFiles);
+            var maxFiles = int.Parse(cfg.AppSettings.Settings["MAX_FILES"]?.Value ?? "1000");
             var files = Directory.EnumerateFiles(historyFilesLocation)
                 .Concat(Directory.GetDirectories(historyFilesLocation)
                     .SelectMany(subdir => Directory.EnumerateFiles(subdir)))

@@ -46,18 +46,22 @@ namespace UserTracker.Tests.Patcher
                 if (double.TryParse(x.ToString(), out double dx) &&
                     double.TryParse(y.ToString(), out double dy))
                 {
-                    return dx == dy;
+                    const double tolerance = 1e-9;
+                    return Math.Abs(dx - dy) < tolerance;
                 }
             }
-            catch { }
+            catch
+            {
+                // Accept
+            }
 
             // Fallback: string comparison
             return x.ToString() == y.ToString();
         }
 
-        public static IEnumerable<object[]> ArrayData()
+        public static IEnumerable<object?[]> ArrayData()
         {
-            return new List<object[]>
+            return new List<object?[]>
             {
                 new object[] { "Array[0].String", "a" },
                 new object[] { "Array[0].Int", 5 },
@@ -67,9 +71,9 @@ namespace UserTracker.Tests.Patcher
                 new object[] { "Array>0.Int", 5 },
                 new object[] { "Array>0.Long", 5 },
 
-                new object[] { "Array[0].String", null },
-                new object[] { "Array[0].Int", null },
-                new object[] { "Array[0].Long", null },
+                new object?[] { "Array[0].String", null },
+                new object?[] { "Array[0].Int", null },
+                new object?[] { "Array[0].Long", null },
 
                 new object[] { "Array[0].Array[0].String", "a" },
                 new object[] { "Array[0].Array[0].Int", 5 },
@@ -85,7 +89,7 @@ namespace UserTracker.Tests.Patcher
             };
         }
 
-        public static IEnumerable<object[]> MultipleArrayData()
+        public static IEnumerable<object?[]> MultipleArrayData()
         {
             var values_ab = new object[] { "a", "b" };
             var values_5_5 = new object[] { 5, 5 };
@@ -106,7 +110,7 @@ namespace UserTracker.Tests.Patcher
             var intMismatch = new[] { "Array[0].Array[0].Array[3].Int", "Array[0].Array[0].Array[1].Int" };
             var longMismatch = new[] { "Array[0].Array[0].Array[3].Long", "Array[0].Array[0].Array[1].Long" };
 
-            return new List<object[]>
+            return new List<object?[]>
             {
                 new object[] { stringLevel1, values_ab },
                 new object[] { intLevel1, values_5_5 },
@@ -292,7 +296,9 @@ namespace UserTracker.Tests.Patcher
 
         [Theory]
         [MemberData(nameof(MultipleArrayData), MemberType = typeof(DynamicPatcherTests))]
-        public void MultipleArrayData_ReturnsCorrectResult(string[] paths, object[] expecteds, bool shouldNotFail = true)
+        [MemberData(nameof(MultipleListData), MemberType = typeof(DynamicPatcherTests))]
+        [MemberData(nameof(MultipleDictionaryData), MemberType = typeof(DynamicPatcherTests))]
+        public void MultipleData_ReturnsCorrectResult(string[] paths, object[] expecteds, bool shouldNotFail = true)
         {
             var obj = new TestObject();
             foreach (string path in paths)
@@ -351,36 +357,6 @@ namespace UserTracker.Tests.Patcher
         }
 
         [Theory]
-        [MemberData(nameof(MultipleListData), MemberType = typeof(DynamicPatcherTests))]
-        public void MultipleListData_ReturnsCorrectResult(string[] paths, object[] expecteds, bool shouldNotFail = true)
-        {
-            var obj = new TestObject();
-            foreach (string path in paths)
-            {
-                try
-                {
-                    var expected = expecteds[Array.IndexOf(paths, path)];
-                    DynamicPatcher.ApplyPatch(obj, path, expected);
-                }
-                catch (Exception)
-                {
-                    if (shouldNotFail) throw;
-                }
-            }
-
-            var changes = new Dictionary<string, object?>();
-            var jToken = JToken.Parse(JsonConvert.SerializeObject(obj));
-            JsonHelper.FlattenJson(jToken, new StringBuilder(), changes);
-            foreach (string path in paths)
-            {
-                var change = changes.FirstOrDefault(c => c.Key == path);
-                var expected = expecteds[Array.IndexOf(paths, path)];
-                Assert.True((change.Key == path) == shouldNotFail);
-                Assert.True((AreEqual(change.Value, expected)) == shouldNotFail);
-            }
-        }
-
-        [Theory]
         [MemberData(nameof(DictionaryData), MemberType = typeof(DynamicPatcherTests))]
         public void DictionaryData_ReturnsCorrectResult(string path, object expected, bool shouldNotFail = true)
         {
@@ -401,36 +377,6 @@ namespace UserTracker.Tests.Patcher
             var change = changes.FirstOrDefault(c => c.Key == path);
             Assert.True((change.Key == path) == shouldNotFail);
             Assert.True((AreEqual(change.Value, expected)) == shouldNotFail);
-        }
-
-        [Theory]
-        [MemberData(nameof(MultipleDictionaryData), MemberType = typeof(DynamicPatcherTests))]
-        public void MultipleDictionaryData_ReturnsCorrectResult(string[] paths, object[] expecteds, bool shouldNotFail = true)
-        {
-            var obj = new TestObject();
-            foreach (string path in paths)
-            {
-                try
-                {
-                    var expected = expecteds[Array.IndexOf(paths, path)];
-                    DynamicPatcher.ApplyPatch(obj, path, expected);
-                }
-                catch (Exception)
-                {
-                    if (shouldNotFail) throw;
-                }
-            }
-
-            var changes = new Dictionary<string, object?>();
-            var jToken = JToken.Parse(JsonConvert.SerializeObject(obj));
-            JsonHelper.FlattenJson(jToken, new StringBuilder(), changes);
-            foreach (string path in paths)
-            {
-                var change = changes.FirstOrDefault(c => c.Key == path);
-                var expected = expecteds[Array.IndexOf(paths, path)];
-                Assert.True((change.Key == path) == shouldNotFail);
-                Assert.True((AreEqual(change.Value, expected)) == shouldNotFail);
-            }
         }
 
         [Fact]

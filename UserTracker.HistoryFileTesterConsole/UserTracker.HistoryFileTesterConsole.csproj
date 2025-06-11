@@ -41,8 +41,4 @@
     <ProjectReference Include="..\UserTrackerStates\UserTrackerStates.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Helpers\" />
-  </ItemGroup>
-
 </Project>

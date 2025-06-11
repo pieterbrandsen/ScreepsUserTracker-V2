@@ -476,7 +476,7 @@ namespace UserTrackerShared.Models
                 var groundResourceObj = his.GroundResources[groundResourceKeys[gr]];
                 if (groundResourceObj == null) continue;
 
-                var resourceType = groundResourceObj.ResourceType;
+                var resourceType = groundResourceObj.ResourceType ?? "";
                 PropertyInfo? property = groundResourceObj.GetType()
                     .GetProperty(resourceType) ?? groundResourceObj.GetType().GetProperty(char.ToUpperInvariant(resourceType[0]) + resourceType.Substring(1));
                 if (property == null) continue;

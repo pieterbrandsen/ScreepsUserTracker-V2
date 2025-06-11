@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System.Configuration;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
@@ -40,13 +41,13 @@ namespace UserTrackerScreepsApi
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
         });
-        private static async Task<(HttpResponseMessage response, int retyCount)> ThrottledRequestAsync(HttpRequestMessage request)
+        private static async Task<(HttpResponseMessage? response, int retyCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();
             try
             {
                 var retryCount = 0;
-                HttpResponseMessage response = null;
+                HttpResponseMessage? response = null;
 
                 while (retryCount < 100)
                 {
@@ -116,7 +117,7 @@ namespace UserTrackerScreepsApi
             try
             {
                 var retryCount = 0;
-                HttpResponseMessage response = null;
+                HttpResponseMessage? response = null;
                 if (isHistoryRequest)
                 {
                     await _filesThrottler.WaitAsync();
@@ -150,16 +151,18 @@ namespace UserTrackerScreepsApi
                     request.Headers.Add("X-Username", ScreepsAPIToken);
                     (response, retryCount) = await ThrottledRequestAsync(request);
                 }
-                _logger.Information($"{reqUrl} - {response.StatusCode} - {retryCount}");
 
-                if (response.IsSuccessStatusCode)
+                var infoMessage = "{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
+                _logger.Information(infoMessage);
+
+                if (response?.IsSuccessStatusCode ??false)
                 {
                     var result = await JSONConvertHelper.ReadAndConvertStream<T>(response.Content);
                     return (result, response.StatusCode);
                 }
                 else
                 {
-                    return (default, response.StatusCode);
+                    return (default, response?.StatusCode ?? HttpStatusCode.InternalServerError);
                 }
             }
             catch (Exception ex)
@@ -270,7 +273,7 @@ namespace UserTrackerScreepsApi
                 else
                 {
                     leaderboardsList.Add(season, (gclLeaderboardList, powerLeaderboardList));
-                    season = DateTime.Parse(season).AddMonths(-1).ToString("yyyy-MM");
+                    season = DateTime.Parse(season, CultureInfo.InvariantCulture).AddMonths(-1).ToString("yyyy-MM", CultureInfo.InvariantCulture);
                 }
             }
 
@@ -291,7 +294,7 @@ namespace UserTrackerScreepsApi
             var path = $"/api/user/find?id={userId}";
 
             var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);
-            return Status == HttpStatusCode.OK && Result.Ok == 1 ? Result.User : null;
+            return Status == HttpStatusCode.OK && Result?.Ok == 1 ? Result.User : null;
         }
 
         public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)
@@ -381,10 +384,6 @@ namespace UserTrackerScreepsApi
                     mapStatsResponse.Users = mapStatsResponse.Users
                         .Concat(mapStats.Users.Where(user => !mapStatsResponse.Users.ContainsKey(user.Key)))
                         .ToDictionary();
-                }
-                else
-                {
-
                 }
             }
 

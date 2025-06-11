@@ -147,7 +147,7 @@ namespace UserTrackerShared.States
             LastSyncTime = syncTime;
             isSyncing = false;
         }
-        private async void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
+        private void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
         {
             _ = StartUpdate();
         }

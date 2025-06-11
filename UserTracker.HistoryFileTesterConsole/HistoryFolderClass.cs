@@ -9,31 +9,30 @@ namespace UserTracker.HistoryFileTesterConsole
 {
     public class HistoryFolderClass
     {
-        private string _historyFilesLocation;
-        private string _badFilesPath;
-        private string _totalChangesTextPath;
-        private string _badFilesErrorsPath;
-        private string _seenPropertiesPath;
-        private string _goodFilesPath;
+        private readonly string _historyFilesLocation;
+        private readonly string _badFilesPath;
+        private readonly string _totalChangesTextPath;
+        private readonly string _badFilesErrorsPath;
+        private readonly string _seenPropertiesPath;
+        private readonly string _goodFilesPath;
 
         private bool _isWriting = false;
         private long _seenProperties = 0;
-        private Dictionary<string, long> _seenPropertiesDict = new Dictionary<string, long>();
+        private readonly Dictionary<string, long> _seenPropertiesDict = new Dictionary<string, long>();
+        private readonly long _originalTotalChanges = 0;
+        private readonly long _originalSeenPropertiesChanges = 0;
         private long _totalChanges = 0;
-        private long _originalTotalChanges = 0;
-        private long _originalSeenPropertiesChanges = 0;
         private int _fileProcessedCount = 0;
 
-        private ConcurrentBag<long> _totalChangesToBeWritten = new();
-        private ConcurrentBag<string> _linesToBeWrittenGood = new();
-        private ConcurrentBag<string> _linesToBeWrittenBad = new();
-        private ConcurrentBag<string> _linesToBeWrittenBadErrors = new();
-        private ConcurrentBag<string> _linesToBeWrittenProperties = new();
-        private IEnumerable<string> _files;
+        private readonly ConcurrentBag<long> _totalChangesToBeWritten = new();
+        private readonly ConcurrentBag<string> _linesToBeWrittenGood = new();
+        private readonly ConcurrentBag<string> _linesToBeWrittenBad = new();
+        private readonly ConcurrentBag<string> _linesToBeWrittenProperties = new();
+        private readonly IEnumerable<string> _files;
 
-        private HashSet<string> _goodFiles = new HashSet<string>();
-        private HashSet<string> _badFiles = new HashSet<string>();
-        private ConcurrentDictionary<string, int> _badFileErrorCounts = new ConcurrentDictionary<string, int>();
+        private readonly HashSet<string> _goodFiles = new HashSet<string>();
+        private readonly HashSet<string> _badFiles = new HashSet<string>();
+        private readonly ConcurrentDictionary<string, int> _badFileErrorCounts = new ConcurrentDictionary<string, int>();
 
         private void LoadExistingErrorCounts(string path)
         {
@@ -206,7 +205,6 @@ namespace UserTracker.HistoryFileTesterConsole
 
             writeStopwatch.Stop();
             Console.WriteLine();
-            //Console.WriteLine($"Write times: Good {Math.Round(goodWriteTime.TotalMilliseconds, 2)}ms, Bad {Math.Round(badWriteTime.TotalMilliseconds - goodWriteTime.TotalMilliseconds, 2)}ms, Bad Errors {Math.Round(badErrorWriteTime.TotalMilliseconds - badWriteTime.TotalMilliseconds, 2)}ms, SeenProperties {Math.Round(seenPropertiesWriteTime.TotalMilliseconds - badErrorWriteTime.TotalMilliseconds, 2)}ms TotalLines {Math.Round(totalWriteTime.TotalMilliseconds - seenPropertiesWriteTime.TotalMilliseconds, 2)}ms at {DateTime.Now.ToLongTimeString()}");
             Console.WriteLine($"//====== {DateTime.Now.ToLongTimeString()}");
             Console.WriteLine($"Writing files took {Math.Round(seenPropertiesWriteTime.TotalMilliseconds, 2)}ms");
             Console.WriteLine($"Changes processed {changesProcessedThisSync} in {newGoodFilesCount} good files, {badFilesCount} new bad files");
@@ -238,7 +236,6 @@ namespace UserTracker.HistoryFileTesterConsole
                 if (HistoryConfigSettingsState.ThrowOnBadFile)
                 {
                     Console.WriteLine($"Error processing file {file}: {e.Message}");
-                    //HistoryFileChecker.ParseFile(file);
                     throw;
                 }
             }

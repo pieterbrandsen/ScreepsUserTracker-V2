@@ -154,7 +154,7 @@ namespace UserTrackerShared.States
             }
             WriteAllUsers();
         }
-        private static async void OnUpdateAdminUtilsDataTimer(Object? source, ElapsedEventArgs e)
+        private static async void OnUpdateAdminUtilsDataTimer(Object? source, ElapsedEventArgs? e)
         {
             var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();
             if (adminUtilsResponse != null)
