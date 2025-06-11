@@ -12,9 +12,9 @@ namespace UserTracker.Tests.RoomHistory
 {
     public static class HistoryFileChecker
     {
-        private static (long, HashSet<string>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
+        private static (long, List<string>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
         {
-            var seenProperties = new HashSet<string>();
+            var seenProperties = new List<string>();
             long changesProcessed = 0;
             var ids = history.TypeMap.Keys.ToArray();
             for (int y = 0; y < ids.Length; y++)
@@ -73,9 +73,9 @@ namespace UserTracker.Tests.RoomHistory
             return (changesProcessed, seenProperties);
         }
 
-        private static (long, HashSet<string>) ProcessHistory(JObject roomData, string filePath)
+        private static (long, List<string>) ProcessHistory(JObject roomData, string filePath)
         {
-            var seenProperties = new HashSet<string>();
+            var seenProperties = new List<string>();
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
             roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
@@ -102,7 +102,7 @@ namespace UserTracker.Tests.RoomHistory
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                         var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
                         changesProcessed += vChangesProcessed;
-                        seenProperties.UnionWith(vSeenProcessed);
+                        seenProperties = seenProperties.Concat(vSeenProcessed).ToList();
                     }
                     roomHistoryDTO.Update(roomHistory);
                 }
@@ -111,7 +111,7 @@ namespace UserTracker.Tests.RoomHistory
             return (changesProcessed, seenProperties);
         }
 
-        public static (long, HashSet<string>) ParseFile(string filePath)
+        public static (long, List<string>) ParseFile(string filePath)
         {
             using var reader = new StreamReader(filePath);
             using var jsonReader = new JsonTextReader(reader);

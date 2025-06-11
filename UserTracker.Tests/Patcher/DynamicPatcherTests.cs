@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Configuration;
 using System.Text;
+using UserTracker.Tests.RoomHistory;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
 
@@ -19,6 +21,15 @@ namespace UserTracker.Tests.Patcher
 
     public class DynamicPatcherTests
     {
+        public DynamicPatcherTests()
+        {
+            var configFileMap = new ExeConfigurationFileMap
+            {
+                ExeConfigFilename = "App.Live.Config"
+            };
+            var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            ConfigSettingsState.InitTest(configuration.AppSettings);
+        }
         private static bool AreEqual(object? x, object? y)
         {
             if (x == null || y == null)
@@ -362,6 +373,28 @@ namespace UserTracker.Tests.Patcher
                 var expected = expecteds[Array.IndexOf(paths, path)];
                 Assert.True((change.Key == path) == shouldNotFail);
                 Assert.True((AreEqual(change.Value, expected)) == shouldNotFail);
+            }
+        }
+
+        [Fact]
+        public void ParseFile_ReturnsCorrectChanges()
+        {
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "case4.json");
+            var (changes, properties) = HistoryFileChecker.ParseFile(path);
+
+            Assert.True(changes == 100, "Expected 100 changes, got " + changes);
+            Assert.True(properties.Count == 100, "Expected 10 properties, got " + properties.Count);
+
+            var countDict = new Dictionary<string, int>();
+            foreach (var kv in properties)
+            {
+               countDict[kv] = countDict.GetValueOrDefault(kv, 0) + 1;
+            }
+
+            Assert.True(countDict.Count == 10, "Expected 10 properties, got " + properties.Count);
+            foreach (var kv in countDict)
+            {
+                Assert.True(kv.Value == 10);
             }
         }
     }
