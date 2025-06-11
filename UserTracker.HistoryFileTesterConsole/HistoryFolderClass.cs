@@ -17,22 +17,19 @@ namespace UserTracker.HistoryFileTesterConsole
         private readonly string _goodFilesPath;
 
         private bool _isWriting = false;
-        private long _seenProperties = 0;
-        private readonly Dictionary<string, long> _seenPropertiesDict = new Dictionary<string, long>();
         private readonly long _originalTotalChanges = 0;
-        private readonly long _originalSeenPropertiesChanges = 0;
         private long _totalChanges = 0;
         private int _fileProcessedCount = 0;
 
         private readonly ConcurrentBag<long> _totalChangesToBeWritten = new();
         private readonly ConcurrentBag<string> _linesToBeWrittenGood = new();
         private readonly ConcurrentBag<string> _linesToBeWrittenBad = new();
-        private readonly ConcurrentBag<string> _linesToBeWrittenProperties = new();
         private readonly IEnumerable<string> _files;
 
         private readonly HashSet<string> _goodFiles = new HashSet<string>();
         private readonly HashSet<string> _badFiles = new HashSet<string>();
         private readonly ConcurrentDictionary<string, int> _badFileErrorCounts = new ConcurrentDictionary<string, int>();
+        private readonly ConcurrentDictionary<string, long> _seenPropertiesDict = new ConcurrentDictionary<string, long>();
 
         private void LoadExistingErrorCounts(string path)
         {
@@ -101,8 +98,6 @@ namespace UserTracker.HistoryFileTesterConsole
             _fileProcessedCount = 0;
             _originalTotalChanges = Convert.ToInt64(File.ReadAllText(_totalChangesTextPath));
             _totalChanges = _originalTotalChanges;
-            _originalSeenPropertiesChanges = _seenPropertiesDict.Count;
-            _seenProperties = _originalSeenPropertiesChanges;
 
             _files = Directory.EnumerateFiles(_historyFilesLocation)
                 .Concat(Directory.GetDirectories(_historyFilesLocation)
@@ -167,17 +162,6 @@ namespace UserTracker.HistoryFileTesterConsole
             }
             var badErrorWriteTime = writeStopwatch.Elapsed;
 
-            var newSeenProperties = 0;
-            while (_linesToBeWrittenProperties.TryTake(out var property))
-            {
-                var value = _seenPropertiesDict.GetValueOrDefault(property, 0L) + 1;
-                _seenPropertiesDict[property] = value;
-                if (value == 1)
-                {
-                    newSeenProperties += 1;
-                    _seenProperties += 1;
-                }
-            }
             if (_seenPropertiesDict.Count > 0)
             {
                 var sortedProperties = _seenPropertiesDict.OrderBy(p => p.Key);
@@ -208,7 +192,7 @@ namespace UserTracker.HistoryFileTesterConsole
             Console.WriteLine($"//====== {DateTime.Now.ToLongTimeString()}");
             Console.WriteLine($"Writing files took {Math.Round(seenPropertiesWriteTime.TotalMilliseconds, 2)}ms");
             Console.WriteLine($"Changes processed {changesProcessedThisSync} in {newGoodFilesCount} good files, {badFilesCount} new bad files");
-            Console.WriteLine($"{newSeenProperties} new properties, total seen properties now {_seenProperties}");
+            Console.WriteLine($"total seen properties {_seenPropertiesDict.Count}");
             Console.WriteLine($"Progress {_fileProcessedCount}/{_files.Count()} files, total changes now {_totalChanges}");
             _isWriting = false;
         }
@@ -221,7 +205,11 @@ namespace UserTracker.HistoryFileTesterConsole
                 _totalChangesToBeWritten.Add(changesProcessed);
                 foreach (var property in seenProperties)
                 {
-                    _linesToBeWrittenProperties.Add(property);
+                    _seenPropertiesDict.AddOrUpdate(
+                        property.Key,
+                        addValue: property.Value,
+                        updateValueFactory: (key, oldValue) => oldValue + property.Value
+                    );
                 }
                 _linesToBeWrittenGood.Add(file);
             }

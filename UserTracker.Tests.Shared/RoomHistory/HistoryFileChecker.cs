@@ -9,9 +9,9 @@ namespace UserTracker.Tests.RoomHistory
 {
     public static class HistoryFileChecker
     {
-        private static (long, List<string>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
+        private static (long, Dictionary<string, long>) AssertHistory(ScreepsRoomHistory history, JToken jTokenTick, string filePath)
         {
-            var seenProperties = new List<string>();
+            var seenProperties = new Dictionary<string, long>();
             long changesProcessed = 0;
             var ids = history.TypeMap.Keys.ToArray();
             for (int y = 0; y < ids.Length; y++)
@@ -57,7 +57,9 @@ namespace UserTracker.Tests.RoomHistory
                             throw new Exception($"Values do not match : {filePath}/{history.Tick} : {id}/{matchedKey} from {string.Join(",", variations)} : {convertedKV} vs {convertedVal}");
                         }
                         changesProcessed += 1;
-                        seenProperties.Add(matchedKey);
+
+                        seenProperties.TryGetValue(matchedKey, out long count);
+                        seenProperties[matchedKey] = count + 1;
 
                     }
                 }
@@ -66,9 +68,9 @@ namespace UserTracker.Tests.RoomHistory
             return (changesProcessed, seenProperties);
         }
 
-        private static (long, List<string>) ProcessHistory(JObject roomData, string filePath)
+        private static (long, Dictionary<string, long>) ProcessHistory(JObject roomData, string filePath)
         {
-            var seenProperties = new List<string>();
+            var seenProperties = new Dictionary<string, long>();
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
             roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
@@ -91,7 +93,11 @@ namespace UserTracker.Tests.RoomHistory
                         roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
                         var (vChangesProcessed, vSeenProcessed) = AssertHistory(roomHistory, tickObject, filePath);
                         changesProcessed += vChangesProcessed;
-                        seenProperties = seenProperties.Concat(vSeenProcessed).ToList();
+                        foreach (var kv in vSeenProcessed)
+                        {
+                            seenProperties.TryGetValue(kv.Key, out long count);
+                            seenProperties[kv.Key] = count + kv.Value;
+                        }
                     }
                     roomHistoryDto.Update(roomHistory);
                 }
@@ -100,7 +106,7 @@ namespace UserTracker.Tests.RoomHistory
             return (changesProcessed, seenProperties);
         }
 
-        public static (long, List<string>) ParseFile(string filePath)
+        public static (long, Dictionary<string, long>) ParseFile(string filePath)
         {
             using var reader = new StreamReader(filePath);
             using var jsonReader = new JsonTextReader(reader);
