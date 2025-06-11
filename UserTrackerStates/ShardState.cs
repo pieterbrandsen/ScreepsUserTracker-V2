@@ -34,14 +34,15 @@ namespace UserTrackerShared.States
             }
 
             _initialized = true;
-            _logger.Warning($"Loaded Shard {Name} with rooms {response.Rooms.Count}");
+            var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
+            _logger.Warning(message);
             _ = StartUpdate();
         }
 
         public string Name { get; set; }
         private long LastSyncTime { get; set; }
         public long Time { get; set; }
-        public List<string> Rooms { get; set; } = new List<string>();
+        public List<string> Rooms { get; set; } = [];
         private static Timer? _setTimeTimer;
         private bool isSyncing = false;
 
@@ -77,7 +78,8 @@ namespace UserTrackerShared.States
                 isSyncing = false;
                 return;
             }
-            _logger.Warning($"Started sync Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms");
+            var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
+            _logger.Warning(message);
             for (long i = LastSyncTime; i < syncTime; i += 100)
             {
                 var resultCodes = new ConcurrentDictionary<int, int>();
@@ -142,6 +144,7 @@ namespace UserTrackerShared.States
                 }
                 catch (Exception)
                 {
+                    // Accepted
                 }
             }
             LastSyncTime = syncTime;

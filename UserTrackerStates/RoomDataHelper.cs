@@ -45,7 +45,8 @@ namespace UserTrackerShared.Helpers
                             }
                             catch (Exception e)
                             {
-                                _logger.Error(e, $"Error processing single tick {tickNumber} for room {name}");
+                                var message = $"Error processing tick {tickNumber} for room {name}: {e.Message}";
+                                _logger.Error(e, message);
                             }
                         }
 
@@ -78,7 +79,8 @@ namespace UserTrackerShared.Helpers
             }
             catch (Exception e)
             {
-                _logger.Error(e, $"Error processing room {name}");
+                var message = $"Error processing room {name} at tick {tick}: {e.Message}";
+                _logger.Error(e, message);
                 return (int)HttpStatusCode.InternalServerError;
             }
         }
