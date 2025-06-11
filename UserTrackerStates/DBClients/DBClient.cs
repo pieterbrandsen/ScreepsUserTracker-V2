@@ -17,6 +17,10 @@ namespace UserTrackerStates.DBClients
             {
                 GraphiteDBClientWriter.Init();
             }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                TimeScaleDBClientWriter.Init();
+            }
         }
 
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
@@ -28,6 +32,10 @@ namespace UserTrackerStates.DBClients
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
                 await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
             }
         }
 
@@ -41,6 +49,10 @@ namespace UserTrackerStates.DBClients
             {
                 GraphiteDBClientState.WritePerformanceData(PerformanceClassDto);
             }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                TimeScaleDBClientState.WritePerformanceData(PerformanceClassDto);
+            }
         }
 
         public static void WriteLeaderboardData(SeaonListItem seasonItem)
@@ -52,6 +64,10 @@ namespace UserTrackerStates.DBClients
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
                 GraphiteDBClientState.WriteLeaderboardData(seasonItem);
+            }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                //TimeScaleDBClientState.WriteLeaderboardData(seasonItem);
             }
         }
 
@@ -65,6 +81,10 @@ namespace UserTrackerStates.DBClients
             {
                 GraphiteDBClientState.WriteSingleUserData(user);
             }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                //TimeScaleDBClientState.WriteSingleUserData(user);
+            }
         }
 
         public static void WriteAdminUtilsData(AdminUtilsResponse data)
@@ -77,6 +97,10 @@ namespace UserTrackerStates.DBClients
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
                 GraphiteDBClientState.WriteAdminUtilsData(dto);
+            }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+                //TimeScaleDBClientState.WriteAdminUtilsData(dto);
             }
         }
     }

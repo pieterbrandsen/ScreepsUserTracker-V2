@@ -30,6 +30,10 @@ namespace UserTrackerShared.Helpers
         public static string GraphiteDbHost { get; set; } = string.Empty;
         public static int GraphiteDbPort { get; set; }
 
+        public static bool TimeScaleDbEnabled { get; set; }
+        public static string TimeScaleDbHost { get; set; } = string.Empty;
+        public static int TimeScaleDbPort { get; set; }
+
         public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
@@ -67,6 +71,10 @@ namespace UserTrackerShared.Helpers
             GraphiteDbEnabled = Convert.ToBoolean(appSettings["GRAPHITE_ENABLED"]);
             GraphiteDbHost = appSettings["GRAPHITE_HOST"] ?? "";
             GraphiteDbPort = Convert.ToInt32(appSettings["GRAPHITE_PORT"] ?? "");
+            
+            TimeScaleDbEnabled = Convert.ToBoolean(appSettings["TIMESCALE_ENABLED"]);
+            TimeScaleDbHost = appSettings["TIMESCALE_HOST"] ?? "";
+            TimeScaleDbPort = Convert.ToInt32(appSettings["TIMESCALE_PORT"] ?? "");
 
             PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
             TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);

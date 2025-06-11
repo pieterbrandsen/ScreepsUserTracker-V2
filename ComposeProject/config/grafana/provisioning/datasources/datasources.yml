@@ -1,0 +1,29 @@
+apiVersion: 1
+datasources:
+  - name: InfluxDB
+    id: 1
+    type: influxdb
+    typeName: InfluxDB
+    access: proxy
+    url: http://influxdb:8086
+    basicAuth: true
+    basicAuthUser: admin
+    secureJsonData:
+      basicAuthPassword: admin
+      token: DhHySu59JXb8cp8LIZPcMPqC9iSATLz1Mc31-4xYTf1ZKUO7Du6HX7E0gPCjU2Y6Lueuor_N661kzN_6mJ4XhQ==
+    secureJsonFields:
+      basicAuthPassword: true
+      token: true
+    jsonData:
+      httpMode: POST
+      organization: screeps
+      version: Flux
+  - name: Graphite
+    id: 2
+    type: graphite
+    access: proxy
+    url: http://carbon-api:8081
+    isDefault: true
+    jsonData:
+      graphiteVersion: "1.1"
+      graphiteType": "default"

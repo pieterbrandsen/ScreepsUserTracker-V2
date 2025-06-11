@@ -1,0 +1,188 @@
+networks:
+    traefik-net:
+        external: true
+    internal:
+
+volumes:
+    grafana-data:
+    postgres-data:
+    timescale-data:
+
+x-logging: &default-logging
+    driver: "local"
+    options:
+        max-size: "20m"
+        max-file: "5"
+
+services:
+    carbon-relay-ng:
+        image: grafana/carbon-relay-ng
+        depends_on:
+            - go-carbon
+        networks:
+            - internal
+        volumes:
+            - ./config/carbon-relay-ng:/conf
+        logging: *default-logging
+    go-carbon:
+        image: ghcr.io/go-graphite/go-carbon
+        networks:
+            - internal
+        volumes:
+            - ./config/go-carbon/go-carbon.conf:/etc/go-carbon/go-carbon.conf
+            - ./config/go-carbon:/etc/go-carbon/
+            - ./go-carbon-data:/var/lib/graphite/whisper
+        logging: *default-logging
+    carbon-api:
+        image: pieterbrandsen/carbon-api:0.16.1
+        volumes:
+            - ./config/carbonapi/carbonapi.yml:/etc/carbonapi.yml
+            - ./config/carbonapi:/conf:ro
+            - ./logs/carbonApi:/log
+        networks:
+            - internal
+        depends_on:
+            - go-carbon
+        logging: *default-logging
+    influxdb:
+        image: influxdb:latest
+        ports:
+            - 8086:8086
+        environment:
+            - DOCKER_INFLUXDB_INIT_MODE=setup
+            - DOCKER_INFLUXDB_INIT_ORG=screeps
+            - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USERNAME}
+            - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASSWORD}
+            - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+            - DOCKER_INFLUXDB_INIT_BUCKET=history_performance
+        networks:
+            - internal
+            - traefik-net
+        logging: *default-logging
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.influxdb.rule=Host(`influxdb.pandascreeps.com`)"
+            - "traefik.http.services.influxdb.loadbalancer.server.port=8086"
+            - "traefik.http.routers.influxdb.entrypoints=websecure"
+            - "traefik.http.routers.influxdb.tls.certresolver=letsencrypt"
+        volumes:
+            - ./config/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+            - ./config/influxdb/scripts:/docker-entrypoint-initdb.d
+            - ./influxdb-data:/var/lib/influxdb3
+    grafana:
+        image: grafana/grafana:latest
+        volumes:
+            - grafana-data:/var/lib/grafana
+            - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
+            - ./config/grafana/provisioning/:/etc/grafana/provisioning
+            - ./config/grafana/dashboards/performance:/var/lib/grafana/dashboards/performance
+            - ./config/grafana/dashboards/data:/var/lib/grafana/dashboards/data
+        networks:
+            - internal
+            - traefik-net
+        depends_on:
+            postgres-usertrackergrafana:
+                condition: service_healthy
+        labels:
+            - "traefik.enable=true"
+            - "traefik.http.routers.grafanaUserTracker.rule=Host(`usertracker.pandascreeps.com`)"
+            - "traefik.http.services.grafanaUserTracker.loadbalancer.server.port=3000"
+            - "traefik.http.routers.grafanaUserTracker.entrypoints=websecure"
+            - "traefik.http.routers.grafanaUserTracker.tls.certresolver=letsencrypt"
+        logging: *default-logging
+    timescaledb:
+        image: timescale/timescaledb:latest-pg14
+        container_name: timescaledb
+        ports:
+            - 5435:5432
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+        volumes:
+            - timescale-data:/var/lib/postgresql/data
+        restart: unless-stopped
+    postgres-usertrackergrafana:
+        image: postgres:14
+        networks:
+            - traefik-net
+        restart: unless-stopped
+        volumes:
+            - postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready", "-U", "${POSTGRES_USER}"]
+        user: postgres
+        ports:
+            - 5434:5432
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        logging: *default-logging
+    pgbackups:
+        image: kartoza/pg-backup:14-3.2
+        restart: always
+        logging: *default-logging
+        depends_on:
+            - postgres-usertrackergrafana
+        networks:
+            - traefik-net
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASS=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_HOST=postgres-usertrackergrafana
+        volumes:
+            - /var/opt/pgbackups-grafanaUserTracker:/backups
+    screeps_usertracker_console_mmo:
+        build:
+            context: ScreepsUserTrackerRepo
+            dockerfile: ../UserTrackerConsole/Dockerfile
+            args:
+                APP_CONFIG_FILE: App.mmo.config
+        networks:
+            - internal
+        depends_on:
+            - influxdb
+        volumes:
+            - ./logs/mmo:/app/logs
+        logging: *default-logging
+    # screeps_usertracker_console_panda:
+    #     build:
+    #         context: ScreepsUserTrackerRepo
+    #         dockerfile: ../UserTrackerConsole/Dockerfile
+    #         args:
+    #             APP_CONFIG_FILE: App.pandascreeps.config
+    #     networks:
+    #         - internal
+    #     depends_on:
+    #         - influxdb
+    #     volumes:
+    #         - ./logs/pandascreeps:/app/logs
+    #     logging: *default-logging
+    # screeps_usertracker_console_jayseegames:
+    #     build:
+    #         context: ScreepsUserTrackerRepo
+    #         dockerfile: ../UserTrackerConsole/Dockerfile
+    #         args:
+    #             APP_CONFIG_FILE: App.jayseegames.config
+    #     networks:
+    #         - internal
+    #     depends_on:
+    #         - influxdb
+    #     volumes:
+    #         - ./logs/jayseegames:/app/logs
+    #     logging: *default-logging
+    # screeps_usertracker_console_newbieland:
+    #     build:
+    #         context: ScreepsUserTrackerRepo
+    #         dockerfile: ../UserTrackerConsole/Dockerfile
+    #         args:
+    #             APP_CONFIG_FILE: App.newbieland.config
+    #     networks:
+    #         - internal
+    #     depends_on:
+    #         - influxdb
+    #     volumes:
+    #         - ./logs/newbieland:/app/logs
+    #     logging: *default-logging

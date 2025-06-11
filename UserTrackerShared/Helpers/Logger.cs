@@ -39,7 +39,8 @@ namespace UserTrackerShared.Helpers
         HistoryProcessor,
         PullPerformance,
         InfluxDB,
-        GraphiteDB
+        GraphiteDB,
+        TimeScaleDB,
     }
 
 }
