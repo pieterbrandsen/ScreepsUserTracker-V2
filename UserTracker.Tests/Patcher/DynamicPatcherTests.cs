@@ -384,18 +384,10 @@ namespace UserTracker.Tests.Patcher
         {
             var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "case4.json");
             var (changes, properties) = HistoryFileChecker.ParseFile(path);
-
+            
             Assert.True(changes == 100, "Expected 100 changes, got " + changes);
-            Assert.True(properties.Count == 100, "Expected 10 properties, got " + properties.Count);
-
-            var countDict = new Dictionary<string, int>();
+            Assert.True(properties.Count == 10, "Expected 10 properties, got " + properties.Count);
             foreach (var kv in properties)
-            {
-               countDict[kv] = countDict.GetValueOrDefault(kv, 0) + 1;
-            }
-
-            Assert.True(countDict.Count == 10, "Expected 10 properties, got " + properties.Count);
-            foreach (var kv in countDict)
             {
                 Assert.True(kv.Value == 10);
             }
