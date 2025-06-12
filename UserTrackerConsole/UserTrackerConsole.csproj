@@ -38,7 +38,6 @@
   <ItemGroup>
     <ProjectReference Include="..\UserTrackerScreepsApi\UserTrackerScreepsApi.csproj" />
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
-    <ProjectReference Include="..\UserTrackerStates\UserTrackerStates.csproj" />
   </ItemGroup>
 
 </Project>

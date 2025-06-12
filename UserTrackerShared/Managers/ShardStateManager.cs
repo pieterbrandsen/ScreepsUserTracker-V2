@@ -11,29 +11,27 @@ using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
 {
-    public class ShardState
+    public class ShardStateManager
     {
-        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
-        private bool _initialized;
+        private readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public ShardState(string Name)
+        public ShardStateManager(string Name)
         {
             this.Name = Name;
-
-            _setTimeTimer = new Timer(300000);
-            _setTimeTimer.Elapsed += OnSetTimeTimer;
-            _setTimeTimer.AutoReset = true;
-            _setTimeTimer.Enabled = true;
         }
         public async Task StartAsync()
         {
+            var setTimeTimer = new Timer(300000);
+            setTimeTimer.Elapsed += (s, e) => StartUpdate();
+            setTimeTimer.AutoReset = true;
+            setTimeTimer.Enabled = true;
+
             var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
                 Rooms.Add(room.Key);
             }
 
-            _initialized = true;
             var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
             _logger.Warning(message);
             _ = StartUpdate();
@@ -43,21 +41,17 @@ namespace UserTrackerShared.States
         private long LastSyncTime { get; set; }
         public long Time { get; set; }
         public List<string> Rooms { get; set; } = [];
-        private static Timer? _setTimeTimer;
         private bool isSyncing = false;
 
         public async Task StartUpdate()
         {
             var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
-            if (timeResponse != null)
+            if (timeResponse != null && Time != timeResponse.Time)
             {
-                if (Time != timeResponse.Time)
-                {
-                    Time = timeResponse.Time;
-                    if (isSyncing || !_initialized) return;
-                    isSyncing = true;
-                    _ = StartSync();
-                }
+                Time = timeResponse.Time;
+                if (isSyncing || !_initialized) return;
+                isSyncing = true;
+                _ = StartSync();
             }
         }
 
@@ -101,7 +95,7 @@ namespace UserTrackerShared.States
                                 var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, reservedRoomsByUser, userLocks);
                                 if (resultCodes.TryGetValue(statusResult, out int value))
                                 {
-                                    resultCodes[statusResult] = ++value;
+                                    resultCodes[statusResult] = value + 1;
                                 }
                                 else
                                 {
@@ -149,10 +143,6 @@ namespace UserTrackerShared.States
             }
             LastSyncTime = syncTime;
             isSyncing = false;
-        }
-        private void OnSetTimeTimer(Object? source, ElapsedEventArgs? e)
-        {
-            _ = StartUpdate();
         }
     }
 }

@@ -11,13 +11,8 @@ namespace UserTrackerShared.States
 {
     public static class GameState
     {
-        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
-
-        public static List<ShardState> Shards = new List<ShardState>();
-        public static Dictionary<string, ScreepsUser> Users = new();
-
-        private static Timer? _onSetLeaderboardTimer;
-        private static Timer? _onSetAdminUtilsDataTimer;
+        public static List<ShardStateManager> Shards { get; set; } = new List<ShardStateManager>();
+        public static Dictionary<string, ScreepsUser> Users { get; set; } = new();
 
         public static async Task InitAsync()
         {
@@ -30,32 +25,32 @@ namespace UserTrackerShared.States
                     throw new Exception("Failed to sign in");
                 ConfigSettingsState.ScreepsToken = signinReponse.Token;
 
-                Shards.Add(new ShardState(ConfigSettingsState.ScreepsShardName));
+                _shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
 
                 OnUpdateAdminUtilsDataTimer(null, null);
-                _onSetAdminUtilsDataTimer = new Timer(60 * 1000);
-                _onSetAdminUtilsDataTimer.AutoReset = true;
-                _onSetAdminUtilsDataTimer.Enabled = true;
-                _onSetAdminUtilsDataTimer.Elapsed += OnUpdateAdminUtilsDataTimer;
+                var onSetAdminUtilsDataTimer = new Timer(60 * 1000);
+                onSetAdminUtilsDataTimer.AutoReset = true;
+                onSetAdminUtilsDataTimer.Enabled = true;
+                onSetAdminUtilsDataTimer.Elapsed += (s, e) => OnUpdateAdminUtilsDataTimer();
             }
             else
             {
                 for (int i = 0; i <= 3; i++)
                 {
-                    Shards.Add(new ShardState($"shard{i}"));
+                    Shards.Add(new ShardStateManager($"shard{i}"));
                 }
             }
 
 
-            _onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
-            _onSetLeaderboardTimer.AutoReset = true;
-            _onSetLeaderboardTimer.Enabled = true;
-            _onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
-            
+            var onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
+            onSetLeaderboardTimer.AutoReset = true;
+            onSetLeaderboardTimer.Enabled = true;
+            onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
+
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
-                foreach (var shard in Shards)
+                foreach (var shard in _shards)
                 {
                     await shard.StartAsync();
                 }
@@ -154,7 +149,7 @@ namespace UserTrackerShared.States
             }
             WriteAllUsers();
         }
-        private static async void OnUpdateAdminUtilsDataTimer(Object? source, ElapsedEventArgs? e)
+        private static async void OnUpdateAdminUtilsDataTimer()
         {
             var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();
             if (adminUtilsResponse != null)
