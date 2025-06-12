@@ -16,7 +16,7 @@ namespace UserTrackerShared.Helpers
             try
             {
                 var isReservedRoom = false;
-                var (roomData, Result) = await ScreepsAPI.GetHistory(shard, name, tick);
+                var (roomData, Result) = await ScreepsApi.GetHistory(shard, name, tick);
                 if (roomData == null)
                 {
                     return (int)Result;

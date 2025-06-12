@@ -20,11 +20,11 @@ namespace UserTrackerShared.Managers
         public async Task StartAsync()
         {
             var setTimeTimer = new Timer(300000);
-            setTimeTimer.Elapsed += (s, e) => StartUpdate();
+            setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
             setTimeTimer.AutoReset = true;
             setTimeTimer.Enabled = true;
 
-            var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
+            var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
                 Rooms.Add(room.Key);
@@ -43,7 +43,7 @@ namespace UserTrackerShared.Managers
 
         public async Task StartUpdate()
         {
-            var timeResponse = await ScreepsAPI.GetTimeOfShard(Name);
+            var timeResponse = await ScreepsApi.GetTimeOfShard(Name);
             if (timeResponse != null && Time != timeResponse.Time)
             {
                 Time = timeResponse.Time;

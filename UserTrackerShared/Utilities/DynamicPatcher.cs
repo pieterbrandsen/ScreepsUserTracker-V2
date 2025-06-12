@@ -50,7 +50,7 @@ namespace UserTrackerShared.Utilities
                         continue;
                     }
                     var prop = GetPropFromCache(type, propName);
-                    HandleProperty(current, prop, prop.GetValue(current), propName, index, dictionaryKeyName, isLast, ref current, value);
+                    HandleProperty(current, prop, prop.GetValue(current), index, dictionaryKeyName, isLast, ref current, value);
                 }
             }
             catch (Exception ex)
@@ -71,7 +71,7 @@ namespace UserTrackerShared.Utilities
                  ?? throw new InvalidOperationException($"Property '{propName}' not found on '{type.Name}'");
         }
 
-        private static void HandleProperty(object current, PropertyInfo prop, object? propValue, string propName, int? index, string? dictionaryKeyName, bool isLast, ref object obj, object? value)
+        private static void HandleProperty(object current, PropertyInfo prop, object? propValue, int? index, string? dictionaryKeyName, bool isLast, ref object obj, object? value)
         {
             var propType = prop.PropertyType;
             var simplifiedType = GetSimplifiedTypeName(propType);
@@ -81,7 +81,7 @@ namespace UserTrackerShared.Utilities
                 if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex) && !index.HasValue)
                     throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
-                HandleArrayProperty(current, prop, propValue, propType, idx, ref obj, value);
+                HandleArrayProperty(current, prop, propValue, propType, idx, ref obj);
                 return;
             }
             else if (simplifiedType == SimplifiedTypeName.List)
@@ -89,7 +89,7 @@ namespace UserTrackerShared.Utilities
                 if (!int.TryParse(dictionaryKeyName, out int dictionaryIndex) && !index.HasValue)
                     throw new FormatException(string.Format("Invalid index: '{0}' is not a valid integer.", dictionaryKeyName));
                 int idx = index.HasValue ? index.Value : dictionaryIndex;
-                HandleListProperty(current, prop, propValue, propType, idx, ref obj, value);
+                HandleListProperty(current, prop, propValue, propType, idx, ref obj);
                 return;
             }
             else
@@ -109,11 +109,11 @@ namespace UserTrackerShared.Utilities
                 {
                     if (propType.IsArray)
                     {
-                        HandleArrayProperty(current, prop, propValue, propType, dictionaryIndex, ref obj, value);
+                        HandleArrayProperty(current, prop, propValue, propType, dictionaryIndex, ref obj);
                     }
                     else
                     {
-                        HandleListProperty(current, prop, propValue, propType, dictionaryIndex, ref obj, value);
+                        HandleListProperty(current, prop, propValue, propType, dictionaryIndex, ref obj);
                     }
                 }
             }
@@ -135,7 +135,7 @@ namespace UserTrackerShared.Utilities
         }
 
 
-        private static void HandleArrayProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj, object? value)
+        private static void HandleArrayProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj)
         {
             var elemType = propType.GetElementType()!;
             var oldArr = (Array?)propValue ?? Array.CreateInstance(elemType, 0);
@@ -149,7 +149,7 @@ namespace UserTrackerShared.Utilities
             prop.SetValue(current, newArr);
             obj = next;
         }
-        private static void HandleListProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj, object? value)
+        private static void HandleListProperty(object current, PropertyInfo prop, object? propValue, Type propType, int idx, ref object obj)
         {
             var elemType = propType.GetGenericArguments()[0];
             var listType = typeof(List<>).MakeGenericType(elemType);

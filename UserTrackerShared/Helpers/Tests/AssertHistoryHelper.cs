@@ -13,7 +13,6 @@ namespace UserTrackerShared.Helpers.Tests
             for (int y = 0; y < ids.Length; y++)
             {
                 var id = ids[y];
-                var obj = GetObjectFromHistory.GetById(history, id) ?? throw new Exception("obj was null");
                 if (history.HistoryChangesDictionary == null) throw new Exception("history.HistoryChangesDictionary was null");
 
                 history.HistoryChangesDictionary.TryGetValue(id, out var historyChanges);
@@ -23,16 +22,16 @@ namespace UserTrackerShared.Helpers.Tests
                 var keyVariations = new Dictionary<string, HashSet<string>>(originalChanges.Count);
 
                 // First loop to create the key variations
-                foreach (var kv in originalChanges)
+                foreach (var key in originalChanges.Select(kv=>kv.Key))
                 {
-                    var baseKey = HistoryDictionaryHelper.MapPropertyIfFound(kv.Key);
+                    var baseKey = HistoryDictionaryHelper.MapPropertyIfFound(key);
                     var variations = new HashSet<string>
                         {
                             baseKey,
                             HistoryDictionaryHelper.CapitalizeLetters(baseKey),
                             HistoryDictionaryHelper.CapitalizeLettersExceptLast(baseKey)
                         };
-                    keyVariations[kv.Key] = variations;
+                    keyVariations[key] = variations;
                 }
 
                 // Second loop to process the changes

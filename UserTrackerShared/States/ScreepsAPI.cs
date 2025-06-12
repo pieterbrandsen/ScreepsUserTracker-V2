@@ -16,7 +16,7 @@ using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
 namespace UserTrackerShared.States
 {
-    public static class JSONConvertHelper
+    public static class JsonConvertHelper
     {
         public static async Task<T?> ReadAndConvertStream<T>(HttpContent httpContent)
         {
@@ -28,7 +28,7 @@ namespace UserTrackerShared.States
             return serializer.Deserialize<T>(jsonReader);
         }
     }
-    public static class ScreepsAPI
+    public static class ScreepsApi
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static readonly SemaphoreSlim _normalThrottler = new(1);
@@ -157,7 +157,7 @@ namespace UserTrackerShared.States
 
                 if (response?.IsSuccessStatusCode ?? false)
                 {
-                    var result = await JSONConvertHelper.ReadAndConvertStream<T>(response.Content);
+                    var result = await JsonConvertHelper.ReadAndConvertStream<T>(response.Content);
                     return (result, response.StatusCode);
                 }
                 else
@@ -323,7 +323,7 @@ namespace UserTrackerShared.States
             var jsonString = JsonConvert.SerializeObject(content);
             var body = new StringContent(jsonString, Encoding.UTF8, "application/json");
 
-            var (Result, Status) = await ExecuteRequestAsync<MapStatsResponse>(HttpMethod.Post, path, body);
+            var (Result, _) = await ExecuteRequestAsync<MapStatsResponse>(HttpMethod.Post, path, body);
             if (Result != null)
             {
                 Result.Rooms = Result.Rooms.Where(s => s.Value.Status != "out of borders").ToDictionary();

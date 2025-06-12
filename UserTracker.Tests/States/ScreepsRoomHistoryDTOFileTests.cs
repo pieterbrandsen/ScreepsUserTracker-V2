@@ -22,14 +22,14 @@ namespace UserTracker.Tests.States
             var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
             ConfigSettingsState.InitTest(configuration.AppSettings);
         }
-        private JObject ParseFile(string fileName)
+        private static JObject ParseFile(string fileName)
         {
             using var reader = new StreamReader(@"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTracker.Tests\Files\"+fileName);
             using var jsonReader = new JsonTextReader(reader);
             return JObject.Load(jsonReader);
         }
 
-        private ScreepsRoomHistoryDto ProcessHistory(JObject roomData)
+        private static ScreepsRoomHistoryDto ProcessHistory(JObject roomData)
         {
             var roomHistory = new ScreepsRoomHistory();
             var roomHistoryDto = new ScreepsRoomHistoryDto();

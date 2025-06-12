@@ -272,7 +272,7 @@ namespace UserTrackerShared.DBClients
                 }
                 else if (!string.IsNullOrEmpty(userId))
                 {
-                    var apiUser = await ScreepsAPI.GetUser(userId);
+                    var apiUser = await ScreepsApi.GetUser(userId);
                     if (apiUser != null)
                     {
                         GameState.Users.Add(userId, apiUser);

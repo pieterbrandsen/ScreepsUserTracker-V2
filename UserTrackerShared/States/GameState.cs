@@ -17,7 +17,7 @@ namespace UserTrackerShared.States
             bool isPrivateServer = ConfigSettingsState.ScreepsIsPrivateServer;
             if (isPrivateServer)
             {
-                var signinReponse = await ScreepsAPI.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
+                var signinReponse = await ScreepsApi.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
 
                 if (signinReponse == null)
                     throw new Exception("Failed to sign in");
@@ -57,7 +57,7 @@ namespace UserTrackerShared.States
 
         private static async Task<string?> GetUser(string userId)
         {
-            var userResponse = await ScreepsAPI.GetUser(userId);
+            var userResponse = await ScreepsApi.GetUser(userId);
             if (userResponse != null)
             {
                 Users[userId] = userResponse;
@@ -75,13 +75,13 @@ namespace UserTrackerShared.States
 
         public static async Task GetAllUsers()
         {
-            var LeaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard();
+            var LeaderboardsResponse = await ScreepsApi.GetAllSeasonsLeaderboard();
             if (LeaderboardsResponse != null)
             {
-                foreach (var leaderboardKVP in LeaderboardsResponse)
+                foreach (var leaderboard in LeaderboardsResponse.Select(kv=>kv.Value))
                 {
-                    var gclLeaderborad = leaderboardKVP.Value.gcl;
-                    foreach (var leaderboardSpot in gclLeaderborad)
+                    var gclLeaderbard = leaderboard.gcl;
+                    foreach (var leaderboardSpot in gclLeaderbard)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
@@ -97,7 +97,7 @@ namespace UserTrackerShared.States
                         }
                     }
 
-                    var powerLeaderboard = leaderboardKVP.Value.power;
+                    var powerLeaderboard = leaderboard.power;
                     foreach (var leaderboardSpot in powerLeaderboard)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
@@ -149,7 +149,7 @@ namespace UserTrackerShared.States
         }
         private static async void OnUpdateAdminUtilsDataTimer()
         {
-            var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();
+            var adminUtilsResponse = await ScreepsApi.GetAdminUtilsStats();
             if (adminUtilsResponse != null)
             {
                 DBClient.WriteAdminUtilsData(adminUtilsResponse);
