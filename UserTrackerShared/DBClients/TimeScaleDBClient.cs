@@ -9,7 +9,7 @@ using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
 
 
-namespace UserTrackerStates.DBClients
+namespace UserTrackerShared.DBClients
 {
     public class TimeScaleBatchClient : IDisposable
     {
@@ -42,7 +42,7 @@ namespace UserTrackerStates.DBClients
         /// </summary>
         public void Flush()
         {
-           
+
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace UserTrackerStates.DBClients
         {
             try
             {
-               
+
             }
             catch (Exception ex)
             {

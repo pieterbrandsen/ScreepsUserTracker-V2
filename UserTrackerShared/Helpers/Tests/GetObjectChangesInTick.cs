@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UserTrackerShared.Helpers;
 
-namespace UserTracker.Tests.Helper
+namespace UserTrackerShared.Helpers.Tests
 {
     public static class GetObjectChangesInTick
     {

@@ -9,7 +9,7 @@ using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
 
 
-namespace UserTrackerStates.DBClients
+namespace UserTrackerShared.DBClients
 {
     public class GraphiteBatchClient : IDisposable
     {

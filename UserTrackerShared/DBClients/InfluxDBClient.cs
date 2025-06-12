@@ -13,7 +13,7 @@ using UserTrackerShared.Models;
 using UserTrackerShared.States;
 
 
-namespace UserTrackerStates.DBClients
+namespace UserTrackerShared.DBClients
 {
     public class PointDataParameter
     {

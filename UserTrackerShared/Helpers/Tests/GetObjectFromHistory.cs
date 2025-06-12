@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using UserTrackerShared.Models;
 
-namespace UserTracker.Tests.Helper
+namespace UserTrackerShared.Helpers.Tests
 {
     public class GetObjectFromHistory
     {

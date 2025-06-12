@@ -9,7 +9,7 @@ using UserTrackerShared.Models;
 using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
-namespace UserTrackerShared.States
+namespace UserTrackerShared.Managers
 {
     public class ShardStateManager
     {

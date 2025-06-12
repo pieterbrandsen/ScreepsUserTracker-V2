@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using UserTrackerShared.Models.Screen;
 
-namespace UserTrackerShared
+namespace UserTrackerShared.Utilities
 {
     public static class Screen
     {

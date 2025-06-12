@@ -3,7 +3,7 @@ using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 
-namespace UserTrackerStates.DBClients
+namespace UserTrackerShared.DBClients
 {
     public static class DBClient
     {

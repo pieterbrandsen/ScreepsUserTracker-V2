@@ -155,7 +155,7 @@ namespace UserTrackerScreepsApi
                 var infoMessage = "{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
                 _logger.Information(infoMessage);
 
-                if (response?.IsSuccessStatusCode ??false)
+                if (response?.IsSuccessStatusCode ?? false)
                 {
                     var result = await JSONConvertHelper.ReadAndConvertStream<T>(response.Content);
                     return (result, response.StatusCode);
@@ -266,7 +266,7 @@ namespace UserTrackerScreepsApi
                     offset += limit;
                 }
 
-                if (gclLeaderboardList.Count+ powerLeaderboardList.Count == 0)
+                if (gclLeaderboardList.Count + powerLeaderboardList.Count == 0)
                 {
                     lastSeasonEmpty = true;
                 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserTracker.Tests.Helper
+namespace UserTrackerShared.Helpers.Tests
 {
     public static class HistoryDictionaryHelper
     {

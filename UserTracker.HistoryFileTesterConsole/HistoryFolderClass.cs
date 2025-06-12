@@ -81,7 +81,7 @@ namespace UserTracker.HistoryFileTesterConsole
                 File.Create(_seenPropertiesPath).Close();
 
             _goodFiles = new HashSet<string>(File.ReadLines(_goodFilesPath));
-            _badFiles = new HashSet<string>(File.ReadLines(_badFilesPath)).Where(f=>!_goodFiles.Contains(f)).ToHashSet();
+            _badFiles = new HashSet<string>(File.ReadLines(_badFilesPath)).Where(f => !_goodFiles.Contains(f)).ToHashSet();
             File.WriteAllLines(_badFilesPath, _badFiles);
 
             LoadExistingErrorCounts(_badFilesErrorsPath);

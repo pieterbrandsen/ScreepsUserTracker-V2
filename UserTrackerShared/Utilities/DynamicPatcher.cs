@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace UserTrackerShared
+namespace UserTrackerShared.Utilities
 {
     public static class DynamicPatcher
     {
