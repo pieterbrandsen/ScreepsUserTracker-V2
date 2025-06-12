@@ -5,6 +5,7 @@ using System.Text;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.Utilities;
 
 namespace UserTracker.Tests.Patcher
 {

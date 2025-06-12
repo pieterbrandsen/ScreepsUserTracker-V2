@@ -1,12 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks.Dataflow;
-using System.Timers;
-using UserTrackerScreepsApi;
+using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
-using UserTrackerStates.DBClients;
+using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Managers
@@ -49,7 +47,7 @@ namespace UserTrackerShared.Managers
             if (timeResponse != null && Time != timeResponse.Time)
             {
                 Time = timeResponse.Time;
-                if (isSyncing || !_initialized) return;
+                if (isSyncing) return;
                 isSyncing = true;
                 _ = StartSync();
             }

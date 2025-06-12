@@ -1,6 +1,6 @@
 ﻿using UserTracker.HistoryFileTesterConsole;
+using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
-using UserTrackerStates.DBClients;
 
 ConfigSettingsState.Init();
 HistoryConfigSettingsState.Init();
@@ -26,7 +26,7 @@ while (true)
         Console.WriteLine($"Checking {folder}");
         if (HasHistoryFilesLocation(folder))
         {
-            var historyFolder = new HistoryFolderClass(baseDirectory,folder);
+            var historyFolder = new HistoryFolderClass(baseDirectory, folder);
             await historyFolder.Start();
         }
     }

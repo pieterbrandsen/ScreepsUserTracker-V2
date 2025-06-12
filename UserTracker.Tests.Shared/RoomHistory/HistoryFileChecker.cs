@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Buffers;
-using UserTracker.Tests.Helper;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Helpers.Tests;
 using UserTrackerShared.Models;

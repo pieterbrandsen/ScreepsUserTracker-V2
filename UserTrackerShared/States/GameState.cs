@@ -1,10 +1,8 @@
 ﻿using System.Timers;
-using UserTrackerScreepsApi;
+using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.Managers;
 using UserTrackerShared.Models;
-using UserTrackerShared.Models.ScreepsAPI;
-using UserTrackerStates;
-using UserTrackerStates.DBClients;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States
@@ -25,9 +23,9 @@ namespace UserTrackerShared.States
                     throw new Exception("Failed to sign in");
                 ConfigSettingsState.ScreepsToken = signinReponse.Token;
 
-                _shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
+                Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
 
-                OnUpdateAdminUtilsDataTimer(null, null);
+                OnUpdateAdminUtilsDataTimer();
                 var onSetAdminUtilsDataTimer = new Timer(60 * 1000);
                 onSetAdminUtilsDataTimer.AutoReset = true;
                 onSetAdminUtilsDataTimer.Enabled = true;
@@ -50,7 +48,7 @@ namespace UserTrackerShared.States
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
-                foreach (var shard in _shards)
+                foreach (var shard in Shards)
                 {
                     await shard.StartAsync();
                 }

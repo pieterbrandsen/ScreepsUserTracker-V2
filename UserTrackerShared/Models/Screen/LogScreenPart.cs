@@ -40,15 +40,15 @@ namespace UserTrackerShared.Models.Screen
                 LogEntries.RemoveAt(0); // Remove the oldest log entry
             }
 
-            UserTrackerShared.Screen.SetCursorPosition(5);
+            Utilities.Screen.SetCursorPosition(5);
             Console.WriteLine(new string(' ', Console.WindowWidth)); // Clear log area
             for (int i = 0; i < LogEntries.Count; i++)
             {
                 if (i < Height) // Only display the maximum allowed logs
                 {
-                    UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
+                    Utilities.Screen.SetCursorPosition(StartHeight + i);
                     Console.Write(new string(' ', Console.WindowWidth));
-                    UserTrackerShared.Screen.SetCursorPosition(StartHeight + i);
+                    Utilities.Screen.SetCursorPosition(StartHeight + i);
                     Console.WriteLine(LogEntries[i]); // Show current log
                 }
             }

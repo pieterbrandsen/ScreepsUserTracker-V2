@@ -241,9 +241,9 @@ namespace UserTrackerShared.Helpers
             {
                 structuresDto.Terminal.Count += 1m / ConfigSettingsState.TicksInFile;
 
-                if (terminal.Value.Store != null)
+                if (terminal.Store != null)
                 {
-                    UpdateStore(structuresDto.Terminal.Store, terminalW.Store);
+                    UpdateStore(structuresDto.Terminal.Store, terminal.Store);
                 }
             }
             foreach (var tombstone in structures.Tombstones.Select(x => x.Value))

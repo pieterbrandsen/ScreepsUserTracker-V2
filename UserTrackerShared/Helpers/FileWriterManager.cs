@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.Timers;
+using UserTrackerShared.Utilities;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.Helpers

@@ -2,6 +2,7 @@
 using System.Text;
 using UserTrackerShared.Helpers.Tests;
 using UserTrackerShared.Models;
+using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.Helpers
 {
@@ -432,7 +433,7 @@ namespace UserTrackerShared.Helpers
             {
                 var id = GetLastPathSegment(tickObj.Path).ToString();
 
-                if (tickObj.HasValues && tickObj is JObjectbj && id != "undefined")
+                if (tickObj.HasValues && tickObj is JObject && id != "undefined")
                 {
                     var changes = new Dictionary<string, object?>();
                     JsonHelper.FlattenJson(tickObj, new StringBuilder(), changes);

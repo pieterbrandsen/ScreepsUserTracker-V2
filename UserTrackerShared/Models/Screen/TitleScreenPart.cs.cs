@@ -14,7 +14,7 @@ namespace UserTrackerShared.Models.Screen
 
         public override void Draw()
         {
-            UserTrackerShared.Screen.SetCursorPosition(StartHeight);
+            Utilities.Screen.SetCursorPosition(StartHeight);
             Console.WriteLine("User Tracker".PadLeft((Console.WindowWidth + 24) / 2)); // Centered title
         }
     }
