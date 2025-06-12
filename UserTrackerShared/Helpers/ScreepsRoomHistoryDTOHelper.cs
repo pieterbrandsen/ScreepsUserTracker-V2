@@ -99,7 +99,7 @@ namespace UserTrackerShared.Helpers
                 structuresDto.Controller.Level += structures.Controller.Level / ConfigSettingsState.TicksInFile;
                 structuresDto.Controller.Progress += structures.Controller.Progress / ConfigSettingsState.TicksInFile;
                 structuresDto.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInFile;
-                structuresDto.Controller.UserId = structures.Controller.User;
+                structuresDto.Controller.UserId = structures.Controller?.User;
                 structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User ?? "";
             }
             if (structures.Mineral != null)
@@ -125,11 +125,14 @@ namespace UserTrackerShared.Helpers
                 structuresDto.ConstructionSite.ProgressTotal += constructionSite.ProgressTotal / ConfigSettingsState.TicksInFile;
 
                 var typeBeingBuild = constructionSite.StructureType;
-                if (!structuresDto.ConstructionSite.TypesBuilding.TryGetValue(typeBeingBuild, out var current))
+                if (typeBeingBuild != null)
                 {
-                    current = 0;
+                    if (!structuresDto.ConstructionSite.TypesBuilding.TryGetValue(typeBeingBuild, out var current))
+                    {
+                        current = 0;
+                    }
+                    structuresDto.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInFile;
                 }
-                structuresDto.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInFile;
             }
             foreach (var container in structures.Containers.Select(x => x.Value))
             {
@@ -234,20 +237,20 @@ namespace UserTrackerShared.Helpers
                     UpdateStore(structuresDto.Storage.Store, storage.Store);
                 }
             }
-            foreach (var terminal in structures.Terminals)
+            foreach (var terminal in structures.Terminals.Select(x => x.Value))
             {
                 structuresDto.Terminal.Count += 1m / ConfigSettingsState.TicksInFile;
 
                 if (terminal.Value.Store != null)
                 {
-                    UpdateStore(structuresDto.Terminal.Store, terminal.Value.Store);
+                    UpdateStore(structuresDto.Terminal.Store, terminalW.Store);
                 }
             }
             foreach (var tombstone in structures.Tombstones.Select(x => x.Value))
             {
                 structuresDto.Tombstone.Count += 1m / ConfigSettingsState.TicksInFile;
             }
-            foreach (var tower in structures.Towers.Select(x=>x.Value))
+            foreach (var tower in structures.Towers.Select(x => x.Value))
             {
                 structuresDto.Tower.Count += 1m / ConfigSettingsState.TicksInFile;
                 structuresDto.Tower.Energy += tower.Store?.energy / ConfigSettingsState.TicksInFile ?? 0;
@@ -298,7 +301,7 @@ namespace UserTrackerShared.Helpers
                 creepsDto.Count += 1m / ConfigSettingsState.TicksInFile;
                 ConvertBody(creep.Body, creepsDtoBodyPart);
                 ComputeExtraIntentPower(creep.Body, creepsDtoBodyPart, intentMap);
-                ConvertActiongLog(creep.ActionLog, creepsDto.ActionLog, creepsDtoBodyPart, intentMap, creep._oldFatigue);
+                ConvertActiongLog(creep.ActionLog ?? new ActionLog(), creepsDto.ActionLog, creepsDtoBodyPart, intentMap, creep._oldFatigue);
                 if (creep.Store != null)
                 {
                     UpdateStore(creepsDto.Store, creep.Store);
@@ -478,46 +481,46 @@ namespace UserTrackerShared.Helpers
             if (actionLog.Attacked != null)
             {
                 actionLogDto.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.Attacked.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attacked.Damage += (decimal)Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Attack != null)
             {
                 actionLogDto.Attack.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.Attack.Damage += Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Attack.Damage += (decimal)Convert.ToInt64(Math.Round(attackCount * 30 + intentPowerMap.Attack * 30)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedAttack != null)
             {
                 actionLogDto.Attacked.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.RangedAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 10 + intentPowerMap.RangedAttack * 10)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedAttack.Damage += (decimal)Convert.ToInt64(Math.Round(attackCount * 10 + intentPowerMap.RangedAttack * 10)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedMassAttack != null)
             {
                 actionLogDto.RangedMassAttack.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.RangedMassAttack.Damage += Convert.ToInt64(Math.Round(attackCount * 4 + intentPowerMap.RangedAttack * 4)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedMassAttack.Damage += (decimal)Convert.ToInt64(Math.Round(attackCount * 4 + intentPowerMap.RangedAttack * 4)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Heal
             if (actionLog.Heal != null)
             {
                 actionLogDto.Heal.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.Heal.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Heal.Heal += (decimal)Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Healed != null)
             {
                 actionLogDto.Healed.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.Healed.Heal += Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Healed.Heal += (decimal)Convert.ToInt64(Math.Round(healCount * 12 + intentPowerMap.Heal * 12)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.RangedHeal != null)
             {
                 actionLogDto.RangedHeal.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.RangedHeal.Heal += Convert.ToInt64(Math.Round(healCount * 4 + intentPowerMap.RangedHeal * 4)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.RangedHeal.Heal += (decimal)Convert.ToInt64(Math.Round(healCount * 4 + intentPowerMap.RangedHeal * 4)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Inflow
             if (actionLog.Harvest != null)
             {
                 actionLogDto.Harvest.Count += 1m / ConfigSettingsState.TicksInFile;
-                actionLogDto.Harvest.Inflow += Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2));
+                actionLogDto.Harvest.Inflow += (decimal)Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2));
             }
             #endregion
             #region Outflow
@@ -525,19 +528,19 @@ namespace UserTrackerShared.Helpers
             {
                 actionLogDto.Repair.Count += 1m / ConfigSettingsState.TicksInFile;
                 actionLogDto.Repair.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDto.Repair.Effect += Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap.Repair * 100)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Repair.Effect += (decimal)Convert.ToInt64(Math.Round(workCount * 100 + intentPowerMap.Repair * 100)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.Build != null)
             {
                 actionLogDto.Build.Count += 1m / ConfigSettingsState.TicksInFile;
                 actionLogDto.Build.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDto.Build.Effect += Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap.Build * 5)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.Build.Effect += (decimal)Convert.ToInt64(Math.Round(workCount * 5 + intentPowerMap.Build * 5)) / ConfigSettingsState.TicksInFile;
             }
             if (actionLog.UpgradeController != null)
             {
                 actionLogDto.UpgradeController.Count += 1m / ConfigSettingsState.TicksInFile;
                 actionLogDto.UpgradeController.Outflow += workCount / ConfigSettingsState.TicksInFile;
-                actionLogDto.UpgradeController.Effect += Convert.ToInt64(Math.Round(workCount + intentPowerMap.UpgradeController)) / ConfigSettingsState.TicksInFile;
+                actionLogDto.UpgradeController.Effect += (decimal)Convert.ToInt64(Math.Round(workCount + intentPowerMap.UpgradeController)) / ConfigSettingsState.TicksInFile;
             }
             #endregion
             #region Generic

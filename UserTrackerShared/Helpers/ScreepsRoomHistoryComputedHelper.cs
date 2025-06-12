@@ -432,7 +432,7 @@ namespace UserTrackerShared.Helpers
             {
                 var id = GetLastPathSegment(tickObj.Path).ToString();
 
-                if (tickObj.HasValues && tickObj is JObject obj && id != "undefined")
+                if (tickObj.HasValues && tickObj is JObjectbj && id != "undefined")
                 {
                     var changes = new Dictionary<string, object?>();
                     JsonHelper.FlattenJson(tickObj, new StringBuilder(), changes);

@@ -282,10 +282,10 @@ namespace UserTracker.Tests.Patcher
             var jToken = JToken.Parse(JsonConvert.SerializeObject(obj));
             JsonHelper.FlattenJson(jToken, new StringBuilder(), changes);
 
-            if (path.Contains(">"))
+            if (path.Contains('>'))
             {
-                var separatorIndex = path.IndexOf(">");
-                var endOfSeparatorIndex = path.IndexOf(".");
+                var separatorIndex = path.IndexOf('>');
+                var endOfSeparatorIndex = path.IndexOf('.');
                 path = path.Substring(0, separatorIndex) + "[" + path.Substring(separatorIndex + 1, endOfSeparatorIndex - separatorIndex - 1) + "]" + path.Substring(endOfSeparatorIndex);
             }
 
@@ -344,10 +344,10 @@ namespace UserTracker.Tests.Patcher
             var jToken = JToken.Parse(JsonConvert.SerializeObject(obj));
             JsonHelper.FlattenJson(jToken, new StringBuilder(), changes);
 
-            if (path.Contains(">"))
+            if (path.Contains('>'))
             {
-                var separatorIndex = path.IndexOf(">");
-                var endOfSeparatorIndex = path.IndexOf(".");
+                var separatorIndex = path.IndexOf('>');
+                var endOfSeparatorIndex = path.IndexOf('.');
                 path = path.Substring(0, separatorIndex) + "[" + path.Substring(separatorIndex + 1, endOfSeparatorIndex - separatorIndex - 1) + "]" + path.Substring(endOfSeparatorIndex);
             }
 
@@ -384,7 +384,7 @@ namespace UserTracker.Tests.Patcher
         {
             var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Files", "case4.json");
             var (changes, properties) = HistoryFileChecker.ParseFile(path);
-            
+
             Assert.True(changes == 100, "Expected 100 changes, got " + changes);
             Assert.True(properties.Count == 10, "Expected 10 properties, got " + properties.Count);
             foreach (var kv in properties)

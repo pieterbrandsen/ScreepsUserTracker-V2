@@ -111,9 +111,9 @@ namespace UserTrackerShared.Managers
                 }
                 await Task.WhenAll(tasks);
 
-                foreach (var historyDto in reservedRoomsByUser)
+                foreach (var historyDto in reservedRoomsByUser.Select(x => x.Value))
                 {
-                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDto.Value.TimeStamp, historyDto.Value);
+                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDto.TimeStamp, historyDto);
                 }
 
 
