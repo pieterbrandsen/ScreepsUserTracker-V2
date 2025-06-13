@@ -22,22 +22,22 @@ services:
         networks:
             - internal
         volumes:
-            - ./config/carbon-relay-ng:/conf
+            - ./conf/carbon-relay-ng:/conf
         logging: *default-logging
     go-carbon:
         image: ghcr.io/go-graphite/go-carbon
         networks:
             - internal
         volumes:
-            - ./config/go-carbon/go-carbon.conf:/etc/go-carbon/go-carbon.conf
-            - ./config/go-carbon:/etc/go-carbon/
+            - ./conf/go-carbon/go-carbon.conf:/etc/go-carbon/go-carbon.conf
+            - ./conf/go-carbon:/etc/go-carbon/
             - ./go-carbon-data:/var/lib/graphite/whisper
         logging: *default-logging
     carbon-api:
         image: pieterbrandsen/carbon-api:0.16.1
         volumes:
-            - ./config/carbonapi/carbonapi.yml:/etc/carbonapi.yml
-            - ./config/carbonapi:/conf:ro
+            - ./conf/carbonapi/carbonapi.yml:/etc/carbonapi.yml
+            - ./conf/carbonapi:/conf:ro
             - ./logs/carbonApi:/log
         networks:
             - internal
@@ -66,17 +66,17 @@ services:
             - "traefik.http.routers.influxdb.entrypoints=websecure"
             - "traefik.http.routers.influxdb.tls.certresolver=letsencrypt"
         volumes:
-            - ./config/influxdb/config/influxdb.conf:/etc/influxdb/influxdb.conf:ro
-            - ./config/influxdb/scripts:/docker-entrypoint-initdb.d
+            - ./conf/influxdb/conf/influxdb.conf:/etc/influxdb/influxdb.conf:ro
+            - ./conf/influxdb/scripts:/docker-entrypoint-initdb.d
             - ./influxdb-data:/var/lib/influxdb3
     grafana:
         image: grafana/grafana:latest
         volumes:
             - grafana-data:/var/lib/grafana
-            - ./config/grafana/grafana.ini:/etc/grafana/grafana.ini
-            - ./config/grafana/provisioning/:/etc/grafana/provisioning
-            - ./config/grafana/dashboards/performance:/var/lib/grafana/dashboards/performance
-            - ./config/grafana/dashboards/data:/var/lib/grafana/dashboards/data
+            - ./conf/grafana/grafana.ini:/etc/grafana/grafana.ini
+            - ./conf/grafana/provisioning/:/etc/grafana/provisioning
+            - ./conf/grafana/dashboards/performance:/var/lib/grafana/dashboards/performance
+            - ./conf/grafana/dashboards/data:/var/lib/grafana/dashboards/data
         networks:
             - internal
             - traefik-net
@@ -136,53 +136,14 @@ services:
             - /var/opt/pgbackups-grafanaUserTracker:/backups
     screeps_usertracker_console_mmo:
         build:
-            context: ScreepsUserTrackerRepo
-            dockerfile: ../UserTrackerConsole/Dockerfile
+            context: ../
+            dockerfile: UserTrackerConsole/Dockerfile
             args:
-                APP_CONFIG_FILE: App.mmo.config
+                APP_CONFIG_FILE: App.Live.config
         networks:
             - internal
         depends_on:
             - influxdb
         volumes:
-            - ./logs/mmo:/app/logs
+            - ./logs:/app/logs
         logging: *default-logging
-    # screeps_usertracker_console_panda:
-    #     build:
-    #         context: ScreepsUserTrackerRepo
-    #         dockerfile: ../UserTrackerConsole/Dockerfile
-    #         args:
-    #             APP_CONFIG_FILE: App.pandascreeps.config
-    #     networks:
-    #         - internal
-    #     depends_on:
-    #         - influxdb
-    #     volumes:
-    #         - ./logs/pandascreeps:/app/logs
-    #     logging: *default-logging
-    # screeps_usertracker_console_jayseegames:
-    #     build:
-    #         context: ScreepsUserTrackerRepo
-    #         dockerfile: ../UserTrackerConsole/Dockerfile
-    #         args:
-    #             APP_CONFIG_FILE: App.jayseegames.config
-    #     networks:
-    #         - internal
-    #     depends_on:
-    #         - influxdb
-    #     volumes:
-    #         - ./logs/jayseegames:/app/logs
-    #     logging: *default-logging
-    # screeps_usertracker_console_newbieland:
-    #     build:
-    #         context: ScreepsUserTrackerRepo
-    #         dockerfile: ../UserTrackerConsole/Dockerfile
-    #         args:
-    #             APP_CONFIG_FILE: App.newbieland.config
-    #     networks:
-    #         - internal
-    #     depends_on:
-    #         - influxdb
-    #     volumes:
-    #         - ./logs/newbieland:/app/logs
-    #     logging: *default-logging
