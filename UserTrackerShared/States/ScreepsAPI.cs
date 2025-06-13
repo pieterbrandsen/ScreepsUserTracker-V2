@@ -152,7 +152,7 @@ namespace UserTrackerShared.States
                     (response, retryCount) = await ThrottledRequestAsync(request);
                 }
 
-                var infoMessage = "{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
+                var infoMessage = $"{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
                 _logger.Information(infoMessage);
 
                 if (response?.IsSuccessStatusCode ?? false)

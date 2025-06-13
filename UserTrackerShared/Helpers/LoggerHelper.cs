@@ -5,6 +5,7 @@ namespace UserTrackerShared.Helpers
     using Serilog;
     using System;
     using System.IO;
+    using UserTrackerShared.States;
 
     public static class Logger
     {

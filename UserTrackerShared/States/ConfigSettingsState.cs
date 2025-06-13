@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UserTrackerShared.Helpers
+namespace UserTrackerShared.States
 {
     public static class ConfigSettingsState
     {
@@ -31,8 +31,11 @@ namespace UserTrackerShared.Helpers
         public static int GraphiteDbPort { get; set; }
 
         public static bool TimeScaleDbEnabled { get; set; }
-        public static string TimeScaleDbHost { get; set; } = string.Empty;
         public static int TimeScaleDbPort { get; set; }
+        public static string TimeScaleDbHost { get; set; } = string.Empty;
+        public static string TimeScaleDbDBName { get; set; } = string.Empty;
+        public static string TimeScaleDbUser { get; set; } = string.Empty;
+        public static string TimeScaleDbPassword { get; set; } = string.Empty;
 
         public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
@@ -75,6 +78,9 @@ namespace UserTrackerShared.Helpers
             TimeScaleDbEnabled = Convert.ToBoolean(appSettings["TIMESCALE_ENABLED"]);
             TimeScaleDbHost = appSettings["TIMESCALE_HOST"] ?? "";
             TimeScaleDbPort = Convert.ToInt32(appSettings["TIMESCALE_PORT"] ?? "");
+            TimeScaleDbDBName = appSettings["TIMESCALE_DB"] ?? "";
+            TimeScaleDbUser = appSettings["TIMESCALE_USERNAME"] ?? "";
+            TimeScaleDbPassword = appSettings["TIMESCALE_PASSWORD"] ?? "";
 
             PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
             TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);

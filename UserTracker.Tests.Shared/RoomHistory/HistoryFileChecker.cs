@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Helpers.Tests;
 using UserTrackerShared.Models;
+using UserTrackerShared.States;
 
 namespace UserTracker.Tests.RoomHistory
 {

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.States;
 using Xunit;
 
 namespace UserTracker.Tests.Models

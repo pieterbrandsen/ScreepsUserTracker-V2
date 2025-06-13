@@ -1,7 +1,13 @@
-﻿using System.Reactive;
-using UserTrackerShared.Helpers;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Reactive;
+using UserTrackerShared.DBClients.TimeScale;
+using UserTrackerShared.DBClients.TimeScaleDB;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
+using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.DBClients
 {
@@ -19,7 +25,18 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                TimeScaleDBClientWriter.Init();
+                var connString = $"Host={ConfigSettingsState.TimeScaleDbHost};Port={ConfigSettingsState.TimeScaleDbPort};Database={ConfigSettingsState.TimeScaleDbDBName};Username={ConfigSettingsState.TimeScaleDbUser};Password={ConfigSettingsState.TimeScaleDbPassword};";
+                var host = Host.CreateDefaultBuilder()
+                        .ConfigureServices((ctx, services) =>
+                        {
+                            services.AddDbContext<AppDbContext>(opts =>
+                                opts.UseNpgsql(connString));
+                        })
+                    .Build();
+
+                var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();
+                TimeScaleDBClientWriter.Init(scopeFactory);
+                Screen.UpdateSize();
             }
         }
 

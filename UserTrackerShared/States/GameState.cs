@@ -1,6 +1,5 @@
 ﻿using System.Timers;
 using UserTrackerShared.DBClients;
-using UserTrackerShared.Helpers;
 using UserTrackerShared.Managers;
 using UserTrackerShared.Models;
 using Timer = System.Timers.Timer;

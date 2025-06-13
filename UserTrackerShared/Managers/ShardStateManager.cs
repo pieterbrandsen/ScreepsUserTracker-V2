@@ -119,7 +119,7 @@ namespace UserTrackerShared.Managers
                 var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;
                 var ticksBehind = GetSyncTime() - i;
 
-                DBClient.WritePerformanceData(new PerformanceClassDto
+                DBClient.WritePerformanceData(new TimeScalePerformanceClassDto
                 {
                     Shard = Name,
                     TicksBehind = ticksBehind,

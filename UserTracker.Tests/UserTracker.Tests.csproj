@@ -46,7 +46,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UserTracker.Tests.Shared\UserTracker.Tests.Shared.csproj" />
-    <ProjectReference Include="..\UserTrackerScreepsApi\UserTrackerScreepsApi.csproj" />
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
   </ItemGroup>
 

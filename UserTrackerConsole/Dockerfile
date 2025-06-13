@@ -1,5 +1,5 @@
 # Base stage (runtime environment)
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:9.0 AS base
 WORKDIR /app
 
 # Set default value for APP_CONFIG_FILE unless overridden
@@ -11,7 +11,7 @@ RUN echo "Base stage: APP_CONFIG_FILE=${APP_CONFIG_FILE}"
 ENV TZ=Europe/Amsterdam
 
 # Build stage (compiles the code)
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG APP_CONFIG_FILE  # Pass APP_CONFIG_FILE again in build stage
 ENV APP_CONFIG_FILE=${APP_CONFIG_FILE}

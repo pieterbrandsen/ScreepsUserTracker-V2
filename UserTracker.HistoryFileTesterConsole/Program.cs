@@ -1,6 +1,7 @@
 ﻿using UserTracker.HistoryFileTesterConsole;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
+using UserTrackerShared.States;
 
 ConfigSettingsState.Init();
 HistoryConfigSettingsState.Init();

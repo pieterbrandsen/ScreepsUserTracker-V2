@@ -404,3 +404,5 @@ FodyWeavers.xsd
 # Development config
 App.*.config
 /Objects
+
+docker-compose.custom.yml

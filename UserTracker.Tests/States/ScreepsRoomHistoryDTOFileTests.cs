@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using System.Configuration;
+using UserTrackerShared.States;
 
 namespace UserTracker.Tests.States
 {
