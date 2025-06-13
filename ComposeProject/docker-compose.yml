@@ -113,7 +113,7 @@ services:
             test: ["CMD-SHELL", "pg_isready", "-U", "${POSTGRES_USER}"]
         user: postgres
         ports:
-            - 5434:5432
+            - 5436:5432
         environment:
             POSTGRES_DB: ${POSTGRES_DB}
             POSTGRES_USER: ${POSTGRES_USER}
