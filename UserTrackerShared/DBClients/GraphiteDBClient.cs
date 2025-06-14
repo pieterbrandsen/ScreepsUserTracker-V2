@@ -225,7 +225,7 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static void WriteLeaderboardData(SeaonListItem seasonItem)
+        public static void WriteLeaderboardData(SeasonListItem seasonItem)
         {
             try
             {

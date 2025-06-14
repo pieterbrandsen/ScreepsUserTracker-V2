@@ -125,6 +125,86 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
         }
 
+        public static void UploadLeaderboardData(string serverName, SeasonListItem seasonItem)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var entity = new TimeScaleSeasonItem
+                {
+                    Server = serverName,
+                    Type = seasonItem.Type,
+                    Season = seasonItem.Season,
+                    UserId = seasonItem.UserId,
+                    UserName = seasonItem.UserName,
+                    Score = seasonItem.Score,
+                    Rank = seasonItem.Rank,
+                };
+                db.SeasonItems.Add(entity);
+                db.SaveChanges();
+                Interlocked.Add(ref _writtenDataCount, 1);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in UploadData");
+            }
+        }
+
+        public static void UploadSingleUserData(string serverName, TimeScaleScreepsUser user)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var entity = new TimeScaleScreepsUser
+                {
+                    Server = serverName,
+                    Badge = user.Badge,
+                    Username = user.Username,
+                    GCL = user.GCL,
+                    Power = user.Power,
+                    GCLRank = user.GCLRank,
+                    PowerRank = user.PowerRank,
+                };
+                db.Users.Add(entity);
+                db.SaveChanges();
+                Interlocked.Add(ref _writtenDataCount, 1);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in UploadData");
+            }
+        }
+
+        public static void UploadAdminUtilsData(string serverName, AdminUtilsDto data)
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var entity = new TimeScaleAdminUtilsDto
+                {
+                    Server = serverName,
+                    Objects= data.Objects,
+                    Ticks = data.Ticks,
+                    Users = data.Users,
+                    ActiveUsers = data.ActiveUsers,
+                    ActiveRooms = data.ActiveRooms,
+                    TotalRooms = data.TotalRooms,
+                    OwnedRooms = data.OwnedRooms,
+                    GameTime = data.GameTime,   
+                };
+                db.AdminUtilsData.Add(entity);
+                db.SaveChanges();
+                Interlocked.Add(ref _writtenDataCount, 1);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in UploadData");
+            }
+        }
+
         private static async Task LogStatusPeriodically()
         {
             while (true)
@@ -183,7 +263,7 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
         }
 
-        public static void WriteLeaderboardData(SeaonListItem seasonItem)
+        public static void WriteLeaderboardData(SeasonListItem seasonItem)
         {
             try
             {
@@ -193,7 +273,7 @@ namespace UserTrackerShared.DBClients.TimeScale
 
                 DateTime dateTime = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var timestamp = ((DateTimeOffset)dateTime).ToUnixTimeMilliseconds();
-                //TimeScaleDBClientWriter.UploadLeaderboardData($"history.{ConfigSettingsState.ServerName}.leaderboard.{seasonItem.Type}.{seasonItem.UserName}.", seasonItem);
+                TimeScaleDBClientWriter.UploadLeaderboardData(ConfigSettingsState.ServerName, seasonItem);
             }
             catch (Exception e)
             {
@@ -205,7 +285,7 @@ namespace UserTrackerShared.DBClients.TimeScale
         {
             try
             {
-                //TimeScaleDBClientWriter.UploadSingleUserData($"history.{ConfigSettingsState.ServerName}.users.{user.Username}.", user);
+                TimeScaleDBClientWriter.UploadSingleUserData(ConfigSettingsState.ServerName, user);
             }
             catch (Exception e)
             {
@@ -217,7 +297,7 @@ namespace UserTrackerShared.DBClients.TimeScale
         {
             try
             {
-                //TimeScaleDBClientWriter.UploadAdminUtilsData($"history.{ConfigSettingsState.ServerName}.adminutils.", data);
+                TimeScaleDBClientWriter.UploadAdminUtilsData(ConfigSettingsState.ServerName, data);
             }
             catch (Exception e)
             {

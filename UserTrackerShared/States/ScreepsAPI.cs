@@ -197,18 +197,18 @@ namespace UserTrackerShared.States
             return Result;
         }
 
-        private static async Task<SeasonListResponse?> GetCurrentSeasonLeaderboard(string mode, string season, int offset, int limit)
+        private static async Task<TimeScaleSeasonList?> GetCurrentSeasonLeaderboard(string mode, string season, int offset, int limit)
         {
             var path = $"/api/leaderboard/list?limit={limit}&mode={mode}&offset={offset}&season={season}";
 
-            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<TimeScaleSeasonList>(HttpMethod.Get, path);
             return Result;
         }
-        public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
+        public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power)> GetCurrentSeasonLeaderboard()
         {
             var season = DateTime.Now.ToString("yyyy-MM");
-            var gclLeaderboardList = new List<SeaonListItem>();
-            var powerLeaderboardList = new List<SeaonListItem>();
+            var gclLeaderboardList = new List<SeasonListItem>();
+            var powerLeaderboardList = new List<SeasonListItem>();
 
             int offset = 0;
             int limit = 20;
@@ -234,16 +234,16 @@ namespace UserTrackerShared.States
             return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList());
         }
 
-        public static async Task<Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>> GetAllSeasonsLeaderboard()
+        public static async Task<Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>> GetAllSeasonsLeaderboard()
         {
-            var leaderboardsList = new Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>();
+            var leaderboardsList = new Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>();
 
             var lastSeasonEmpty = false;
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var gclLeaderboardList = new List<SeaonListItem>();
-                var powerLeaderboardList = new List<SeaonListItem>();
+                var gclLeaderboardList = new List<SeasonListItem>();
+                var powerLeaderboardList = new List<SeasonListItem>();
 
                 int offset = 0;
                 int limit = 20;
@@ -281,19 +281,19 @@ namespace UserTrackerShared.States
             return leaderboardsList;
         }
 
-        public static async Task<SeasonListResponse?> GetLeaderboardsOfUser(string mode, string username)
+        public static async Task<TimeScaleSeasonList?> GetLeaderboardsOfUser(string mode, string username)
         {
             var path = $"/api/leaderboard/find?mode={mode}&username={username}";
 
-            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<TimeScaleSeasonList>(HttpMethod.Get, path);
             return Result;
         }
 
-        public static async Task<ScreepsUser?> GetUser(string userId)
+        public static async Task<TimeScaleScreepsUser?> GetUser(string userId)
         {
             var path = $"/api/user/find?id={userId}";
 
-            var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);
+            var (Result, Status) = await ExecuteRequestAsync<TimeScaleGetUserResponse>(HttpMethod.Get, path);
             return Status == HttpStatusCode.OK && Result?.Ok == 1 ? Result.User : null;
         }
 

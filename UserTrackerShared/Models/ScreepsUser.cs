@@ -11,7 +11,7 @@ namespace UserTrackerShared.Models
     public class ScreepsUser
     {
         [JsonProperty("_id")]
-        public required string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         [JsonProperty("username")]
         public required string Username { get; set; }
         [JsonProperty("gcl")]
@@ -19,7 +19,7 @@ namespace UserTrackerShared.Models
         [JsonProperty("power")]
         public long Power { get; set; }
         [JsonProperty("badge")]
-        public required MapStatUserBadge Badge { get; set; }
+        public MapStatUserBadge Badge { get; set; } = null!;
         public int GCLRank { get; set; }
         public int PowerRank { get; set; }
     }

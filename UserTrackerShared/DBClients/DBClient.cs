@@ -81,7 +81,7 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static void WriteLeaderboardData(SeaonListItem seasonItem)
+        public static void WriteLeaderboardData(SeasonListItem seasonItem)
         {
             if (ConfigSettingsState.InfluxDbEnabled)
             {
@@ -93,7 +93,7 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                //TimeScaleDBClientState.WriteLeaderboardData(seasonItem);
+                TimeScaleDBClientState.WriteLeaderboardData(seasonItem);
             }
         }
 
@@ -109,7 +109,7 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                //TimeScaleDBClientState.WriteSingleUserData(user);
+                TimeScaleDBClientState.WriteSingleUserData(user);
             }
         }
 
@@ -126,7 +126,7 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                //TimeScaleDBClientState.WriteAdminUtilsData(dto);
+                TimeScaleDBClientState.WriteAdminUtilsData(dto);
             }
         }
     }

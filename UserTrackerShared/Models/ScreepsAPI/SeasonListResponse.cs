@@ -2,17 +2,17 @@
 
 namespace UserTrackerShared.Models.ScreepsAPI
 {
-    public class SeaonListItem
+    public class SeasonListItem
     {
-        public required string Type { get; set; }
+        public string Type { get; set; } = null!;
         [JsonProperty("_id")]
-        public required string Id { get; set; }
+        public string Id { get; set; } = null!;
 
         [JsonProperty("season")]
-        public required string Season { get; set; }
+        public string Season { get; set; } = null!;
         [JsonProperty("user")]
-        public required string UserId { get; set; }
-        public required string UserName { get; set; }
+        public string UserId { get; set; } = null!;
+        public string UserName { get; set; } = null!;
         [JsonProperty("score")]
         public int Score { get; set; }
         [JsonProperty("rank")]
@@ -25,7 +25,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("count")]
         public int Count { get; set; }
         [JsonProperty("list")]
-        public required List<SeaonListItem> List { get; set; }
+        public required List<SeasonListItem> List { get; set; }
         [JsonProperty("users")]
         public required Dictionary<string, ScreepsUser> Users { get; set; }
     }

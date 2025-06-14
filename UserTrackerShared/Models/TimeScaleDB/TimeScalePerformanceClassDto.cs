@@ -12,10 +12,6 @@ namespace UserTrackerShared.Models
 {
     public class TimeScalePerformanceClassDto : PerformanceClassDto
     {
-        public TimeScalePerformanceClassDto()
-        {
-            
-        }
         [Key]
         public int Id { get; set; }
         public DateTime Time { get; set; }

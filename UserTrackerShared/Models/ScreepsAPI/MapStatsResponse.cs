@@ -40,17 +40,17 @@ namespace UserTrackerShared.Models.ScreepsAPI
     public class MapStatUserBadge
     {
         [JsonProperty("type")]
-        public required object Type { get; set; }
+        public object? Type { get; set; }
         [JsonProperty("color1")]
-        public required string Color1 { get; set; }
+        public string? Color1 { get; set; }
         [JsonProperty("color2")]
-        public required string Color2 { get; set; }
+        public  string? Color2 { get; set; }
         [JsonProperty("color3")]
-        public required string Color3 { get; set; }
+        public string? Color3 { get; set; }
         [JsonProperty("param")]
         public int Param { get; set; }
         [JsonProperty("decoration")]
-        public required string Decoration { get; set; }
+        public string? Decoration { get; set; }
         [JsonProperty("flip")]
         public bool Flip { get; set; }
     }

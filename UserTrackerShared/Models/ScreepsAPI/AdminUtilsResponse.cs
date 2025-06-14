@@ -98,7 +98,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("maxDeviation")]
         public int MaxDeviation { get; set; }
         [JsonProperty("stages")]
-        public required AdminUtilsStages Stages { get; set; }
+        public AdminUtilsStages Stages { get; set; } = null!;
     }
 
     public class AdminUtilsObjects
@@ -130,6 +130,10 @@ namespace UserTrackerShared.Models.ScreepsAPI
     }
     public class AdminUtilsDto
     {
+        public AdminUtilsDto()
+        {
+            
+        }
         public AdminUtilsDto(AdminUtilsResponse response)
         {
             ActiveUsers = response.ActiveUsers;
