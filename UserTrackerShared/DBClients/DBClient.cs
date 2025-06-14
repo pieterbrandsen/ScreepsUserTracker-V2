@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Reactive;
 using UserTrackerShared.DBClients.TimeScale;
 using UserTrackerShared.DBClients.TimeScaleDB;
@@ -27,11 +28,17 @@ namespace UserTrackerShared.DBClients
             {
                 var connString = $"Host={ConfigSettingsState.TimeScaleDbHost};Port={ConfigSettingsState.TimeScaleDbPort};Database={ConfigSettingsState.TimeScaleDbDBName};Username={ConfigSettingsState.TimeScaleDbUser};Password={ConfigSettingsState.TimeScaleDbPassword};";
                 var host = Host.CreateDefaultBuilder()
-                        .ConfigureServices((ctx, services) =>
-                        {
-                            services.AddDbContext<AppDbContext>(opts =>
-                                opts.UseNpgsql(connString));
-                        })
+                    .ConfigureLogging(logging =>
+                    {
+                        logging.ClearProviders();
+                        logging.AddConsole();
+                        logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Warning);
+                    })
+                  .ConfigureServices((ctx, services) =>
+                    {
+                        services.AddDbContext<AppDbContext>(opts =>
+                            opts.UseNpgsql(connString));
+                    })
                     .Build();
 
                 var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();

@@ -905,6 +905,8 @@ namespace UserTrackerShared.Models
         public string? Shard { get; set; }
         [JsonProperty("deleteTime")]
         public decimal DeleteTime { get; set; }
+        [JsonProperty("_damageToApply")]
+        public decimal _damageToApply { get; set; }
     }
 
     public class GroundResource : Store

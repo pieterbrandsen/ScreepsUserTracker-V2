@@ -23,7 +23,25 @@ datasources:
     type: graphite
     access: proxy
     url: http://carbon-api:8081
-    isDefault: true
     jsonData:
       graphiteVersion: "1.1"
       graphiteType": "default"
+  - name: TimescaleDB
+    id: 3
+    type: grafana-postgresql-datasource
+    access: proxy
+    url: timescaledb:5432
+    isDefault: true
+    user: postgres
+    basicAuth: false
+    withCredentials: false
+    jsonData: 
+        connMaxLifetime: 14400
+        database: screeps
+        maxIdleConns: 100
+        maxIdleConnsAuto: true
+        maxOpenConns: 100
+        sslmode: disable
+        timescaledb: true
+    secureJsonData:
+        password: "reset"

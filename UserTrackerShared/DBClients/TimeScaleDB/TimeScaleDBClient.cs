@@ -90,6 +90,7 @@ namespace UserTrackerShared.DBClients.TimeScale
                 };
 
                 db.PerformanceStats.Add(entity);
+                db.SaveChanges();
                 Interlocked.Add(ref _writtenDataCount, 1);
             }
             catch (Exception ex)
@@ -115,6 +116,7 @@ namespace UserTrackerShared.DBClients.TimeScale
                     Structures = obj.Structures,
                 };
                 db.ScreepsRoomHistory.Add(entity);
+                db.SaveChanges();
                 Interlocked.Add(ref _writtenDataCount, 1);
             }
             catch (Exception ex)
@@ -130,10 +132,8 @@ namespace UserTrackerShared.DBClients.TimeScale
                 await Task.Delay(TimeSpan.FromSeconds(10));
                 using var scope = _scopeFactory.CreateScope();
                 
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var flushed = Interlocked.Exchange(ref _writtenDataCount, 0);
                 _logger.Information("Added {Flushed} rows in the last 10 seconds", flushed);
-                await db.SaveChangesAsync();
             }
         }
     }
