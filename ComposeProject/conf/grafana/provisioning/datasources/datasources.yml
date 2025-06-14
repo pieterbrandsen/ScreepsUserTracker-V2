@@ -34,6 +34,7 @@ datasources:
     isDefault: true
     user: postgres
     basicAuth: false
+    editable: true
     withCredentials: false
     jsonData: 
         connMaxLifetime: 14400
@@ -43,5 +44,3 @@ datasources:
         maxOpenConns: 100
         sslmode: disable
         timescaledb: true
-    secureJsonData:
-        password: "reset"
