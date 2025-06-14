@@ -26,7 +26,9 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
+                Task.Delay(30000).Wait();
                 var connString = $"Host={ConfigSettingsState.TimeScaleDbHost};Port={ConfigSettingsState.TimeScaleDbPort};Database={ConfigSettingsState.TimeScaleDbDBName};Username={ConfigSettingsState.TimeScaleDbUser};Password={ConfigSettingsState.TimeScaleDbPassword};";
+                Screen.AddLog($"TimeScaleDB Connection String: {connString}");
                 var host = Host.CreateDefaultBuilder()
                     .ConfigureLogging(logging =>
                     {
