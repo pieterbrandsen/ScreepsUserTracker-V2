@@ -31,16 +31,16 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
 
             _scopeFactory = scopeFactory;
-            _logger.Information("Initializing GraphiteDB client...");
+            _logger.Information("Initializing TimeScaleDB client...");
 
             try
             {
                 _isInitialized = true;
-                _logger.Information("GraphiteDB client connected");
+                _logger.Information("TimeScaleDB client connected");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error initializing GraphiteDB client.");
+                _logger.Error(ex, "Error initializing TimeScaleDB client.");
                 throw;
             }
 
