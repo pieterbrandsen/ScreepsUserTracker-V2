@@ -3,10 +3,12 @@ networks:
         external: true
     internal:
 
+
 volumes:
     grafana-data:
     postgres-data:
     timescale-data:
+
 
 x-logging: &default-logging
     driver: "local"
@@ -80,6 +82,8 @@ services:
         networks:
             - internal
             - traefik-net
+        ports:
+            - 3006:3000
         depends_on:
             postgres-usertrackergrafana:
                 condition: service_healthy
@@ -90,18 +94,6 @@ services:
             - "traefik.http.routers.grafanaUserTracker.entrypoints=websecure"
             - "traefik.http.routers.grafanaUserTracker.tls.certresolver=letsencrypt"
         logging: *default-logging
-    timescaledb:
-        image: timescale/timescaledb:latest-pg14
-        container_name: timescaledb
-        ports:
-            - 5435:5432
-        environment:
-            - POSTGRES_USER=${POSTGRES_USER}
-            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-            - POSTGRES_DB=${POSTGRES_DB}
-        volumes:
-            - timescale-data:/var/lib/postgresql/data
-        restart: unless-stopped
     postgres-usertrackergrafana:
         image: postgres:14
         networks:
@@ -110,7 +102,7 @@ services:
         volumes:
             - postgres-data:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready", "-U", "${POSTGRES_USER}"]
+            test: [ "CMD-SHELL", "pg_isready", "-U", "${POSTGRES_USER}" ]
         user: postgres
         ports:
             - 5436:5432
@@ -134,16 +126,17 @@ services:
             - POSTGRES_HOST=postgres-usertrackergrafana
         volumes:
             - /var/opt/pgbackups-grafanaUserTracker:/backups
-    screeps_usertracker_console_mmo:
-        build:
-            context: ../
-            dockerfile: UserTrackerConsole/Dockerfile
-            args:
-                APP_CONFIG_FILE: App.Live.config
+    timescaledb:
+        image: timescale/timescaledb:latest-pg14
+        container_name: timescaledb
+        ports:
+            - 5437:5432
         networks:
             - internal
-        depends_on:
-            - influxdb
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}
         volumes:
-            - ./logs:/app/logs
-        logging: *default-logging
+            - timescale-data:/var/lib/postgresql/data
+        restart: unless-stopped
