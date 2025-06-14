@@ -197,11 +197,11 @@ namespace UserTrackerShared.States
             return Result;
         }
 
-        private static async Task<TimeScaleSeasonList?> GetCurrentSeasonLeaderboard(string mode, string season, int offset, int limit)
+        private static async Task<SeasonListResponse?> GetCurrentSeasonLeaderboard(string mode, string season, int offset, int limit)
         {
             var path = $"/api/leaderboard/list?limit={limit}&mode={mode}&offset={offset}&season={season}";
 
-            var (Result, _) = await ExecuteRequestAsync<TimeScaleSeasonList>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
         public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power)> GetCurrentSeasonLeaderboard()
@@ -281,19 +281,19 @@ namespace UserTrackerShared.States
             return leaderboardsList;
         }
 
-        public static async Task<TimeScaleSeasonList?> GetLeaderboardsOfUser(string mode, string username)
+        public static async Task<SeasonListResponse?> GetLeaderboardsOfUser(string mode, string username)
         {
             var path = $"/api/leaderboard/find?mode={mode}&username={username}";
 
-            var (Result, _) = await ExecuteRequestAsync<TimeScaleSeasonList>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
 
-        public static async Task<TimeScaleScreepsUser?> GetUser(string userId)
+        public static async Task<ScreepsUser?> GetUser(string userId)
         {
             var path = $"/api/user/find?id={userId}";
 
-            var (Result, Status) = await ExecuteRequestAsync<TimeScaleGetUserResponse>(HttpMethod.Get, path);
+            var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);
             return Status == HttpStatusCode.OK && Result?.Ok == 1 ? Result.User : null;
         }
 

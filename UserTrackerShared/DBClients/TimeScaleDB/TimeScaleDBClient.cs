@@ -151,7 +151,7 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
         }
 
-        public static void UploadSingleUserData(string serverName, TimeScaleScreepsUser user)
+        public static void UploadSingleUserData(string serverName, ScreepsUser user)
         {
             try
             {

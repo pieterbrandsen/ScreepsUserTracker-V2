@@ -9,7 +9,7 @@ namespace UserTrackerShared.States
     public static class GameState
     {
         public static List<ShardStateManager> Shards { get; set; } = new List<ShardStateManager>();
-        public static Dictionary<string, TimeScaleScreepsUser> Users { get; set; } = new();
+        public static Dictionary<string, ScreepsUser> Users { get; set; } = new();
 
         public static async Task InitAsync()
         {
@@ -82,7 +82,7 @@ namespace UserTrackerShared.States
                     var gclLeaderbard = leaderboard.gcl;
                     foreach (var leaderboardSpot in gclLeaderbard)
                     {
-                        if (!Users.TryGetValue(leaderboardSpot.UserId, out TimeScaleScreepsUser? value))
+                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
                             await GetUser(leaderboardSpot.UserId);
                             Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
@@ -99,7 +99,7 @@ namespace UserTrackerShared.States
                     var powerLeaderboard = leaderboard.power;
                     foreach (var leaderboardSpot in powerLeaderboard)
                     {
-                        if (!Users.TryGetValue(leaderboardSpot.UserId, out TimeScaleScreepsUser? value))
+                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
                             await GetUser(leaderboardSpot.UserId);
                             Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch

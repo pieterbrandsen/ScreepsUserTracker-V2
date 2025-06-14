@@ -16,6 +16,7 @@ namespace UserTrackerShared.DBClients.TimeScaleDB
         public DbSet<TimeScaleSeasonItem> SeasonItems { get; set; }
         public DbSet<TimeScaleAdminUtilsDto> AdminUtilsData { get; set; }
         public DbSet<TimeScaleScreepsUser> Users { get; set; }
+        public DbSet<TimeScaleScreepsRoomHistoryDto> ScreepsRoomHistory { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> opts)
             : base(opts)
