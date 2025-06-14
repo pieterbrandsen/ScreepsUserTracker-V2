@@ -77,8 +77,7 @@ services:
             - grafana-data:/var/lib/grafana
             - ./conf/grafana/grafana.ini:/etc/grafana/grafana.ini
             - ./conf/grafana/provisioning/:/etc/grafana/provisioning
-            - ./conf/grafana/dashboards/performance:/var/lib/grafana/dashboards/performance
-            - ./conf/grafana/dashboards/data:/var/lib/grafana/dashboards/data
+            - ./conf/grafana/dashboards:/var/lib/grafana/dashboards
         networks:
             - internal
             - traefik-net
