@@ -46,29 +46,29 @@ namespace UserTrackerShared.DBClients.TimeScale
 
 
             Task.Run(LogStatusPeriodically);
-            using var masterConn = new NpgsqlConnection(
-                            new NpgsqlConnectionStringBuilder
-                            {
-                                Host = ConfigSettingsState.TimeScaleDbHost,
-                                Port = ConfigSettingsState.TimeScaleDbPort,
-                                Database = "postgres",
-                                Username = ConfigSettingsState.TimeScaleDbUser,
-                                Password = ConfigSettingsState.TimeScaleDbPassword
-                            }.ConnectionString);
+            //using var masterConn = new NpgsqlConnection(
+            //                new NpgsqlConnectionStringBuilder
+            //                {
+            //                    Host = ConfigSettingsState.TimeScaleDbHost,
+            //                    Port = ConfigSettingsState.TimeScaleDbPort,
+            //                    Database = "postgres",
+            //                    Username = ConfigSettingsState.TimeScaleDbUser,
+            //                    Password = ConfigSettingsState.TimeScaleDbPassword
+            //                }.ConnectionString);
 
-            masterConn.Open();
-            using (var cmd = masterConn.CreateCommand())
-            {
-                cmd.CommandText =
-                  $@"CREATE DATABASE ""{ConfigSettingsState.TimeScaleDbDBName}"";";
-                try { cmd.ExecuteNonQuery(); }
-                catch (PostgresException ex) when (ex.SqlState == "42P04") { /* already exists */ }
-            }
+            //masterConn.Open();
+            //using (var cmd = masterConn.CreateCommand())
+            //{
+            //    cmd.CommandText =
+            //      $@"CREATE DATABASE ""{ConfigSettingsState.TimeScaleDbDBName}"";";
+            //    try { cmd.ExecuteNonQuery(); }
+            //    catch (PostgresException ex) when (ex.SqlState == "42P04") { /* already exists */ }
+            //}
 
-            // Apply EF Core migrations in a scope
-            using var migrateScope = _scopeFactory.CreateScope();
-            var migrator = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
-            migrator.Database.Migrate();
+            //// Apply EF Core migrations in a scope
+            //using var migrateScope = _scopeFactory.CreateScope();
+            //var migrator = migrateScope.ServiceProvider.GetRequiredService<AppDbContext>();
+            //migrator.Database.Migrate();
 
             _logger.Information("Worker tasks started.");
         }
@@ -114,6 +114,9 @@ namespace UserTrackerShared.DBClients.TimeScale
                     GroundResources = obj.GroundResources,
                     Creeps = obj.Creeps,
                     Structures = obj.Structures,
+                    TimeStamp = obj.TimeStamp,
+                    Tick = obj.Tick,
+                    Base = obj.Base,
                 };
                 db.ScreepsRoomHistory.Add(entity);
                 db.SaveChanges();
