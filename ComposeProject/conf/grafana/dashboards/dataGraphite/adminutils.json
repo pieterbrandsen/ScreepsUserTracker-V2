@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 6,
+  "id": 8,
   "links": [],
   "panels": [
     {
@@ -49,8 +49,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           },
@@ -82,7 +81,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -113,8 +112,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           }
@@ -145,7 +143,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -175,8 +173,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           }
@@ -207,7 +204,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -237,8 +234,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           }
@@ -269,7 +265,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -299,8 +295,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "text",
-                "value": null
+                "color": "text"
               }
             ]
           }
@@ -331,7 +326,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "datasource": {
@@ -407,8 +402,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -444,7 +438,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -507,7 +501,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -579,8 +573,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -616,7 +609,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -675,8 +668,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -713,7 +705,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -786,8 +778,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -824,7 +815,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -884,8 +875,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -922,7 +912,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -981,8 +971,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1019,7 +1008,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -1092,8 +1081,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1130,12 +1118,12 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
           "refId": "A",
-          "target": "aliasByNode(history.$Servers.adminutils.users.$Team1.gcl, 4)"
+          "target": "aliasByNode(history.$Servers.adminutils.users.*.gcl, 4)"
         }
       ],
       "title": "GCL",
@@ -1190,8 +1178,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1228,7 +1215,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "11.5.1",
+      "pluginVersion": "12.0.1+security-01",
       "targets": [
         {
           "refCount": 0,
@@ -1240,7 +1227,7 @@
       "type": "timeseries"
     },
     {
-      "collapsed": false,
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1248,622 +1235,617 @@
         "y": 45
       },
       "id": 21,
-      "panels": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 46
+          },
+          "id": 20,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team1.gcl, 3, 'sum'), 'Team 1', false)"
+            },
+            {
+              "datasource": {
+                "type": "graphite",
+                "uid": "P1D261A8554D2DA69"
+              },
+              "hide": false,
+              "refCount": 0,
+              "refId": "B",
+              "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team2.gcl, 3, 'sum'), 'Team 2', false)"
+            }
+          ],
+          "title": "GCL teams",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 46
+          },
+          "id": 26,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "aliasByNode(history.$Servers.adminutils.users.$Team1.gcl, 4)"
+            }
+          ],
+          "title": "GCL team 1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 46
+          },
+          "id": 22,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "aliasByNode(history.$Servers.adminutils.users.$Team2.gcl, 4)"
+            }
+          ],
+          "title": "GCL team 2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 54
+          },
+          "id": 25,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team1.combinedrcl, 3, 'sum'), 'Team 1', false)"
+            },
+            {
+              "datasource": {
+                "type": "graphite",
+                "uid": "P1D261A8554D2DA69"
+              },
+              "hide": false,
+              "refCount": 0,
+              "refId": "B",
+              "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team2.combinedrcl, 3, 'sum'), 'Team 2', false)"
+            }
+          ],
+          "title": "GCL teams",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 54
+          },
+          "id": 23,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "aliasByNode(history.$Servers.adminutils.users.$Team1.combinedrcl, 4)"
+            }
+          ],
+          "title": "Combined RCL 1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "graphite",
+            "uid": "P1D261A8554D2DA69"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "decimals": 0,
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 54
+          },
+          "id": 24,
+          "options": {
+            "legend": {
+              "calcs": [
+                "lastNotNull",
+                "diff"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "sortBy": "Last *",
+              "sortDesc": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "12.0.1+security-01",
+          "targets": [
+            {
+              "refCount": 0,
+              "refId": "A",
+              "target": "aliasByNode(history.$Servers.adminutils.users.$Team2.combinedrcl, 4)"
+            }
+          ],
+          "title": "CombinedRCL team 2",
+          "type": "timeseries"
+        }
+      ],
       "title": "Leaderboard team based",
       "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 46
-      },
-      "id": 20,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team1.gcl, 3, 'sum'), 'Team 1', false)"
-        },
-        {
-          "datasource": {
-            "type": "graphite",
-            "uid": "P1D261A8554D2DA69"
-          },
-          "hide": false,
-          "refCount": 0,
-          "refId": "B",
-          "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team2.gcl, 3, 'sum'), 'Team 2', false)"
-        }
-      ],
-      "title": "GCL teams",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 46
-      },
-      "id": 26,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "aliasByNode(history.$Servers.adminutils.users.$Team1.gcl, 4)"
-        }
-      ],
-      "title": "GCL team 1",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 46
-      },
-      "id": 22,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "aliasByNode(history.$Servers.adminutils.users.$Team2.gcl, 4)"
-        }
-      ],
-      "title": "GCL team 2",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 54
-      },
-      "id": 25,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team1.combinedrcl, 3, 'sum'), 'Team 1', false)"
-        },
-        {
-          "datasource": {
-            "type": "graphite",
-            "uid": "P1D261A8554D2DA69"
-          },
-          "hide": false,
-          "refCount": 0,
-          "refId": "B",
-          "target": "alias(groupByNode(history.$Servers.adminutils.users.$Team2.combinedrcl, 3, 'sum'), 'Team 2', false)"
-        }
-      ],
-      "title": "GCL teams",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 54
-      },
-      "id": 23,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "aliasByNode(history.$Servers.adminutils.users.$Team1.combinedrcl, 4)"
-        }
-      ],
-      "title": "Combined RCL 1",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "graphite",
-        "uid": "P1D261A8554D2DA69"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "decimals": 0,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 54
-      },
-      "id": 24,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "diff"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true,
-          "sortBy": "Last *",
-          "sortDesc": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "11.5.1",
-      "targets": [
-        {
-          "refCount": 0,
-          "refId": "A",
-          "target": "aliasByNode(history.$Servers.adminutils.users.$Team2.combinedrcl, 4)"
-        }
-      ],
-      "title": "CombinedRCL team 2",
-      "type": "timeseries"
     }
   ],
   "preload": false,
   "refresh": "",
-  "schemaVersion": 40,
+  "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
@@ -1915,7 +1897,7 @@
         "description": "",
         "hide": 2,
         "name": "Team1",
-        "query": "{player94,droidfreak,hailhydra,harabi,kalgen,maddokmike,mirroar,neoncamouflage}",
+        "query": "{}",
         "skipUrlSync": true,
         "type": "constant"
       },
@@ -1926,7 +1908,7 @@
         },
         "hide": 2,
         "name": "Team2",
-        "query": "{sneakypolarbear,dakryolith,geodefence,jasper_185,robalian,shibdib,trepidimous}",
+        "query": "{}",
         "skipUrlSync": true,
         "type": "constant"
       }
@@ -1940,6 +1922,5 @@
   "timezone": "browser",
   "title": "Adminutils",
   "uid": "beef15kfq8npca",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }
