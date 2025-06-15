@@ -121,7 +121,7 @@ namespace UserTrackerShared.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TimeScaleScreepsRoomHistoryDto");
+                    b.ToTable("ScreepsRoomHistory");
                 });
 
             modelBuilder.Entity("UserTrackerShared.Models.TimeScaleDB.TimeScaleScreepsUser", b =>

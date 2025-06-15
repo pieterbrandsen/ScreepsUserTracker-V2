@@ -12,19 +12,6 @@ namespace UserTrackerShared.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_ScreepsRoomHistory",
-                table: "ScreepsRoomHistory");
-
-            migrationBuilder.RenameTable(
-                name: "ScreepsRoomHistory",
-                newName: "TimeScaleScreepsRoomHistoryDto");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_TimeScaleScreepsRoomHistoryDto",
-                table: "TimeScaleScreepsRoomHistoryDto",
-                column: "Id");
-
             migrationBuilder.CreateTable(
                 name: "AdminUtilsData",
                 columns: table => new
@@ -99,19 +86,6 @@ namespace UserTrackerShared.Migrations
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropPrimaryKey(
-                name: "PK_TimeScaleScreepsRoomHistoryDto",
-                table: "TimeScaleScreepsRoomHistoryDto");
-
-            migrationBuilder.RenameTable(
-                name: "TimeScaleScreepsRoomHistoryDto",
-                newName: "ScreepsRoomHistory");
-
-            migrationBuilder.AddPrimaryKey(
-                name: "PK_ScreepsRoomHistory",
-                table: "ScreepsRoomHistory",
-                column: "Id");
         }
     }
 }
