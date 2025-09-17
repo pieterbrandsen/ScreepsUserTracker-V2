@@ -42,6 +42,6 @@ namespace UserTrackerShared.Helpers
         InfluxDB,
         GraphiteDB,
         TimeScaleDB,
+        QuestDB
     }
-
 }

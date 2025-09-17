@@ -19,11 +19,6 @@ namespace UserTrackerShared.Managers
         }
         public async Task StartAsync()
         {
-            var setTimeTimer = new Timer(300000);
-            setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
-            setTimeTimer.AutoReset = true;
-            setTimeTimer.Enabled = true;
-
             var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
@@ -33,6 +28,11 @@ namespace UserTrackerShared.Managers
             var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
             _logger.Warning(message);
             _ = StartUpdate();
+
+            var setTimeTimer = new Timer(300000);
+            setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
+            setTimeTimer.AutoReset = true;
+            setTimeTimer.Enabled = true;
         }
 
         public string Name { get; set; }
@@ -47,6 +47,7 @@ namespace UserTrackerShared.Managers
             if (timeResponse != null && Time != timeResponse.Time)
             {
                 Time = timeResponse.Time;
+                _logger.Information($"Updated time of shard {Name} to {Time} ({isSyncing})");
                 if (isSyncing) return;
                 isSyncing = true;
                 _ = StartSync();

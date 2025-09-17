@@ -1,5 +1,7 @@
 .env
 appsettings.development.json
+docker-compose.custom.yml
+data/questdb
 
 
 ## Ignore Visual Studio temporary files, build results, and
@@ -406,5 +408,3 @@ go-carbon-data
 # Development config
 App.*.config
 /Objects
-
-docker-compose.custom.yml

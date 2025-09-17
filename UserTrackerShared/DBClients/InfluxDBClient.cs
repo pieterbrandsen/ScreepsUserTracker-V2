@@ -7,41 +7,19 @@ using System.Text;
 using System.Threading.Channels;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
+using UserTrackerShared.Models.Db;
 using UserTrackerShared.States;
-
 
 namespace UserTrackerShared.DBClients
 {
-    public class PointDataParameter
-    {
-        public string Measurement { get; set; }
-        public string Shard { get; set; }
-        public string Room { get; set; }
-        public long Tick { get; set; }
-        public long Timestamp { get; set; }
-        public string Username { get; set; }
-        public string Field { get; set; }
-        public object? Value { get; set; }
-
-        public PointDataParameter(string measurement, string shard, string room, long tick, long timestamp, string username, string field, object? value)
-        {
-            Measurement = measurement;
-            Shard = shard;
-            Room = room;
-            Tick = tick;
-            Timestamp = timestamp;
-            Username = username;
-            Field = field;
-            Value = value;
-        }
-    }
     public static class InfluxDBPointHelper
     {
-        public static PointData CreatePoint(PointDataParameter parameters)
+        public static PointData CreatePoint(InfluxHistoryPointDataParameter parameters)
         {
             var point = PointData.Measurement(parameters.Measurement)
                 .Tag("shard", parameters.Shard)
                 .Tag("room", parameters.Room)
+                .Field("field", parameters.Field)
                 .Field(parameters.Field, parameters.Value)
                 .Field("tick", parameters.Tick)
                 .Timestamp(parameters.Timestamp, WritePrecision.Ms);
@@ -50,38 +28,6 @@ namespace UserTrackerShared.DBClients
                 point = point.Tag("user", parameters.Username);
             }
             return point;
-        }
-
-        public static void FlattenJson(JToken token, StringBuilder currentPath, IDictionary<string, object?> dict)
-        {
-            switch (token)
-            {
-                case JObject obj:
-                    foreach (var prop in obj.Properties())
-                    {
-                        int initialLen = currentPath.Length;
-                        currentPath.Append($"{prop.Name}.");
-                        FlattenJson(prop.Value, currentPath, dict);
-                        currentPath.Length = initialLen; // Reset path
-                    }
-                    break;
-
-                case JArray array:
-                    for (int i = 0; i < array.Count; i++)
-                    {
-                        int initialLen = currentPath.Length;
-                        currentPath.Append($"{i}.");
-                        FlattenJson(array[i], currentPath, dict);
-                        currentPath.Length = initialLen; // Reset path
-                    }
-                    break;
-
-                case JValue jValue:
-                    if (currentPath.Length > 0)
-                        currentPath.Length--; // Remove trailing "."
-                    dict[currentPath.ToString().ToLower()] = jValue.Value;
-                    break;
-            }
         }
     }
 
@@ -99,10 +45,12 @@ namespace UserTrackerShared.DBClients
 
         // A pool of worker tasks that will process the channel.
         private static List<Task>? _workerTasks;
+
         private const int WorkerCount = 32;   // Number of concurrent worker tasks; tune per hardware.
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
+
         private static long _pendingPointCount = 0;
 
         public static void Init()
@@ -161,11 +109,11 @@ namespace UserTrackerShared.DBClients
                 var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
-                InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long))
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
                 {
-                    var pointParameters = new PointDataParameter(
+                    var pointParameters = new InfluxHistoryPointDataParameter(
                         ConfigSettingsState.ServerName,
                         shard,
                         room,
@@ -173,7 +121,7 @@ namespace UserTrackerShared.DBClients
                         timestamp,
                         username,
                         kvp.Key.ToLower(),
-                        kvp.Value);
+                        Convert.ToDouble(kvp.Value));
                     var point = InfluxDBPointHelper.CreatePoint(pointParameters);
                     // Increment pending counter when adding a new point.
                     Interlocked.Increment(ref _pendingPointCount);
@@ -255,10 +203,10 @@ namespace UserTrackerShared.DBClients
         }
     }
 
-
     public static class InfluxDBClientState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.InfluxDB);
+
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
@@ -275,7 +223,7 @@ namespace UserTrackerShared.DBClients
                     var apiUser = await ScreepsApi.GetUser(userId);
                     if (apiUser != null)
                     {
-                        GameState.Users.Add(userId, apiUser);
+                        GameState.Users.AddOrUpdate(userId, apiUser, (key, oldValue) => apiUser);
                     }
                 }
 

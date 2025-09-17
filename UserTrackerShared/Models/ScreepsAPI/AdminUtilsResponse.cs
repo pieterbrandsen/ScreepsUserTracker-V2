@@ -115,14 +115,14 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int ActiveUsers { get; set; }
         [JsonProperty("activeRooms")]
         public int ActiveRooms { get; set; }
-        [JsonProperty("objects")]
-        public required AdminUtilsObjects Objects { get; set; }
         [JsonProperty("totalRooms")]
         public int TotalRooms { get; set; }
         [JsonProperty("ownedRooms")]
         public int OwnedRooms { get; set; }
         [JsonProperty("gametime")]
         public long GameTime { get; set; }
+        [JsonProperty("objects")]
+        public required AdminUtilsObjects Objects { get; set; }
         [JsonProperty("ticks")]
         public required AdminUtilsTicks Ticks { get; set; }
         [JsonProperty("users")]
@@ -153,16 +153,16 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int ActiveUsers { get; set; }
         [JsonProperty("activeRooms")]
         public int ActiveRooms { get; set; }
-        [JsonProperty("objects")]
-        public AdminUtilsObjects Objects { get; set; }
         [JsonProperty("totalRooms")]
         public int TotalRooms { get; set; }
         [JsonProperty("ownedRooms")]
         public int OwnedRooms { get; set; }
         [JsonProperty("gametime")]
         public long GameTime { get; set; }
+        [JsonProperty("objects")]
+        public AdminUtilsObjects Objects { get; set; }
         [JsonProperty("ticks")]
-        public AdminUtilsTicks Ticks { get; set; }
+         public AdminUtilsTicks Ticks { get; set; }
         [JsonProperty("users")]
         public Dictionary<string, AdminUtilsUser> Users { get; set; }
     }

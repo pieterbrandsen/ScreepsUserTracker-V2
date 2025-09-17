@@ -47,6 +47,10 @@ namespace UserTrackerShared.DBClients
                 TimeScaleDBClientWriter.Init(scopeFactory);
                 Screen.UpdateSize();
             }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                QuestDBClientWriter.Init();
+            }
         }
 
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
@@ -62,6 +66,10 @@ namespace UserTrackerShared.DBClients
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
                 await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                await QuestDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
             }
         }
 
@@ -79,25 +87,50 @@ namespace UserTrackerShared.DBClients
             {
                 TimeScaleDBClientState.WritePerformanceData(PerformanceClassDto);
             }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                _ = QuestDBClientState.WritePerformanceData(PerformanceClassDto);
+            }
         }
 
-        public static void WriteLeaderboardData(SeasonListItem seasonItem)
+        public static async Task WriteHistoricalLeaderboardData(SeasonListItem seasonItem)
         {
             if (ConfigSettingsState.InfluxDbEnabled)
             {
-                // InfluxDBClientState.WriteLeaderboardData(seasonItem);
+                // InfluxDBClientState.WriteHistoricalLeaderboardData(seasonItem);
             }
             if (ConfigSettingsState.GraphiteDbEnabled)
             {
-                GraphiteDBClientState.WriteLeaderboardData(seasonItem);
+                GraphiteDBClientState.WriteHistoricalLeaderboardData(seasonItem);
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                TimeScaleDBClientState.WriteLeaderboardData(seasonItem);
+                TimeScaleDBClientState.WriteHistoricalLeaderboardData(seasonItem);
+            }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                await QuestDBClientState.WriteHistoricalLeaderboardData(seasonItem);
             }
         }
 
-        public static void WriteSingleUserData(ScreepsUser user)
+        public static async Task WriteCurrentLeaderboardData(SeasonListItem seasonItem)
+        {
+            if (ConfigSettingsState.InfluxDbEnabled)
+            {
+            }
+            if (ConfigSettingsState.GraphiteDbEnabled)
+            {
+            }
+            if (ConfigSettingsState.TimeScaleDbEnabled)
+            {
+            }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                await QuestDBClientState.WriteCurrentLeaderboardData(seasonItem);
+            }
+        }
+
+        public static async Task WriteSingleUserData(ScreepsUser user)
         {
             if (ConfigSettingsState.InfluxDbEnabled)
             {
@@ -110,6 +143,10 @@ namespace UserTrackerShared.DBClients
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
                 TimeScaleDBClientState.WriteSingleUserData(user);
+            }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                await QuestDBClientState.WriteSingleUserData(user);
             }
         }
 
@@ -127,6 +164,10 @@ namespace UserTrackerShared.DBClients
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
                 TimeScaleDBClientState.WriteAdminUtilsData(dto);
+            }
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                QuestDBClientState.WriteAdminUtilsData(dto);
             }
         }
     }

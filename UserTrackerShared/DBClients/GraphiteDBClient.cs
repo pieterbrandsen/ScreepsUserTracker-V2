@@ -8,7 +8,6 @@ using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
 
-
 namespace UserTrackerShared.DBClients
 {
     public class GraphiteBatchClient : IDisposable
@@ -83,6 +82,7 @@ namespace UserTrackerShared.DBClients
             GC.SuppressFinalize(this);
         }
     }
+
     public static class GraphiteDBClientWriter
     {
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
@@ -114,7 +114,6 @@ namespace UserTrackerShared.DBClients
                 throw;
             }
 
-
             // Start a background task to log status.
             Task.Run(LogStatusPeriodically);
 
@@ -128,14 +127,11 @@ namespace UserTrackerShared.DBClients
                 var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
-                InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData)
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
                 {
-                    if (kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal)
-                    {
-                        _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
-                    }
+                    _client.AddMetric($"{prefix}{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                 }
                 Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
@@ -152,14 +148,11 @@ namespace UserTrackerShared.DBClients
                 var flattenedData = new Dictionary<string, object?>();
                 var writer = new JTokenWriter();
                 _serializer.Serialize(writer, obj);
-                InfluxDBPointHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData)
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
                 {
-                    if (kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal)
-                    {
-                        _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
-                    }
+                    _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
                 }
                 Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
             }
@@ -180,10 +173,10 @@ namespace UserTrackerShared.DBClients
         }
     }
 
-
     public static class GraphiteDBClientState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
+
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
@@ -200,7 +193,7 @@ namespace UserTrackerShared.DBClients
                     var apiUser = await ScreepsApi.GetUser(userId);
                     if (apiUser != null)
                     {
-                        GameState.Users.TryAdd(userId, apiUser);
+                        GameState.Users.AddOrUpdate(userId, apiUser, (key, oldValue) => apiUser);
                     }
                 }
 
@@ -225,7 +218,7 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static void WriteLeaderboardData(SeasonListItem seasonItem)
+        public static void WriteHistoricalLeaderboardData(SeasonListItem seasonItem)
         {
             try
             {

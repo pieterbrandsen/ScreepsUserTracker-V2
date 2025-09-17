@@ -241,7 +241,7 @@ namespace UserTrackerShared.DBClients.TimeScale
                     var apiUser = await ScreepsApi.GetUser(userId);
                     if (apiUser != null)
                     {
-                        GameState.Users.TryAdd(userId, apiUser);
+                        GameState.Users.AddOrUpdate(userId, apiUser, (key, oldValue) => apiUser);
                     }
                 }
 
@@ -266,7 +266,7 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
         }
 
-        public static void WriteLeaderboardData(SeasonListItem seasonItem)
+        public static void WriteHistoricalLeaderboardData(SeasonListItem seasonItem)
         {
             try
             {

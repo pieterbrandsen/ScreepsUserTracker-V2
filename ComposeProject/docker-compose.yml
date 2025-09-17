@@ -73,6 +73,8 @@ services:
             - ./influxdb-data:/var/lib/influxdb3
     grafana:
         image: grafana/grafana:latest
+        environment:
+            - GF_INSTALL_PLUGINS=questdb-questdb-datasource
         volumes:
             - grafana-data:/var/lib/grafana
             - ./conf/grafana/grafana.ini:/etc/grafana/grafana.ini
@@ -139,3 +141,17 @@ services:
         volumes:
             - timescale-data:/var/lib/postgresql/data
         restart: unless-stopped
+    questdb:
+        image: questdb/questdb:9.0.3
+        container_name: questdb
+        ports:
+            - 8812:8812
+            - 9000:9000
+            - 9009:9009
+        networks:
+            - internal
+        volumes:
+            - ./data/questdb:/var/lib/questdb
+            - ./conf/questdb/server.conf:/root/.questdb/conf/server.conf
+        restart: unless-stopped
+        logging: *default-logging

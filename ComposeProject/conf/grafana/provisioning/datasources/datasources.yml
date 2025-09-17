@@ -8,9 +8,6 @@ datasources:
     url: http://influxdb:8086
     basicAuth: true
     basicAuthUser: admin
-    secureJsonData:
-      basicAuthPassword: admin
-      token: DhHySu59JXb8cp8LIZPcMPqC9iSATLz1Mc31-4xYTf1ZKUO7Du6HX7E0gPCjU2Y6Lueuor_N661kzN_6mJ4XhQ==
     secureJsonFields:
       basicAuthPassword: true
       token: true
@@ -44,3 +41,14 @@ datasources:
         maxOpenConns: 100
         sslmode: disable
         timescaledb: true
+  - name: QuestDB
+    id: 4
+    type: questdb-questdb-datasource
+    access: proxy
+    url: http://questdb:9000
+    jsonData:
+      port: 8812
+      server: "questdb"
+      tlsMode: "disable"
+      username: "admin"
+    editable: true

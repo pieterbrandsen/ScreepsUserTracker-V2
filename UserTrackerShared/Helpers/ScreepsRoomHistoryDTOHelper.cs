@@ -102,6 +102,7 @@ namespace UserTrackerShared.Helpers
                 structuresDto.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInFile;
                 structuresDto.Controller.UserId = structures.Controller.User ?? "";
                 structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User;
+                structuresDto.Controller.Upgraded = structures.Controller._upgraded / ConfigSettingsState.TicksInFile;
             }
             if (structures.Mineral != null)
             {

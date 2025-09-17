@@ -17,6 +17,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public int Score { get; set; }
         [JsonProperty("rank")]
         public int Rank { get; set; }
+        public DateTime Timestamp { get; set; }
     }
     public class SeasonListResponse
     {

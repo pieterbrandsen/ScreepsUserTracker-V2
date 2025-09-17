@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System.Collections.Concurrent;
+using System.Timers;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Managers;
 using UserTrackerShared.Models;
@@ -9,7 +10,7 @@ namespace UserTrackerShared.States
     public static class GameState
     {
         public static List<ShardStateManager> Shards { get; set; } = new List<ShardStateManager>();
-        public static Dictionary<string, ScreepsUser> Users { get; set; } = new();
+        public static ConcurrentDictionary<string, ScreepsUser> Users { get; set; } = new();
 
         public static async Task InitAsync()
         {
@@ -38,12 +39,6 @@ namespace UserTrackerShared.States
                 }
             }
 
-
-            var onSetLeaderboardTimer = new Timer(60 * 60 * 1000);
-            onSetLeaderboardTimer.AutoReset = true;
-            onSetLeaderboardTimer.Enabled = true;
-            onSetLeaderboardTimer.Elapsed += OnUpdateUsersLeaderboardTimer;
-
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
@@ -52,6 +47,10 @@ namespace UserTrackerShared.States
                     await shard.StartAsync();
                 }
             }
+
+          var onSetLeaderboardTimer = new TimerScheduleHelper(
+                OnUpdateUsersLeaderboardTimer,
+                0, 6, 12, 18);
         }
 
         private static async Task<string?> GetUser(string userId)
@@ -59,28 +58,31 @@ namespace UserTrackerShared.States
             var userResponse = await ScreepsApi.GetUser(userId);
             if (userResponse != null)
             {
-                Users[userId] = userResponse;
+                Users.AddOrUpdate(userId, userResponse, (key, oldValue) => userResponse);
                 return userResponse.Username;
             }
             return null;
         }
-        private static void WriteAllUsers()
+        private static async Task WriteAllUsers()
         {
             foreach (var user in Users)
             {
-                DBClient.WriteSingleUserData(user.Value);
+                await DBClient.WriteSingleUserData(user.Value);
             }
         }
 
         public static async Task GetAllUsers()
         {
-            var LeaderboardsResponse = await ScreepsApi.GetAllSeasonsLeaderboard();
-            if (LeaderboardsResponse != null)
+            var leaderboardsResponse = await ScreepsApi.GetAllSeasonsLeaderboard();
+            if (leaderboardsResponse != null)
             {
-                foreach (var leaderboard in LeaderboardsResponse.Select(kv=>kv.Value))
+                var seasons = leaderboardsResponse.Select(kv => kv.Key).OrderDescending().ToList();
+                var currentSeason = seasons.FirstOrDefault();
+                
+                var leaderboardList = leaderboardsResponse.Where(kv=>kv.Key != currentSeason).Select(kv => kv.Value).ToList();
+                foreach (var (gclLeaderboard, powerLeaderboard) in leaderboardList)
                 {
-                    var gclLeaderbard = leaderboard.gcl;
-                    foreach (var leaderboardSpot in gclLeaderbard)
+                    foreach (var leaderboardSpot in gclLeaderboard)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
                         {
@@ -90,13 +92,13 @@ namespace UserTrackerShared.States
 
                         if (value != null)
                         {
+                            leaderboardSpot.Rank += 1;
                             leaderboardSpot.UserName = value.Username;
                             leaderboardSpot.Type = "gcl";
-                            DBClient.WriteLeaderboardData(leaderboardSpot);
+                            await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
                         }
                     }
 
-                    var powerLeaderboard = leaderboard.power;
                     foreach (var leaderboardSpot in powerLeaderboard)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
@@ -107,20 +109,55 @@ namespace UserTrackerShared.States
 
                         if (value != null)
                         {
+                            leaderboardSpot.Rank += 1;
                             leaderboardSpot.UserName = value.Username;
                             leaderboardSpot.Type = "power";
-                            DBClient.WriteLeaderboardData(leaderboardSpot);
+                            await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
                         }
                     }
                 }
             }
         }
 
-        private static async void OnUpdateUsersLeaderboardTimer(Object? source, ElapsedEventArgs e)
+        private static async void OnUpdateUsersLeaderboardTimer()
         {
-            foreach (var user in Users)
+            var userIdsUpdated = new HashSet<string>();
+
+            var (gclLeaderboard, powerLeaderboard) = await ScreepsApi.GetCurrentSeasonLeaderboard();
+            foreach (var leaderboardSpot in gclLeaderboard)
             {
-                await GetUser(user.Key);
+                if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
+                {
+                    await GetUser(leaderboardSpot.UserId);
+                    Users.TryGetValue(leaderboardSpot.UserId, out value);
+                    userIdsUpdated.Add(leaderboardSpot.UserId);
+                }
+
+                if (value != null)
+                {
+                    leaderboardSpot.Rank += 1;
+                    leaderboardSpot.UserName = value.Username;
+                    leaderboardSpot.Type = "gcl";
+                    await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
+                }
+            }
+
+            foreach (var leaderboardSpot in powerLeaderboard)
+            {
+                if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
+                {
+                    await GetUser(leaderboardSpot.UserId);
+                    Users.TryGetValue(leaderboardSpot.UserId, out value);
+                    userIdsUpdated.Add(leaderboardSpot.UserId);
+                }
+
+                if (value != null)
+                {
+                    leaderboardSpot.Rank += 1;
+                    leaderboardSpot.UserName = value.Username;
+                    leaderboardSpot.Type = "power";
+                    await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
+                }
             }
 
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
@@ -144,7 +181,7 @@ namespace UserTrackerShared.States
                 }
                 powerRank += group.Count();
             }
-            WriteAllUsers();
+            await WriteAllUsers();
         }
         private static async void OnUpdateAdminUtilsDataTimer()
         {

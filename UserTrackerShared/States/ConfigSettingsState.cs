@@ -37,12 +37,17 @@ namespace UserTrackerShared.States
         public static string TimeScaleDbUser { get; set; } = string.Empty;
         public static string TimeScaleDbPassword { get; set; } = string.Empty;
 
+        public static bool QuestDbEnabled { get; set; }
+        public static int QuestDbPort { get; set; }
+        public static string QuestDbHost { get; set; } = string.Empty;
+        public static string QuestDbUser { get; set; } = string.Empty;
+        public static string QuestDbPassword { get; set; } = string.Empty;
+
         public static int PullBackwardsTickAmount { get; set; }
         public static int TicksInFile { get; set; }
         public static bool GetAllUsers { get; set; }
         public static bool StartsShards { get; set; }
         public static string LogsFolder { get; set; } = string.Empty;
-
 
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
@@ -53,6 +58,7 @@ namespace UserTrackerShared.States
         {
             Init(ConfigurationManager.AppSettings);
         }
+
         private static void Init(NameValueCollection appSettings)
         {
             RunningHistoryTested = Convert.ToBoolean(appSettings["RUNNING_HISTORY_TESTED"]);
@@ -74,13 +80,19 @@ namespace UserTrackerShared.States
             GraphiteDbEnabled = Convert.ToBoolean(appSettings["GRAPHITE_ENABLED"]);
             GraphiteDbHost = appSettings["GRAPHITE_HOST"] ?? "";
             GraphiteDbPort = Convert.ToInt32(appSettings["GRAPHITE_PORT"] ?? "");
-            
+
             TimeScaleDbEnabled = Convert.ToBoolean(appSettings["TIMESCALE_ENABLED"]);
             TimeScaleDbHost = appSettings["TIMESCALE_HOST"] ?? "";
             TimeScaleDbPort = Convert.ToInt32(appSettings["TIMESCALE_PORT"] ?? "");
             TimeScaleDbDBName = appSettings["TIMESCALE_DB"] ?? "";
             TimeScaleDbUser = appSettings["TIMESCALE_USERNAME"] ?? "";
             TimeScaleDbPassword = appSettings["TIMESCALE_PASSWORD"] ?? "";
+
+            QuestDbEnabled = Convert.ToBoolean(appSettings["QUESTDB_ENABLED"]);
+            QuestDbHost = appSettings["QUESTDB_HOST"] ?? "";
+            QuestDbPort = Convert.ToInt32(appSettings["QUESTDB_PORT"] ?? "");
+            QuestDbUser = appSettings["QUESTDB_USERNAME"] ?? "";
+            QuestDbPassword = appSettings["QUESTDB_PASSWORD"] ?? "";
 
             PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
             TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);
@@ -91,11 +103,11 @@ namespace UserTrackerShared.States
             ObjectsFolder = appSettings["OBJECTS_FOLDER"] ?? "";
             if (ObjectsFolder == "") throw new ArgumentException("No objects folder provided");
 
-
             WriteHistoryFiles = Convert.ToBoolean(appSettings["WRITE_HISTORY_FILES"]);
             WriteHistoryProperties = Convert.ToBoolean(appSettings["WRITE_HISTORY_PROPERTIES"]);
             LiveAssertRoomHistory = Convert.ToBoolean(appSettings["LIVE_ASSERT_ROOM_HISTORY"]);
         }
+
         public static void InitTest(AppSettingsSection appSettingsSection)
         {
             var settings = appSettingsSection.Settings;

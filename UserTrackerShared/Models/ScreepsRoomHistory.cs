@@ -442,6 +442,8 @@ namespace UserTrackerShared.Models
         public decimal X { get; set; }
         [JsonProperty("y")]
         public decimal Y { get; set; }
+        [JsonProperty("remainingAgeTime")]
+        public decimal RemainingAgeTime { get; set; }
     }
     public class Power
     {
