@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Newtonsoft.Json.Linq;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
@@ -40,6 +41,9 @@ namespace UserTrackerShared.Managers
         public long Time { get; set; }
         public List<string> Rooms { get; set; } = [];
         private bool isSyncing = false;
+        private long lastTickUploaded = 0;
+        private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new ();
+
 
         public async Task StartUpdate()
         {
@@ -81,7 +85,6 @@ namespace UserTrackerShared.Managers
                 var semaphore = new SemaphoreSlim(Rooms.Count);
                 var tasks = new List<Task>();
 
-                var reservedRoomsByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
                 var userLocks = new ConcurrentDictionary<string, object>();
                 foreach (var room in Rooms)
                 {
@@ -91,7 +94,7 @@ namespace UserTrackerShared.Managers
                         {
                             try
                             {
-                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, reservedRoomsByUser, userLocks);
+                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks);
                                 if (resultCodes.TryGetValue(statusResult, out int value))
                                 {
                                     resultCodes[statusResult] = value + 1;
@@ -110,9 +113,36 @@ namespace UserTrackerShared.Managers
                 }
                 await Task.WhenAll(tasks);
 
-                foreach (var historyDto in reservedRoomsByUser.Select(x => x.Value))
+                var shouldUploadAllData = i - lastTickUploaded >= ConfigSettingsState.UploadEveryXTicks;
+                if (shouldUploadAllData)
                 {
-                    await DBClient.WriteScreepsRoomHistory(Name, "Reserved", i, historyDto.TimeStamp, historyDto);
+                    var globalData = new ScreepsRoomHistoryDto();
+                    var dataByUser = new Dictionary<string, ScreepsRoomHistoryDto>();
+                    foreach (var kvp in dataByRoom.ToArray())
+                    {
+                        if (dataByRoom.TryRemove(kvp.Key, out var value))
+                        {
+                            await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, value.TimeStamp, value);
+                            
+                            var username = await GameState.GetUser(value.UserId);
+                            if (username != null)
+                            {
+                                if (!dataByUser.ContainsKey(username))
+                                {
+                                    dataByUser[username] = new ScreepsRoomHistoryDto();
+                                }
+                                dataByUser[username].Combine(value);
+                            }
+                        }
+                    }
+
+                    foreach (var userKvp in dataByUser)
+                    {
+                        DBClient.WriteScreepsUserHistory(Name, userKvp.Key, i, userKvp.Value.TimeStamp, userKvp.Value);
+                        globalData.Combine(userKvp.Value);
+                    }
+                    DBClient.WriteScreepsGlobalHistory(Name, i, globalData.TimeStamp, globalData);
+                    lastTickUploaded = i;
                 }
 
 

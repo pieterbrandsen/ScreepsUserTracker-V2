@@ -11,11 +11,10 @@ namespace UserTrackerShared.Helpers
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> reservedRoomsByUser, ConcurrentDictionary<string, object> userLocks)
+        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom, ConcurrentDictionary<string, object> userLocks)
         {
             try
             {
-                var isReservedRoom = false;
                 var (roomData, Result) = await ScreepsApi.GetHistory(shard, name, tick);
                 if (roomData == null)
                 {
@@ -23,7 +22,11 @@ namespace UserTrackerShared.Helpers
                 }
 
                 var roomHistory = new ScreepsRoomHistory();
-                var roomHistoryDto = new ScreepsRoomHistoryDto();
+                if (!dataByRoom.TryGetValue(name, out ScreepsRoomHistoryDto? roomHistoryDto))
+                {
+                    roomHistoryDto = new ScreepsRoomHistoryDto();
+                    dataByRoom[name] = roomHistoryDto;
+                }
                 roomData.TryGetValue("timestamp", out JToken? jTokenTime);
                 if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
@@ -32,7 +35,7 @@ namespace UserTrackerShared.Helpers
 
                 if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
                 {
-                    for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+                    for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
                     {
                         long tickNumber = roomHistory.Base + i;
                         roomHistory.Tick = tickNumber;
@@ -50,30 +53,10 @@ namespace UserTrackerShared.Helpers
                             }
                         }
 
-                        if (roomHistory.Structures?.Controller?.Reservation?.User != null)
-                        {
-                            isReservedRoom = true;
-                            var userKey = roomHistory.Structures.Controller.Reservation.User;
-                            var userLock = userLocks.GetOrAdd(userKey, _ => new object());
-                            lock (userLock)
-                            {
-                                if (!reservedRoomsByUser.TryGetValue(userKey, out ScreepsRoomHistoryDto? value))
-                                {
-                                    value = new ScreepsRoomHistoryDto();
-                                    reservedRoomsByUser[userKey] = value;
-                                }
-
-                                value.Update(roomHistory);
-                            }
-                        }
-                        else
-                        {
-                            roomHistoryDto.Update(roomHistory);
-                        }
+                        roomHistoryDto.Update(roomHistory);
                     }
                 }
 
-                if (!isReservedRoom) await DBClient.WriteScreepsRoomHistory(shard, name, roomHistory.Tick, roomHistory.TimeStamp, roomHistoryDto);
                 if (ConfigSettingsState.WriteHistoryProperties) FileWriterManager.GenerateHistoryFile(roomData);
                 return 200;
             }

@@ -53,7 +53,7 @@ namespace UserTrackerShared.States
                 0, 6, 12, 18);
         }
 
-        private static async Task<string?> GetUser(string userId)
+        public static async Task<string?> GetUser(string userId)
         {
             var userResponse = await ScreepsApi.GetUser(userId);
             if (userResponse != null)

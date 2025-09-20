@@ -44,10 +44,11 @@ namespace UserTrackerShared.States
         public static string QuestDbPassword { get; set; } = string.Empty;
 
         public static int PullBackwardsTickAmount { get; set; }
-        public static int TicksInFile { get; set; }
+        public static int TicksInObject { get; set; }
         public static bool GetAllUsers { get; set; }
         public static bool StartsShards { get; set; }
         public static string LogsFolder { get; set; } = string.Empty;
+        public static int UploadEveryXTicks { get; set; } = 100;
 
         public static bool WriteHistoryFiles { get; set; }
         public static bool WriteHistoryProperties { get; set; }
@@ -95,13 +96,14 @@ namespace UserTrackerShared.States
             QuestDbPassword = appSettings["QUESTDB_PASSWORD"] ?? "";
 
             PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
-            TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);
+            TicksInObject = Convert.ToInt32(appSettings["TICKS_IN_OBJECT"]);
             GetAllUsers = Convert.ToBoolean(appSettings["GET_ALL_USERS"]);
             StartsShards = Convert.ToBoolean(appSettings["START_SHARDS"]);
             LogsFolder = appSettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new ArgumentException("No logs folder provided");
             ObjectsFolder = appSettings["OBJECTS_FOLDER"] ?? "";
             if (ObjectsFolder == "") throw new ArgumentException("No objects folder provided");
+            UploadEveryXTicks = Convert.ToInt32(appSettings["UPLOAD_EVERY_X_TICKS"] ?? "100");
 
             WriteHistoryFiles = Convert.ToBoolean(appSettings["WRITE_HISTORY_FILES"]);
             WriteHistoryProperties = Convert.ToBoolean(appSettings["WRITE_HISTORY_PROPERTIES"]);
@@ -111,7 +113,7 @@ namespace UserTrackerShared.States
         public static void InitTest(AppSettingsSection appSettingsSection)
         {
             var settings = appSettingsSection.Settings;
-            TicksInFile = Convert.ToInt32(settings["TICKS_IN_FILE"].Value);
+            TicksInObject = Convert.ToInt32(settings["TICKS_IN_OBJECT"].Value);
         }
     }
 }

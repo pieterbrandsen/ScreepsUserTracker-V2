@@ -14,8 +14,8 @@ namespace UserTrackerShared.Helpers
         {
             var type = roomHistory.TypeMap.GetValueOrDefault(key);
             var user = changes.GetValueOrDefault("user") as string;
-            if (user == null) user = roomHistory.UserMap.GetValueOrDefault(key);
-            else roomHistory.UserMap.TryAdd(key, user);
+            if (user == null) user = roomHistory.ObjectUserMap.GetValueOrDefault(key);
+            else roomHistory.ObjectUserMap.TryAdd(key, user);
 
             switch (type)
             {
@@ -409,7 +409,7 @@ namespace UserTrackerShared.Helpers
                     break;
             }
 
-            roomHistory.UserMap.Remove(key);
+            roomHistory.ObjectUserMap.Remove(key);
             roomHistory.TypeMap.Remove(key);
             return roomHistory;
         }

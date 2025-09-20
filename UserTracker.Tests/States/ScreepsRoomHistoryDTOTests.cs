@@ -61,7 +61,7 @@ namespace UserTracker.Tests.Models
             dto.ProcessGroundResources(history);
 
             Assert.Single(dto.GroundResources);
-            Assert.Equal(1000 / ConfigSettingsState.TicksInFile, dto.GroundResources["energy"]);
+            Assert.Equal(1000 / ConfigSettingsState.TicksInObject, dto.GroundResources["energy"]);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
             {
                 dto.ProcessCreeps(history);
             }
@@ -133,7 +133,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
             {
                 dto.ProcessStructures(history);
             }
@@ -169,7 +169,7 @@ namespace UserTracker.Tests.Models
             };
 
 
-            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
             {
                 dto.Update(history);
             }
@@ -183,6 +183,75 @@ namespace UserTracker.Tests.Models
             Assert.Equal(1, dto.Creeps.OwnedCreeps.Count);
             Assert.NotNull(dto.Structures.Controller);
             Assert.Equal(1, dto.Structures.Controller.Level);
+        }
+
+        [Fact]
+        public void Combine_ValidScreepsRoomHistory()
+        {
+            var dto = new ScreepsRoomHistoryDto();
+            var dto2 = new ScreepsRoomHistoryDto();
+            var history = new ScreepsRoomHistory
+            {
+                TimeStamp = 123456789,
+                Base = 987654321,
+                Tick = 100,
+                GroundResources = new Dictionary<string, GroundResource>
+                {
+                    { "energy", new GroundResource { ResourceType = "energy", energy = 1000 } }
+                },
+                Creeps = new Creeps
+                {
+                    OwnedCreeps = new Dictionary<string, Creep>
+                    {
+                        { "creep1", new Creep { Id = "creep1", Name = "Creep1" } }
+                    }
+                },
+                Structures = new Structures
+                {
+                    Controller = new StructureController { Id = "controller1", Level = 1 }
+                }
+            };
+            var history2 = new ScreepsRoomHistory
+            {
+                TimeStamp = 12345678,
+                Base = 98765432,
+                Tick = 200,
+                GroundResources = new Dictionary<string, GroundResource>
+                {
+                    { "energy", new GroundResource { ResourceType = "energy", energy = 1000 } }
+                },
+                Creeps = new Creeps
+                {
+                    OwnedCreeps = new Dictionary<string, Creep>
+                    {
+                        { "creep1", new Creep { Id = "creep1", Name = "Creep1" } }
+                    }
+                },
+                Structures = new Structures
+                {
+                    Controller = new StructureController { Id = "controller1", Level = 1 }
+                }
+            };
+
+
+
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            {
+                dto.Update(history);
+                dto2.Update(history2);
+            }
+
+            dto.Combine(dto2);
+
+            Assert.Equal(12345678, dto.TimeStamp);
+            Assert.Equal(987654321, dto.Base);
+            Assert.Equal(200, dto.Tick);
+            Assert.Single(dto.GroundResources);
+            Assert.Equal(1000 * 2, dto.GroundResources["energy"]);
+            Assert.NotNull(dto.Creeps.OwnedCreeps);
+            Assert.Equal(1 * 2, dto.Creeps.OwnedCreeps.Count);
+            Assert.NotNull(dto.Structures.Controller);
+            Assert.Equal(1 * 2, dto.Structures.Controller.Level);
         }
 
         [Fact]
@@ -261,7 +330,7 @@ namespace UserTracker.Tests.Models
             };
 
 
-            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
             {
                 dto.ProcessGroundResources(history);
             }
@@ -282,7 +351,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
             {
                 dto.ProcessStructures(history);
             }

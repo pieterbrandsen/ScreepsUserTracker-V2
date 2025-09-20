@@ -276,7 +276,7 @@ namespace UserTrackerShared.DBClients
             Interlocked.Increment(ref _pendingPointCount);
         }
 
-        public static void UploadHistoryData(string database, string shard, string room, long tick, long timestamp, string username, object obj)
+        public static void UploadRoomHistoryData(string database, string shard, string room, long tick, long timestamp, string username, object obj)
         {
             try
             {
@@ -302,6 +302,64 @@ namespace UserTrackerShared.DBClients
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error in UploadHistoryData");
+            }
+        }
+
+        public static void UploadUserHistoryData(string database, string shard, long tick, long timestamp, string username, object obj)
+        {
+            try
+            {
+                var flattenedData = new Dictionary<string, object?>();
+                var writer = new JTokenWriter();
+                _serializer.Serialize(writer, obj);
+                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
+                {
+                    var pointParameters = new QuestHistoryPointDataParameter(
+                        database,
+                        shard,
+                        "",
+                        tick,
+                        timestamp,
+                        username,
+                        kvp.Key.ToLower(),
+                        Convert.ToDouble(kvp.Value));
+                    AddPoint(pointParameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in UploadUserHistoryData");
+            }
+        }
+
+        public static void UploadGlobalHistoryData(string database, string shard, long tick, long timestamp, object obj)
+        {
+            try
+            {
+                var flattenedData = new Dictionary<string, object?>();
+                var writer = new JTokenWriter();
+                _serializer.Serialize(writer, obj);
+                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
+
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
+                {
+                    var pointParameters = new QuestHistoryPointDataParameter(
+                        database,
+                        shard,
+                        "",
+                        tick,
+                        timestamp,
+                        "",
+                        kvp.Key.ToLower(),
+                        Convert.ToDouble(kvp.Value));
+                    AddPoint(pointParameters);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in UploadGlobalHistoryData");
             }
         }
 
@@ -965,11 +1023,52 @@ namespace UserTrackerShared.DBClients
             }
         }
 
+        private static QuestDBHistoryDTO GetQuestDBDto(ScreepsRoomHistoryDto screepsRoomHistory)
+        {
+            var (structureCount, ownedStructureCount, neutralStructureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
+            var (ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
+            var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
+            var (creepIntentCount, creepIntentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
+            var (ownedRoomCount, reservedRoomCount, otherRoomCount) = QuestDBDtoHelper.GetRoomCounts(screepsRoomHistory);
+            var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
+
+            var questDBHistoryDTO = new QuestDBHistoryDTO()
+            {
+                StructureCount = structureCount,
+                StructureCounts = structureCounts,
+                OwnedStructureCount = ownedStructureCount,
+                NeutralStructureCount = neutralStructureCount,
+
+                OwnedCreepCount = ownedCreepCount,
+                EnemyCreepCount = enemyCreepCount,
+                OtherCreepCount = otherCreepCount,
+                PowerCreepCount = powerCreepCount,
+                OwnedCreepPartsCount = ownedCreepPartsCount,
+                OwnedCreepPartsCounts = ownedCreepPartsCounts,
+                CreepIntentCount = creepIntentCount,
+                CreepIntentCounts = creepIntentCounts,
+
+                OwnedRoomCount = ownedRoomCount,
+                ReservedRoomCount = reservedRoomCount,
+                OtherRoomCount = otherRoomCount,
+
+                ControllerLevel = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Level ?? null),
+                ControllerProgress = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Progress ?? null),
+                ControllerProgressTotal = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.ProgressTotal ?? null),
+                ControllerPointsPerTick = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Upgraded ?? null),
+
+                StoreTotal = Convert.ToInt32(storeTotal),
+                StoreTotals = storeTotals
+            };
+
+            return questDBHistoryDTO;
+        }
+
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
             {
-                var userId = screepsRoomHistory.Structures.Controller?.UserId ?? "";
+                var userId = screepsRoomHistory.UserId;
                 var username = "";
                 GameState.Users.TryGetValue(userId, out var user);
                 if (user != null)
@@ -985,50 +1084,49 @@ namespace UserTrackerShared.DBClients
                         username = apiUser?.Username ?? "";
                     }
                 }
+                var database = $"{ConfigSettingsState.ServerName}_room_history";
+                var questDBHistoryDTO = GetQuestDBDto(screepsRoomHistory);
 
-                var (structureCount, ownedStructureCount, neutralStructureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
-                var (ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
-                var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
-                var (creepIntentCount, creepIntentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
-                var (ownedRoomCount, reservedRoomCount, otherRoomCount) = QuestDBDtoHelper.GetRoomCounts(screepsRoomHistory);
-                var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
-
-                var database = $"{ConfigSettingsState.ServerName}_history";
-                var questDBHistoryDTO = new QuestDBHistoryDTO()
-                {
-                    StructureCount = structureCount,
-                    StructureCounts = structureCounts,
-                    OwnedStructureCount = ownedStructureCount,
-                    NeutralStructureCount = neutralStructureCount,
-
-                    OwnedCreepCount = ownedCreepCount,
-                    EnemyCreepCount = enemyCreepCount,
-                    OtherCreepCount = otherCreepCount,
-                    PowerCreepCount = powerCreepCount,
-                    OwnedCreepPartsCount = ownedCreepPartsCount,
-                    OwnedCreepPartsCounts = ownedCreepPartsCounts,
-                    CreepIntentCount = creepIntentCount,
-                    CreepIntentCounts = creepIntentCounts,
-
-                    OwnedRoomCount = ownedRoomCount,
-                    ReservedRoomCount = reservedRoomCount,
-                    OtherRoomCount = otherRoomCount,
-
-                    ControllerLevel = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Level ?? null),
-                    ControllerProgress = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Progress ?? null),
-                    ControllerProgressTotal = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.ProgressTotal ?? null),
-                    ControllerPointsPerTick = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Upgraded ?? null),
-
-                    StoreTotal = Convert.ToInt32(storeTotal),
-                    StoreTotals = storeTotals
-                };
-
-                _logger.Information("Uploading history data for {Shard}/{Room} at tick {Tick} (user: {Username})", shard, room, tick, username);
-                QuestDBClientWriter.UploadHistoryData(database, shard, room, tick, timestamp, username, questDBHistoryDTO);
+                _logger.Information("Uploading room history data for {Shard}/{Room} at tick {Tick} (user: {Username})", shard, room, tick, username);
+                QuestDBClientWriter.UploadRoomHistoryData(database, shard, room, tick, timestamp, username, questDBHistoryDTO);
             }
             catch (Exception e)
             {
-                var message = string.Format("Error uploading {0}/{1}/{2}", shard, room, tick);
+                var message = string.Format("Error uploading roomhistory {0}/{1}/{2}", shard, room, tick);
+                _logger.Error(e, message);
+            }
+        }
+
+        public static void WriteScreepsUserHistory(string shard, string username, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        {
+            try
+            {
+                var database = $"{ConfigSettingsState.ServerName}_user_history";
+                var questDBHistoryDTO = GetQuestDBDto(screepsRoomHistory);
+
+                _logger.Information("Uploading user history data for {Shard} at tick {Tick} (user: {Username})", shard, tick, username);
+                QuestDBClientWriter.UploadUserHistoryData(database, shard, tick, timestamp, username, questDBHistoryDTO);
+            }
+            catch (Exception e)
+            {
+                var message = string.Format("Error uploading userhistory {0}/{1}/{2}", shard, username, tick);
+                _logger.Error(e, message);
+            }
+        }
+
+        public static void WriteScreepsGlobalHistory(string shard, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        {
+            try
+            {
+                var database = $"{ConfigSettingsState.ServerName}_global_history";
+                var questDBHistoryDTO = GetQuestDBDto(screepsRoomHistory);
+
+                _logger.Information("Uploading user history data for {Shard} at tick {Tick}", shard, tick);
+                QuestDBClientWriter.UploadGlobalHistoryData(database, shard, tick, timestamp, questDBHistoryDTO);
+            }
+            catch (Exception e)
+            {
+                var message = string.Format("Error uploading globalhistory {0}/{1}", shard, tick);
                 _logger.Error(e, message);
             }
         }

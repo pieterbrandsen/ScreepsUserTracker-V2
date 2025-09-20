@@ -73,6 +73,46 @@ namespace UserTrackerShared.DBClients
             }
         }
 
+        public static void WriteScreepsUserHistory(string shard, string user, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        {
+            //if (ConfigSettingsState.InfluxDbEnabled)
+            //{
+            //    await InfluxDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            //if (ConfigSettingsState.GraphiteDbEnabled)
+            //{
+            //    await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            //if (ConfigSettingsState.TimeScaleDbEnabled)
+            //{
+            //    await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                QuestDBClientState.WriteScreepsUserHistory(shard, user, tick, timestamp, screepsRoomHistory);
+            }
+        }
+
+        public static void WriteScreepsGlobalHistory(string shard, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        {
+            //if (ConfigSettingsState.InfluxDbEnabled)
+            //{
+            //    await InfluxDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            //if (ConfigSettingsState.GraphiteDbEnabled)
+            //{
+            //    await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            //if (ConfigSettingsState.TimeScaleDbEnabled)
+            //{
+            //    await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            //}
+            if (ConfigSettingsState.QuestDbEnabled)
+            {
+                QuestDBClientState.WriteScreepsGlobalHistory(shard, tick, timestamp, screepsRoomHistory);
+            }
+        }
+
         public static void WritePerformanceData(PerformanceClassDto PerformanceClassDto)
         {
             if (ConfigSettingsState.InfluxDbEnabled)

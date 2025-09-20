@@ -1458,7 +1458,7 @@ namespace UserTrackerShared.Models
         public Creeps Creeps { get; set; } = new Creeps();
         public Structures Structures { get; set; } = new Structures();
         public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, string> UserMap { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string> ObjectUserMap { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, Dictionary<string, object?>>? HistoryChangesDictionary { get; set; }
     }
 }

@@ -492,9 +492,25 @@ namespace UserTrackerShared.Models
                     currentAmount = existingGroundResource;
                 }
 
-                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
+                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInObject;
             }
         }
+        public void CombineGroundResources(ScreepsRoomHistoryDto hisDto)
+        {
+            foreach (var grKvp in hisDto.GroundResources)
+            {
+                var key = grKvp.Key;
+                if (GroundResources.ContainsKey(key))
+                {
+                    GroundResources[key] += grKvp.Value;
+                }
+                else
+                {
+                    GroundResources[key] = grKvp.Value;
+                }
+            }
+        }
+        
         public void ProcessCreeps(ScreepsRoomHistory his)
         {
             Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
@@ -503,9 +519,23 @@ namespace UserTrackerShared.Models
 
             Creeps.PowerCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.PowerCreeps.Values.ToList<BaseCreep>(), Creeps.PowerCreeps);
         }
+        public void CombineCreeps(ScreepsRoomHistoryDto hisDto)
+        {
+            Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.OwnedCreeps, Creeps.OwnedCreeps);
+            Creeps.EnemyCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.EnemyCreeps, Creeps.EnemyCreeps);
+            Creeps.OtherCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.OtherCreeps, Creeps.OtherCreeps);
+
+            Creeps.PowerCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.PowerCreeps, Creeps.PowerCreeps);
+        }
+
         public void ProcessStructures(ScreepsRoomHistory his)
         {
             Structures = ScreepsRoomHistoryDtoHelper.ConvertStructures(his.Structures, Structures);
+        }
+
+        public void CombineStructures(ScreepsRoomHistoryDto his)
+        {
+            Structures = ScreepsRoomHistoryDtoHelper.CombineStructures(his.Structures, Structures);
         }
 
         public void Update(ScreepsRoomHistory his)
@@ -514,9 +544,24 @@ namespace UserTrackerShared.Models
             Base = his.Base;
             Tick = his.Tick;
 
+            if (his.ObjectUserMap.Any())
+            {
+                var userId = his.ObjectUserMap.Count == 1 ? his.ObjectUserMap.First().Value : his.ObjectUserMap.Values.GroupBy(v => v).OrderByDescending(g => g.Count()).First().Key;
+                UserId = userId;
+            }
+
             ProcessGroundResources(his);
             ProcessCreeps(his);
             ProcessStructures(his);
+        }
+        public void Combine(ScreepsRoomHistoryDto hisDto)
+        {
+            TimeStamp = hisDto.TimeStamp;
+            Tick = hisDto.Tick;
+
+            CombineGroundResources(hisDto);
+            CombineCreeps(hisDto);
+            CombineStructures(hisDto);
         }
         public void ClearAll()
         {
@@ -528,6 +573,7 @@ namespace UserTrackerShared.Models
         public long TimeStamp { get; set; }
         public long Base { get; set; }
         public long Tick { get; set; }
+        public string UserId { get; set; }
         public Dictionary<string, decimal> GroundResources { get; set; } = new Dictionary<string, decimal>();
         public CreepsDto Creeps { get; set; } = new CreepsDto();
         public StructuresDto Structures { get; set; } = new StructuresDto();
