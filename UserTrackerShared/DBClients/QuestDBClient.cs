@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuestDB;
@@ -443,34 +444,200 @@ namespace UserTrackerShared.DBClients
 
     public static class QuestDBDtoHelper
     {
-        public static (int, Dictionary<string, int>) GetStructureCounts(ScreepsRoomHistoryDto history)
+        public static (int, int, int, Dictionary<string, int>) GetStructureCounts(ScreepsRoomHistoryDto history)
         {
             var structureCounts = new Dictionary<string, int>();
             int structureCount = 0;
+            int ownedStructureCount = 0;
+            int neutralStructureCount = 0;
 
             if (history.Structures.Controller != null)
             {
                 structureCounts["controller"] = 1;
                 structureCount = 1;
+                ownedStructureCount = 1;
             }
 
             if (history.Structures.Mineral != null)
             {
                 structureCounts["mineral"] = 1;
-                structureCount += 1;
             }
             if (history.Structures.Deposit != null)
             {
                 structureCounts["deposit"] = 1;
-                structureCount += 1;
             }
             if (history.Structures.Wall != null)
             {
-                structureCounts["wall"] = 1;
-                structureCount += 1;
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Wall.Count));
+                structureCounts["wall"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.ConstructionSite != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.ConstructionSite.Count));
+                structureCounts["constructionsite"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Container != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Container.Count));
+                structureCounts["container"] = count;
+                structureCount += count;
+                neutralStructureCount += count;
+            }
+            if (history.Structures.Extension != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Extension.Count));
+                structureCounts["extension"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Extractor != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Extractor.Count));
+                structureCounts["extractor"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Factory != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Factory.Count));
+                structureCounts["factory"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.InvaderCore != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.InvaderCore.Count));
+                structureCounts["invadercore"] = count;
+
+            }
+            if (history.Structures.KeeperLair != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.KeeperLair.Count));
+                structureCounts["keeperlair"] = count;
+            }
+            if (history.Structures.Lab != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Lab.Count));
+                structureCounts["lab"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Link != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Link.Count));
+                structureCounts["link"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Observer != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Observer.Count));
+                structureCounts["observer"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Portal != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Portal.Count));
+                structureCounts["portal"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.PowerBank != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.PowerBank.Count));
+                structureCounts["powerbank"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.PowerSpawn != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.PowerSpawn.Count));
+                structureCounts["powerspawn"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Rampart != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Rampart.Count));
+                structureCounts["rampart"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Road != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Road.Count));
+                structureCounts["road"] = count;
+                structureCount += count;
+                neutralStructureCount += count;
+            }
+            if (history.Structures.Ruin != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Ruin.Count));
+                structureCounts["ruin"] = count;
+                structureCount += count;
+                neutralStructureCount += count;
+            }
+            if (history.Structures.Source != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Source.Count));
+                structureCounts["source"] = count;
+                structureCount += count;
+                neutralStructureCount += count;
+            }
+            if (history.Structures.Spawn != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Spawn.Count));
+                structureCounts["spawn"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Storage != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Storage.Count));
+                structureCounts["storage"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Terminal != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Terminal.Count));
+                structureCounts["terminal"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Tombstone != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Tombstone.Count));
+                structureCounts["tombstone"] = count;
+                structureCount += count;
+                neutralStructureCount += count;
+            }
+            if (history.Structures.Tower != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Tower.Count));
+                structureCounts["tower"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Nuker != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Nuker.Count));
+                structureCounts["nuker"] = count;
+                structureCount += count;
+                ownedStructureCount += count;
+            }
+            if (history.Structures.Nuke != null)
+            {
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Nuke.Count));
+                structureCounts["nuke"] = count;
             }
 
-            return (structureCount, structureCounts);
+            return (structureCount, ownedStructureCount, neutralStructureCount, structureCounts);
         }
 
         public static (int, int, int, int) GetCreepCounts(ScreepsRoomHistoryDto history)
@@ -819,7 +986,7 @@ namespace UserTrackerShared.DBClients
                     }
                 }
 
-                var (structureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
+                var (structureCount, ownedStructureCount, neutralStructureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
                 var (ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
                 var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
                 var (creepIntentCount, creepIntentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
@@ -831,6 +998,8 @@ namespace UserTrackerShared.DBClients
                 {
                     StructureCount = structureCount,
                     StructureCounts = structureCounts,
+                    OwnedStructureCount = ownedStructureCount,
+                    NeutralStructureCount = neutralStructureCount,
 
                     OwnedCreepCount = ownedCreepCount,
                     EnemyCreepCount = enemyCreepCount,

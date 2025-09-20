@@ -3,6 +3,8 @@ namespace UserTrackerShared.Models.Db
     public class QuestDBHistoryDTO
     {
         public int StructureCount { get; set; }
+        public int OwnedStructureCount { get; set; }
+        public int NeutralStructureCount { get; set; }
         public Dictionary<string, int> StructureCounts { get; set; } = [];
 
         public int OwnedCreepCount { get; set; }
