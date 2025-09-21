@@ -61,7 +61,7 @@ namespace UserTracker.Tests.Models
             dto.ProcessGroundResources(history);
 
             Assert.Single(dto.GroundResources);
-            Assert.Equal(1000 / ConfigSettingsState.TicksInObject, dto.GroundResources["energy"]);
+            Assert.Equal(1000 / ConfigSettingsState.TicksInFile, dto.GroundResources["energy"]);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.ProcessCreeps(history);
             }
@@ -133,7 +133,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.ProcessStructures(history);
             }
@@ -169,7 +169,7 @@ namespace UserTracker.Tests.Models
             };
 
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.Update(history);
             }
@@ -235,7 +235,7 @@ namespace UserTracker.Tests.Models
 
 
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.Update(history);
                 dto2.Update(history2);
@@ -330,7 +330,7 @@ namespace UserTracker.Tests.Models
             };
 
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.ProcessGroundResources(history);
             }
@@ -351,7 +351,7 @@ namespace UserTracker.Tests.Models
                 }
             };
 
-            for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+            for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
             {
                 dto.ProcessStructures(history);
             }

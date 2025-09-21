@@ -492,7 +492,7 @@ namespace UserTrackerShared.Models
                     currentAmount = existingGroundResource;
                 }
 
-                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInObject;
+                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
             }
         }
         public void CombineGroundResources(ScreepsRoomHistoryDto hisDto)
