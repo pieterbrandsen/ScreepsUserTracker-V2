@@ -48,9 +48,13 @@ namespace UserTrackerShared.States
                 }
             }
 
-          var onSetLeaderboardTimer = new TimerScheduleHelper(
+            var onSetLeaderboardTimer = new TimerScheduleHelper(
                 OnUpdateUsersLeaderboardTimer,
-                0, 6, 12, 18);
+                [0, 6, 12, 18]);
+            var onGetAllUsersTimer = new TimerScheduleHelper(
+                OnGetAllUsersTimer,
+                [0],
+                daysOfMonth: [3, 10]);
         }
 
         private static async Task<string?> GetUser(string userId)
@@ -69,6 +73,11 @@ namespace UserTrackerShared.States
             {
                 await DBClient.WriteSingleUserData(user.Value);
             }
+        }
+
+        public static async void OnGetAllUsersTimer()
+        {
+            await GetAllUsers();
         }
 
         public static async Task GetAllUsers()
