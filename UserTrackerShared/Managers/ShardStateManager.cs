@@ -42,7 +42,7 @@ namespace UserTrackerShared.Managers
         public List<string> Rooms { get; set; } = [];
         private bool isSyncing = false;
         private long lastTickUploaded = 0;
-        private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new ();
+        private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new();
 
 
         public async Task StartUpdate()
@@ -51,7 +51,6 @@ namespace UserTrackerShared.Managers
             if (timeResponse != null && Time != timeResponse.Time)
             {
                 Time = timeResponse.Time;
-                _logger.Information($"Updated time of shard {Name} to {Time} ({isSyncing})");
                 if (isSyncing) return;
                 isSyncing = true;
                 _ = StartSync();
@@ -124,8 +123,9 @@ namespace UserTrackerShared.Managers
                         if (dataByRoom.TryRemove(kvp.Key, out var roomData))
                         {
                             await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
-                            
-                            if (GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user)) {
+
+                            if (GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
+                            {
                                 var username = user.Username;
                                 if (!dataByUser.TryGetValue(username, out ScreepsRoomHistoryDto? userData))
                                 {
