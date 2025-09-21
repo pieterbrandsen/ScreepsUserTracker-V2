@@ -67,6 +67,7 @@ namespace UserTrackerShared.Managers
         {
             var syncTime = GetSyncTime();
             if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
+            if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime;
 
             var ticksToBeSynced = syncTime - LastSyncTime;
             if (ticksToBeSynced <= 0)
@@ -112,25 +113,27 @@ namespace UserTrackerShared.Managers
                 }
                 await Task.WhenAll(tasks);
 
-                var shouldUploadAllData = i - lastTickUploaded >= ConfigSettingsState.UploadEveryXTicks;
+                var shouldUploadAllData = i - lastTickUploaded >= ConfigSettingsState.TicksInObject;
                 if (shouldUploadAllData)
                 {
                     var globalData = new ScreepsRoomHistoryDto();
                     var dataByUser = new Dictionary<string, ScreepsRoomHistoryDto>();
                     foreach (var kvp in dataByRoom.ToArray())
                     {
-                        if (dataByRoom.TryRemove(kvp.Key, out var value))
+                        if (dataByRoom.TryRemove(kvp.Key, out var roomData))
                         {
-                            await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, value.TimeStamp, value);
+                            await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
 
-                            var username = await GameState.GetUser(value.UserId);
-                            if (username != null)
+                            if (GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
                             {
-                                if (!dataByUser.ContainsKey(username))
+                                var username = user.Username;
+                                if (!dataByUser.TryGetValue(username, out ScreepsRoomHistoryDto? userData))
                                 {
-                                    dataByUser[username] = new ScreepsRoomHistoryDto();
+                                    userData = new ScreepsRoomHistoryDto();
+                                    dataByUser[username] = userData;
                                 }
-                                dataByUser[username].Combine(value);
+
+                                userData.Combine(roomData);
                             }
                         }
                     }

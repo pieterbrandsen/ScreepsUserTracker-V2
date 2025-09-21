@@ -42,7 +42,7 @@ namespace UserTracker.Tests.States
 
             if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
             {
-                for (int i = 0; i < ConfigSettingsState.TicksInObject; i++)
+                for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
                 {
                     long tickNumber = roomHistory.Base + i;
                     roomHistory.Tick = tickNumber;
