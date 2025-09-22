@@ -69,7 +69,7 @@ namespace UserTrackerShared.Managers
             {
                 var syncTime = GetSyncTime();
                 if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
-                if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime;
+                if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;
 
                 var ticksToBeSynced = syncTime - LastSyncTime;
                 if (ticksToBeSynced <= 0)
