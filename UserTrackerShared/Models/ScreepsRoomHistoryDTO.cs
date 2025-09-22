@@ -499,14 +499,13 @@ namespace UserTrackerShared.Models
         {
             foreach (var grKvp in hisDto.GroundResources)
             {
-                var key = grKvp.Key;
-                if (GroundResources.ContainsKey(key))
+                if (GroundResources.TryGetValue(grKvp.Key, out var existingValue))
                 {
-                    GroundResources[key] += grKvp.Value;
+                    GroundResources[grKvp.Key] = existingValue + grKvp.Value;
                 }
                 else
                 {
-                    GroundResources[key] = grKvp.Value;
+                    GroundResources[grKvp.Key] = grKvp.Value;
                 }
             }
         }

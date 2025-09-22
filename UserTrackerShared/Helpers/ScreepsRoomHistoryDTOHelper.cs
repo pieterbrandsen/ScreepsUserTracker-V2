@@ -7,90 +7,52 @@ namespace UserTrackerShared.Helpers
     {
         private static void UpdateStore(Store currentStore, Store store)
         {
-            currentStore.energy = (currentStore.energy ?? 0) + (store.energy / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.power = (currentStore.power ?? 0) + (store.power / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.H = (currentStore.H ?? 0) + (store.H / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.O = (currentStore.O ?? 0) + (store.O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.U = (currentStore.U ?? 0) + (store.U / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.L = (currentStore.L ?? 0) + (store.L / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.K = (currentStore.K ?? 0) + (store.K / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.Z = (currentStore.Z ?? 0) + (store.Z / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.X = (currentStore.X ?? 0) + (store.X / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.G = (currentStore.G ?? 0) + (store.G / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.silicon = (currentStore.silicon ?? 0) + (store.silicon / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.metal = (currentStore.metal ?? 0) + (store.metal / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.biomass = (currentStore.biomass ?? 0) + (store.biomass / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.mist = (currentStore.mist ?? 0) + (store.mist / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.OH = (currentStore.OH ?? 0) + (store.OH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ZK = (currentStore.ZK ?? 0) + (store.ZK / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.UL = (currentStore.UL ?? 0) + (store.UL / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.UH = (currentStore.UH ?? 0) + (store.UH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.UO = (currentStore.UO ?? 0) + (store.UO / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.KH = (currentStore.KH ?? 0) + (store.KH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.KO = (currentStore.KO ?? 0) + (store.KO / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.LH = (currentStore.LH ?? 0) + (store.LH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.LO = (currentStore.LO ?? 0) + (store.LO / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ZH = (currentStore.ZH ?? 0) + (store.ZH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ZO = (currentStore.ZO ?? 0) + (store.ZO / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.GH = (currentStore.GH ?? 0) + (store.GH / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.GO = (currentStore.GO ?? 0) + (store.GO / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.UH2O = (currentStore.UH2O ?? 0) + (store.UH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.UHO2 = (currentStore.UHO2 ?? 0) + (store.UHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.KH2O = (currentStore.KH2O ?? 0) + (store.KH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.KHO2 = (currentStore.KHO2 ?? 0) + (store.KHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.LH2O = (currentStore.LH2O ?? 0) + (store.LH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.LHO2 = (currentStore.LHO2 ?? 0) + (store.LHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ZH2O = (currentStore.ZH2O ?? 0) + (store.ZH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ZHO2 = (currentStore.ZHO2 ?? 0) + (store.ZHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.GH2O = (currentStore.GH2O ?? 0) + (store.GH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.GHO2 = (currentStore.GHO2 ?? 0) + (store.GHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XUH2O = (currentStore.XUH2O ?? 0) + (store.XUH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XUHO2 = (currentStore.XUHO2 ?? 0) + (store.XUHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XKH2O = (currentStore.XKH2O ?? 0) + (store.XKH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XKHO2 = (currentStore.XKHO2 ?? 0) + (store.XKHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XLH2O = (currentStore.XLH2O ?? 0) + (store.XLH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XLHO2 = (currentStore.XLHO2 ?? 0) + (store.XLHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XZH2O = (currentStore.XZH2O ?? 0) + (store.XZH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XZHO2 = (currentStore.XZHO2 ?? 0) + (store.XZHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XGH2O = (currentStore.XGH2O ?? 0) + (store.XGH2O / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.XGHO2 = (currentStore.XGHO2 ?? 0) + (store.XGHO2 / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ops = (currentStore.ops ?? 0) + (store.ops / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.utrium_bar = (currentStore.utrium_bar ?? 0) + (store.utrium_bar / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.lemergium_bar = (currentStore.lemergium_bar ?? 0) + (store.lemergium_bar / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.zynthium_bar = (currentStore.zynthium_bar ?? 0) + (store.zynthium_bar / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.keanium_bar = (currentStore.keanium_bar ?? 0) + (store.keanium_bar / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.ghodium_melt = (currentStore.ghodium_melt ?? 0) + (store.ghodium_melt / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.oxidant = (currentStore.oxidant ?? 0) + (store.oxidant / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.reductant = (currentStore.reductant ?? 0) + (store.reductant / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.purifier = (currentStore.purifier ?? 0) + (store.purifier / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.battery = (currentStore.battery ?? 0) + (store.battery / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.composite = (currentStore.composite ?? 0) + (store.composite / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.crystal = (currentStore.crystal ?? 0) + (store.crystal / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.liquid = (currentStore.liquid ?? 0) + (store.liquid / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.wire = (currentStore.wire ?? 0) + (store.wire / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.Switch = (currentStore.Switch ?? 0) + (store.Switch / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.transistor = (currentStore.transistor ?? 0) + (store.transistor / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.microchip = (currentStore.microchip ?? 0) + (store.microchip / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.circuit = (currentStore.circuit ?? 0) + (store.circuit / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.device = (currentStore.device ?? 0) + (store.device / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.cell = (currentStore.cell ?? 0) + (store.cell / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.phlegm = (currentStore.phlegm ?? 0) + (store.phlegm / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.tissue = (currentStore.tissue ?? 0) + (store.tissue / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.muscle = (currentStore.muscle ?? 0) + (store.muscle / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.organoid = (currentStore.organoid ?? 0) + (store.organoid / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.organism = (currentStore.organism ?? 0) + (store.organism / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.alloy = (currentStore.alloy ?? 0) + (store.alloy / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.tube = (currentStore.tube ?? 0) + (store.tube / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.fixtures = (currentStore.fixtures ?? 0) + (store.fixtures / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.frame = (currentStore.frame ?? 0) + (store.frame / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.hydraulics = (currentStore.hydraulics ?? 0) + (store.hydraulics / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.machine = (currentStore.machine ?? 0) + (store.machine / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.condensate = (currentStore.condensate ?? 0) + (store.condensate / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.concentrate = (currentStore.concentrate ?? 0) + (store.concentrate / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.extract = (currentStore.extract ?? 0) + (store.extract / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.spirit = (currentStore.spirit ?? 0) + (store.spirit / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.emanation = (currentStore.emanation ?? 0) + (store.emanation / ConfigSettingsState.TicksInObject ?? 0);
-            currentStore.essence = (currentStore.essence ?? 0) + (store.essence / ConfigSettingsState.TicksInObject ?? 0);
+            if (store == null) return;
+            
+            var storeType = typeof(Store);
+            var properties = storeType.GetProperties();
+            
+            foreach (var prop in properties)
+            {
+                if (prop.PropertyType == typeof(decimal?) && prop.CanRead && prop.CanWrite)
+                {
+                    var currentValueRaw = prop.GetValue(currentStore);
+                    var storeValueRaw = prop.GetValue(store);
+                    
+                    decimal currentValue = 0;
+                    decimal storeValue = 0;
+                    
+                    if (currentValueRaw != null)
+                    {
+                        if (currentValueRaw is decimal d1)
+                            currentValue = d1;
+                        else if (currentValueRaw is int i1)
+                            currentValue = i1;
+                        else if (currentValueRaw is long l1)
+                            currentValue = l1;
+                        else if (currentValueRaw is double db1)
+                            currentValue = (decimal)db1;
+                        else if (currentValueRaw is float f1)
+                            currentValue = (decimal)f1;
+                    }
+                    
+                    if (storeValueRaw != null)
+                    {
+                        if (storeValueRaw is decimal d2)
+                            storeValue = d2;
+                        else if (storeValueRaw is int i2)
+                            storeValue = i2;
+                        else if (storeValueRaw is long l2)
+                            storeValue = l2;
+                        else if (storeValueRaw is double db2)
+                            storeValue = (decimal)db2;
+                        else if (storeValueRaw is float f2)
+                            storeValue = (decimal)f2;
+                    }
+                    
+                    prop.SetValue(currentStore, currentValue + (storeValue / ConfigSettingsState.TicksInObject));
+                }
+            }
         }
         public static StructuresDto ConvertStructures(Structures structures, StructuresDto structuresDto)
         {
@@ -293,9 +255,10 @@ namespace UserTrackerShared.Helpers
             structuresDtoA.ConstructionSite.ProgressTotal += structuresDtoB.ConstructionSite.ProgressTotal;
             foreach (var kvp in structuresDtoB.ConstructionSite.TypesBuilding)
             {
-                if (!structuresDtoA.ConstructionSite.TypesBuilding.ContainsKey(kvp.Key))
-                    structuresDtoA.ConstructionSite.TypesBuilding[kvp.Key] = 0;
-                structuresDtoA.ConstructionSite.TypesBuilding[kvp.Key] += kvp.Value;
+                if (structuresDtoA.ConstructionSite.TypesBuilding.TryGetValue(kvp.Key, out var existingValue))
+                    structuresDtoA.ConstructionSite.TypesBuilding[kvp.Key] = existingValue + kvp.Value;
+                else
+                    structuresDtoA.ConstructionSite.TypesBuilding[kvp.Key] = kvp.Value;
             }
 
             // Container
@@ -689,90 +652,52 @@ namespace UserTrackerShared.Helpers
         {
             if (a == null) a = new Store();
             if (b == null) return a;
-            a.energy = (a.energy ?? 0) + (b.energy ?? 0);
-            a.power = (a.power ?? 0) + (b.power ?? 0);
-            a.H = (a.H ?? 0) + (b.H ?? 0);
-            a.O = (a.O ?? 0) + (b.O ?? 0);
-            a.U = (a.U ?? 0) + (b.U ?? 0);
-            a.L = (a.L ?? 0) + (b.L ?? 0);
-            a.K = (a.K ?? 0) + (b.K ?? 0);
-            a.Z = (a.Z ?? 0) + (b.Z ?? 0);
-            a.X = (a.X ?? 0) + (b.X ?? 0);
-            a.G = (a.G ?? 0) + (b.G ?? 0);
-            a.silicon = (a.silicon ?? 0) + (b.silicon ?? 0);
-            a.metal = (a.metal ?? 0) + (b.metal ?? 0);
-            a.biomass = (a.biomass ?? 0) + (b.biomass ?? 0);
-            a.mist = (a.mist ?? 0) + (b.mist ?? 0);
-            a.OH = (a.OH ?? 0) + (b.OH ?? 0);
-            a.ZK = (a.ZK ?? 0) + (b.ZK ?? 0);
-            a.UL = (a.UL ?? 0) + (b.UL ?? 0);
-            a.UH = (a.UH ?? 0) + (b.UH ?? 0);
-            a.UO = (a.UO ?? 0) + (b.UO ?? 0);
-            a.KH = (a.KH ?? 0) + (b.KH ?? 0);
-            a.KO = (a.KO ?? 0) + (b.KO ?? 0);
-            a.LH = (a.LH ?? 0) + (b.LH ?? 0);
-            a.LO = (a.LO ?? 0) + (b.LO ?? 0);
-            a.ZH = (a.ZH ?? 0) + (b.ZH ?? 0);
-            a.ZO = (a.ZO ?? 0) + (b.ZO ?? 0);
-            a.GH = (a.GH ?? 0) + (b.GH ?? 0);
-            a.GO = (a.GO ?? 0) + (b.GO ?? 0);
-            a.UH2O = (a.UH2O ?? 0) + (b.UH2O ?? 0);
-            a.UHO2 = (a.UHO2 ?? 0) + (b.UHO2 ?? 0);
-            a.KH2O = (a.KH2O ?? 0) + (b.KH2O ?? 0);
-            a.KHO2 = (a.KHO2 ?? 0) + (b.KHO2 ?? 0);
-            a.LH2O = (a.LH2O ?? 0) + (b.LH2O ?? 0);
-            a.LHO2 = (a.LHO2 ?? 0) + (b.LHO2 ?? 0);
-            a.ZH2O = (a.ZH2O ?? 0) + (b.ZH2O ?? 0);
-            a.ZHO2 = (a.ZHO2 ?? 0) + (b.ZHO2 ?? 0);
-            a.GH2O = (a.GH2O ?? 0) + (b.GH2O ?? 0);
-            a.GHO2 = (a.GHO2 ?? 0) + (b.GHO2 ?? 0);
-            a.XUH2O = (a.XUH2O ?? 0) + (b.XUH2O ?? 0);
-            a.XUHO2 = (a.XUHO2 ?? 0) + (b.XUHO2 ?? 0);
-            a.XKH2O = (a.XKH2O ?? 0) + (b.XKH2O ?? 0);
-            a.XKHO2 = (a.XKHO2 ?? 0) + (b.XKHO2 ?? 0);
-            a.XLH2O = (a.XLH2O ?? 0) + (b.XLH2O ?? 0);
-            a.XLHO2 = (a.XLHO2 ?? 0) + (b.XLHO2 ?? 0);
-            a.XZH2O = (a.XZH2O ?? 0) + (b.XZH2O ?? 0);
-            a.XZHO2 = (a.XZHO2 ?? 0) + (b.XZHO2 ?? 0);
-            a.XGH2O = (a.XGH2O ?? 0) + (b.XGH2O ?? 0);
-            a.XGHO2 = (a.XGHO2 ?? 0) + (b.XGHO2 ?? 0);
-            a.ops = (a.ops ?? 0) + (b.ops ?? 0);
-            a.utrium_bar = (a.utrium_bar ?? 0) + (b.utrium_bar ?? 0);
-            a.lemergium_bar = (a.lemergium_bar ?? 0) + (b.lemergium_bar ?? 0);
-            a.zynthium_bar = (a.zynthium_bar ?? 0) + (b.zynthium_bar ?? 0);
-            a.keanium_bar = (a.keanium_bar ?? 0) + (b.keanium_bar ?? 0);
-            a.ghodium_melt = (a.ghodium_melt ?? 0) + (b.ghodium_melt ?? 0);
-            a.oxidant = (a.oxidant ?? 0) + (b.oxidant ?? 0);
-            a.reductant = (a.reductant ?? 0) + (b.reductant ?? 0);
-            a.purifier = (a.purifier ?? 0) + (b.purifier ?? 0);
-            a.battery = (a.battery ?? 0) + (b.battery ?? 0);
-            a.composite = (a.composite ?? 0) + (b.composite ?? 0);
-            a.crystal = (a.crystal ?? 0) + (b.crystal ?? 0);
-            a.liquid = (a.liquid ?? 0) + (b.liquid ?? 0);
-            a.wire = (a.wire ?? 0) + (b.wire ?? 0);
-            a.Switch = (a.Switch ?? 0) + (b.Switch ?? 0);
-            a.transistor = (a.transistor ?? 0) + (b.transistor ?? 0);
-            a.microchip = (a.microchip ?? 0) + (b.microchip ?? 0);
-            a.circuit = (a.circuit ?? 0) + (b.circuit ?? 0);
-            a.device = (a.device ?? 0) + (b.device ?? 0);
-            a.cell = (a.cell ?? 0) + (b.cell ?? 0);
-            a.phlegm = (a.phlegm ?? 0) + (b.phlegm ?? 0);
-            a.tissue = (a.tissue ?? 0) + (b.tissue ?? 0);
-            a.muscle = (a.muscle ?? 0) + (b.muscle ?? 0);
-            a.organoid = (a.organoid ?? 0) + (b.organoid ?? 0);
-            a.organism = (a.organism ?? 0) + (b.organism ?? 0);
-            a.alloy = (a.alloy ?? 0) + (b.alloy ?? 0);
-            a.tube = (a.tube ?? 0) + (b.tube ?? 0);
-            a.fixtures = (a.fixtures ?? 0) + (b.fixtures ?? 0);
-            a.frame = (a.frame ?? 0) + (b.frame ?? 0);
-            a.hydraulics = (a.hydraulics ?? 0) + (b.hydraulics ?? 0);
-            a.machine = (a.machine ?? 0) + (b.machine ?? 0);
-            a.condensate = (a.condensate ?? 0) + (b.condensate ?? 0);
-            a.concentrate = (a.concentrate ?? 0) + (b.concentrate ?? 0);
-            a.extract = (a.extract ?? 0) + (b.extract ?? 0);
-            a.spirit = (a.spirit ?? 0) + (b.spirit ?? 0);
-            a.emanation = (a.emanation ?? 0) + (b.emanation ?? 0);
-            a.essence = (a.essence ?? 0) + (b.essence ?? 0);
+            
+            var storeType = typeof(Store);
+            var properties = storeType.GetProperties();
+            
+            foreach (var prop in properties)
+            {
+                if (prop.PropertyType == typeof(decimal?) && prop.CanRead && prop.CanWrite)
+                {
+                    var aValueRaw = prop.GetValue(a);
+                    var bValueRaw = prop.GetValue(b);
+                    
+                    decimal aValue = 0;
+                    decimal bValue = 0;
+                    
+                    if (aValueRaw != null)
+                    {
+                        if (aValueRaw is decimal d1)
+                            aValue = d1;
+                        else if (aValueRaw is int i1)
+                            aValue = i1;
+                        else if (aValueRaw is long l1)
+                            aValue = l1;
+                        else if (aValueRaw is double db1)
+                            aValue = (decimal)db1;
+                        else if (aValueRaw is float f1)
+                            aValue = (decimal)f1;
+                    }
+                    
+                    if (bValueRaw != null)
+                    {
+                        if (bValueRaw is decimal d2)
+                            bValue = d2;
+                        else if (bValueRaw is int i2)
+                            bValue = i2;
+                        else if (bValueRaw is long l2)
+                            bValue = l2;
+                        else if (bValueRaw is double db2)
+                            bValue = (decimal)db2;
+                        else if (bValueRaw is float f2)
+                            bValue = (decimal)f2;
+                    }
+                    
+                    prop.SetValue(a, aValue + bValue);
+                }
+            }
+            
             return a;
         }
 

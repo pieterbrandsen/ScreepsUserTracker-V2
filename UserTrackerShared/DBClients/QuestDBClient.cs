@@ -1070,8 +1070,8 @@ namespace UserTrackerShared.DBClients
             {
                 var userId = screepsRoomHistory.UserId;
                 var username = "";
-                GameState.Users.TryGetValue(userId, out var user);
-                if (user != null)
+                
+                if (!string.IsNullOrEmpty(userId) && GameState.Users.TryGetValue(userId, out var user))
                 {
                     username = user.Username;
                 }
