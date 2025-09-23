@@ -41,17 +41,19 @@ namespace UserTrackerShared.States
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
         });
-        private static async Task<(HttpResponseMessage? response, int retyCount)> ThrottledRequestAsync(HttpRequestMessage request)
+        private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();
             try
             {
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
+                int maxRetries = 5;
+                int delayMs = 200;
 
-                while (retryCount < 100)
+                while (retryCount < maxRetries)
                 {
-                    await Task.Delay(50);
+                    await Task.Delay(delayMs);
                     using (var clonedRequest = CloneHttpRequestMessage(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
@@ -151,9 +153,6 @@ namespace UserTrackerShared.States
                     request.Headers.Add("X-Username", ScreepsAPIToken);
                     (response, retryCount) = await ThrottledRequestAsync(request);
                 }
-
-                var infoMessage = $"{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
-                _logger.Information(infoMessage);
 
                 if (response?.IsSuccessStatusCode ?? false)
                 {
