@@ -53,23 +53,23 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        public static void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
-            if (ConfigSettingsState.InfluxDbEnabled)
-            {
-                await InfluxDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
-            }
-            if (ConfigSettingsState.GraphiteDbEnabled)
-            {
-                await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
-            }
-            if (ConfigSettingsState.TimeScaleDbEnabled)
-            {
-                await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
-            }
+            // if (ConfigSettingsState.InfluxDbEnabled)
+            // {
+            //     await InfluxDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            // }
+            // if (ConfigSettingsState.GraphiteDbEnabled)
+            // {
+            //     await GraphiteDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            // }
+            // if (ConfigSettingsState.TimeScaleDbEnabled)
+            // {
+            //     await TimeScaleDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+            // }
             if (ConfigSettingsState.QuestDbEnabled)
             {
-                await QuestDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+                QuestDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
             }
         }
 

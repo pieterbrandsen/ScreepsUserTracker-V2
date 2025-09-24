@@ -1064,13 +1064,13 @@ namespace UserTrackerShared.DBClients
             return questDBHistoryDTO;
         }
 
-        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        public static async void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
             {
                 var userId = screepsRoomHistory.UserId;
                 var username = "";
-                
+
                 if (!string.IsNullOrEmpty(userId) && GameState.Users.TryGetValue(userId, out var user))
                 {
                     username = user.Username;
