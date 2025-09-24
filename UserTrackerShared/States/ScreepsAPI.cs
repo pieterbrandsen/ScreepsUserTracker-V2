@@ -32,7 +32,6 @@ namespace UserTrackerShared.States
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static readonly SemaphoreSlim _normalThrottler = new(1);
-        private static readonly SemaphoreSlim _filesThrottler = new(500);
 
         private static readonly HttpClient _normalHttpClient = new();
 
@@ -40,7 +39,7 @@ namespace UserTrackerShared.States
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
-        });
+        }); 
         private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();
@@ -122,7 +121,6 @@ namespace UserTrackerShared.States
                 HttpResponseMessage? response = null;
                 if (isHistoryRequest)
                 {
-                    await _filesThrottler.WaitAsync();
                     try
                     {
                         response = await _filesHttpClient.GetAsync(reqUrl);
@@ -131,10 +129,6 @@ namespace UserTrackerShared.States
                     {
                         _logger.Error(ex, reqUrl);
                         return (default, HttpStatusCode.InternalServerError);
-                    }
-                    finally
-                    {
-                        _filesThrottler.Release();
                     }
                 }
                 else

@@ -83,111 +83,110 @@ namespace UserTrackerShared.Managers
                 {
                     var resultCodes = new ConcurrentDictionary<int, int>();
 
+
                     var mainStopwatch = Stopwatch.StartNew();
-                    var semaphore = new SemaphoreSlim(Rooms.Count);
                     var tasks = new List<Task>();
 
                     var userLocks = new ConcurrentDictionary<string, object>();
+                    var semaphore = new SemaphoreSlim(1000);
                     foreach (var room in Rooms)
                     {
                         await semaphore.WaitAsync();
-                        tasks.Add(
-                            Task.Run(async () =>
+                        tasks.Add(Task.Run(async () =>
+                        {
+                            try
                             {
-                                try
-                                {
-                                    var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks);
-                                    resultCodes.AddOrUpdate(statusResult, 1, (key, value) => value + 1);
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.Error(ex, "Error processing room {Room} for tick {Tick}", room, i);
-                                    resultCodes.AddOrUpdate(500, 1, (key, value) => value + 1); // Error code
-                                }
-                                finally
-                                {
-                                    semaphore.Release();
-                                }
-                            })
-                        );
+                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks);
+                                resultCodes.AddOrUpdate(statusResult, 1, (key, value) => value + 1);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.Error(ex, "Error processing room {Room} for tick {Tick}", room, i);
+                                resultCodes.AddOrUpdate(500, 1, (key, value) => value + 1); // Error code
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        }));
                     }
                     await Task.WhenAll(tasks);
 
                     var shouldUploadAllData = i - lastTickUploaded >= ConfigSettingsState.TicksInObject;
                     if (shouldUploadAllData)
                     {
-                        // _logger.Information($"Uploading data for shard {Name} for tick {i}, last upload was at tick {lastTickUploaded}");
-                        // var globalData = new ScreepsRoomHistoryDto();
-                        // var dataByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
-                        
-                        // var roomDataSnapshot = dataByRoom.ToArray();
-                        // var semaphoreUpload = new SemaphoreSlim(dataByRoom.Count);
-                        // var roomTasks = new List<Task>();
-                        
-                        // foreach (var kvp in roomDataSnapshot)
-                        // {
-                        //     await semaphoreUpload.WaitAsync();
-                        //     roomTasks.Add(Task.Run(async () =>
-                        //     {
-                        //         try
-                        //         {
-                        //             if (dataByRoom.TryRemove(kvp.Key, out var roomData))
-                        //             {
-                        //                 await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
+                        _logger.Information($"Uploading data for shard {Name} for tick {i}, last upload was at tick {lastTickUploaded}");
+                        var globalData = new ScreepsRoomHistoryDto();
+                        var dataByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
 
-                        //                 if (!string.IsNullOrEmpty(roomData.UserId) && GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
-                        //                 {
-                        //                     var username = user.Username;
-                        //                     dataByUser.AddOrUpdate(username, roomData, (key, existingData) =>
-                        //                     {
-                        //                         existingData.Combine(roomData);
-                        //                         return existingData;
-                        //                     });
-                        //                 }
-                        //             }
-                        //         }
-                        //         catch (Exception ex)
-                        //         {
-                        //             _logger.Error(ex, "Error uploading room data for {Room}", kvp.Key);
-                        //         }
-                        //         finally
-                        //         {
-                        //             semaphoreUpload.Release();
-                        //         }
-                        //     }));
-                        // }
-                        
-                        // await Task.WhenAll(roomTasks);
+                        var roomDataSnapshot = dataByRoom.ToArray();
+                        var semaphoreUpload = new SemaphoreSlim(dataByRoom.Count);
+                        var roomTasks = new List<Task>();
 
-                        // var userSemaphore = new SemaphoreSlim(dataByUser.Count);
-                        // var userTasks = new List<Task>();
-                        // foreach (var userKvp in dataByUser)
-                        // {
-                        //     await userSemaphore.WaitAsync();
-                        //     userTasks.Add(Task.Run(() =>
-                        //     {
-                        //         try
-                        //         {
-                        //             DBClient.WriteScreepsUserHistory(Name, userKvp.Key, i, userKvp.Value.TimeStamp, userKvp.Value);
-                        //             globalData.Combine(userKvp.Value);
-                        //         }
-                        //         catch (Exception ex)
-                        //         {
-                        //             _logger.Error(ex, "Error uploading user data for {User}", userKvp.Key);
-                        //         }
-                        //         finally
-                        //         {
-                        //             userSemaphore.Release();
-                        //         }
-                        //     }));
-                        // }
-                        
-                        // if (userTasks.Count > 0)
-                        // {
-                        //     await Task.WhenAll(userTasks);
-                        // }
-                        // DBClient.WriteScreepsGlobalHistory(Name, i, globalData.TimeStamp, globalData);
-                        
+                        foreach (var kvp in roomDataSnapshot)
+                        {
+                            await semaphoreUpload.WaitAsync();
+                            roomTasks.Add(Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    if (dataByRoom.TryRemove(kvp.Key, out var roomData))
+                                    {
+                                        await DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
+
+                                        if (!string.IsNullOrEmpty(roomData.UserId) && GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
+                                        {
+                                            var username = user.Username;
+                                            dataByUser.AddOrUpdate(username, roomData, (key, existingData) =>
+                                            {
+                                                existingData.Combine(roomData);
+                                                return existingData;
+                                            });
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.Error(ex, "Error uploading room data for {Room}", kvp.Key);
+                                }
+                                finally
+                                {
+                                    semaphoreUpload.Release();
+                                }
+                            }));
+                        }
+
+                        await Task.WhenAll(roomTasks);
+
+                        var userSemaphore = new SemaphoreSlim(dataByUser.Count);
+                        var userTasks = new List<Task>();
+                        foreach (var userKvp in dataByUser)
+                        {
+                            await userSemaphore.WaitAsync();
+                            userTasks.Add(Task.Run(() =>
+                            {
+                                try
+                                {
+                                    DBClient.WriteScreepsUserHistory(Name, userKvp.Key, i, userKvp.Value.TimeStamp, userKvp.Value);
+                                    globalData.Combine(userKvp.Value);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.Error(ex, "Error uploading user data for {User}", userKvp.Key);
+                                }
+                                finally
+                                {
+                                    userSemaphore.Release();
+                                }
+                            }));
+                        }
+
+                        if (userTasks.Count > 0)
+                        {
+                            await Task.WhenAll(userTasks);
+                        }
+                        DBClient.WriteScreepsGlobalHistory(Name, i, globalData.TimeStamp, globalData);
+
                         lastTickUploaded = i;
                     }
 
