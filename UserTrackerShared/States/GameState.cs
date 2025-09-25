@@ -44,7 +44,7 @@ namespace UserTrackerShared.States
             {
                 foreach (var shard in Shards)
                 {
-                    await shard.StartAsync();
+                    shard.Start();
                 }
             }
 
@@ -87,8 +87,8 @@ namespace UserTrackerShared.States
             {
                 var seasons = leaderboardsResponse.Select(kv => kv.Key).OrderDescending().ToList();
                 var currentSeason = seasons.FirstOrDefault();
-                
-                var leaderboardList = leaderboardsResponse.Where(kv=>kv.Key != currentSeason).Select(kv => kv.Value).ToList();
+
+                var leaderboardList = leaderboardsResponse.Where(kv => kv.Key != currentSeason).Select(kv => kv.Value).ToList();
                 foreach (var (gclLeaderboard, powerLeaderboard) in leaderboardList)
                 {
                     foreach (var leaderboardSpot in gclLeaderboard)

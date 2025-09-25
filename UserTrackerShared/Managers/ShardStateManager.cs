@@ -19,23 +19,30 @@ namespace UserTrackerShared.Managers
             _logger.Information($"Creating ShardStateManager for {Name}");
             this.Name = Name;
         }
-        public async Task StartAsync()
+        public async void Start()
         {
-            _logger.Information($"Starting ShardStateManager for {Name}");
-            var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
-            foreach (var room in response.Rooms)
+            try
             {
-                Rooms.Add(room.Key);
+                _logger.Information($"Starting ShardStateManager for {Name}");
+                var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
+                foreach (var room in response.Rooms)
+                {
+                    Rooms.Add(room.Key);
+                }
+
+                var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
+                _logger.Information(message);
+                _ = StartUpdate();
+
+                var setTimeTimer = new Timer(300000);
+                setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
+                setTimeTimer.AutoReset = true;
+                setTimeTimer.Enabled = true;
             }
-
-            var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
-            _logger.Information(message);
-            _ = StartUpdate();
-
-            var setTimeTimer = new Timer(300000);
-            setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
-            setTimeTimer.AutoReset = true;
-            setTimeTimer.Enabled = true;
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error starting ShardStateManager for {Name}: {ex.Message}");
+            }
         }
 
         public string Name { get; set; }
