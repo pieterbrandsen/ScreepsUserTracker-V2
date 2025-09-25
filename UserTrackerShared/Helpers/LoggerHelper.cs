@@ -45,5 +45,6 @@ namespace UserTrackerShared.Helpers
         QuestDB,
         // TEMP
         CentralOrderBookTracker,
+        CentralOrderBookTracker2
     }
 }

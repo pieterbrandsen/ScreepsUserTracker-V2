@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UserTrackerShared.Helpers;
+﻿using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
-using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.States
 {
     public static class CentralOrderBookTrackerState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.CentralOrderBookTracker);
+        private static readonly Serilog.ILogger _logger2 = Logger.GetLogger(LogCategory.CentralOrderBookTracker);
         public static Dictionary<long, Dictionary<string, MarketOrderBook>> TickShardMarketOrderbookPairs { get; set; } = new();
         public static Dictionary<long, Dictionary<string, Dictionary<string, Dictionary<string, int>>>> TickShardRoomStorePairs { get; set; } = new();
 
@@ -24,7 +19,7 @@ namespace UserTrackerShared.States
 
             TickShardRoomStorePairs[tick] = TickShardRoomStorePairs.GetValueOrDefault(tick, new Dictionary<string, Dictionary<string, Dictionary<string, int>>>());
             TickShardRoomStorePairs[tick][shardName] = TickShardRoomStorePairs[tick].GetValueOrDefault(shardName, new Dictionary<string, Dictionary<string, int>>());
-            
+
             var terminalData = new Dictionary<string, int>();
 
             if (terminal.Store == null) return;
@@ -34,6 +29,9 @@ namespace UserTrackerShared.States
                 var value = property.GetValue(terminal.Store);
                 terminalData[property.Name] = value != null ? (int)value : 0;
             }
+
+            _logger2.Information("Updated Terminal Store Data | Tick: {Tick}, Shard: {Shard}, Room: {Room}, Store: {@Store}",
+                tick, shardName, roomName, terminalData);
             TickShardRoomStorePairs[tick][shardName][roomName] = terminalData;
         }
 
@@ -47,6 +45,9 @@ namespace UserTrackerShared.States
                 shardDict = new Dictionary<string, MarketOrderBook>();
                 TickShardMarketOrderbookPairs[tick] = shardDict;
             }
+
+            _logger2.Information("Updated Market Order Book | Tick: {Tick}, Shard: {Shard}, BuyCount: {BuyCount}, SellCount: {SellCount}",
+                tick, shardName, marketOrderBook.Buy?.Count ?? 0, marketOrderBook.Sell?.Count ?? 0);
             shardDict[shardName] = marketOrderBook;
         }
         private static void PruneOldMarketOrderBooks(string shardName, long lastTick)
@@ -69,9 +70,7 @@ namespace UserTrackerShared.States
         public static void TryFindMatchBetweenOrderBookAndTerminalData(string shard, long startTick)
         {
             var lastTick = startTick + ConfigSettingsState.TicksInFile;
-            List<MarketOrderBookItem> prevBuy = null;
-            List<MarketOrderBookItem> prevSell = null;
-            long? prevTick = null;
+            var (prevBuy, prevSell, prevTick) = GetPreviousOrderBookState(shard, startTick);
 
             for (long tick = startTick; tick <= lastTick; tick++)
             {
@@ -81,7 +80,7 @@ namespace UserTrackerShared.States
                     var buy = orderBook.Buy ?? new List<MarketOrderBookItem>();
                     var sell = orderBook.Sell ?? new List<MarketOrderBookItem>();
 
-                    if (prevBuy != null && prevSell != null && prevTick.HasValue)
+                    if (prevBuy != null && prevSell != null && prevTick.HasValue && tick - 1 == prevTick)
                     {
                         if (!OrderListEquals(prevBuy, buy) || !OrderListEquals(prevSell, sell))
                         {
@@ -153,14 +152,14 @@ namespace UserTrackerShared.States
                                     {
                                         var credits = diff * order.Price;
                                         _logger.Information(
-                                            "[Match Found] Order {OrderId} | Room {OrderRoom} | Resource {Resource} | Diff {Diff} | Credits {Credits} | Matched Room {MatchedRoom} | Tick {Tick}",
+                                            "[Match Found] Tick {Tick} | Order {OrderId} ({OrderRoom}/{Resource}) | Diff={Diff}, Credits={Credits}, MatchedRoom={MatchedRoom}",
+                                            tickKvp.Key,
                                             order.Id,
                                             order.RoomName,
                                             order.ResourceType,
                                             diff,
                                             credits,
-                                            roomName,
-                                            tickKvp.Key
+                                            roomName
                                         );
                                     }
                                 }
@@ -173,6 +172,39 @@ namespace UserTrackerShared.States
             // Process buy and sell lists
             ProcessOrderList(currentBuy, prevBuy);
             ProcessOrderList(currentSell, prevSell);
+        }
+
+        private static (List<MarketOrderBookItem> prevBuy, List<MarketOrderBookItem> prevSell, long? prevTick) GetPreviousOrderBookState(string shard, long startTick)
+        {
+            // Prefer startTick, otherwise use the last tick before startTick
+            if (TickShardMarketOrderbookPairs.TryGetValue(startTick, out var startShardDict) &&
+                startShardDict.TryGetValue(shard, out var startOrderBook))
+            {
+                return (
+                    startOrderBook.Buy ?? new List<MarketOrderBookItem>(),
+                    startOrderBook.Sell ?? new List<MarketOrderBookItem>(),
+                    startTick
+                );
+            }
+            else
+            {
+                var prevOrderBookTick = TickShardMarketOrderbookPairs
+                    .Where(kvp => kvp.Key < startTick && kvp.Value.ContainsKey(shard))
+                    .Select(kvp => kvp.Key)
+                    .DefaultIfEmpty()
+                    .Max();
+
+                if (prevOrderBookTick != 0 && TickShardMarketOrderbookPairs.TryGetValue(prevOrderBookTick, out var prevShardDict)
+                    && prevShardDict.TryGetValue(shard, out var prevOrderBook))
+                {
+                    return (
+                        prevOrderBook.Buy ?? new List<MarketOrderBookItem>(),
+                        prevOrderBook.Sell ?? new List<MarketOrderBookItem>(),
+                        prevOrderBookTick
+                    );
+                }
+            }
+            return (null, null, null);
         }
     }
 }
