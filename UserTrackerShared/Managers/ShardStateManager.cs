@@ -21,6 +21,7 @@ namespace UserTrackerShared.Managers
         }
         public async Task StartAsync()
         {
+            _logger.Information($"Starting ShardStateManager for {Name}");
             var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
@@ -28,7 +29,7 @@ namespace UserTrackerShared.Managers
             }
 
             var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
-            _logger.Warning(message);
+            _logger.Information(message);
             _ = StartUpdate();
 
             var setTimeTimer = new Timer(300000);
