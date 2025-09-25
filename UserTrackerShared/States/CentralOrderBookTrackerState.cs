@@ -152,7 +152,16 @@ namespace UserTrackerShared.States
                                     if (store.TryGetValue(order.ResourceType, out var amount) && amount == diff)
                                     {
                                         var credits = diff * order.Price;
-                                        _logger.Information($"[Match Found] Order {order.Id} ({order.ResourceType}) diff {diff} credits {credits} matched in room {roomName} at tick {tickKvp.Key}");
+                                        _logger.Information(
+                                            "[Match Found] Order {OrderId} | Room {OrderRoom} | Resource {Resource} | Diff {Diff} | Credits {Credits} | Matched Room {MatchedRoom} | Tick {Tick}",
+                                            order.Id,
+                                            order.RoomName,
+                                            order.ResourceType,
+                                            diff,
+                                            credits,
+                                            roomName,
+                                            tickKvp.Key
+                                        );
                                     }
                                 }
                             }
