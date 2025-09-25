@@ -33,7 +33,7 @@ namespace UserTrackerShared.States
             }
             else
             {
-                for (int i = 0; i <= 0; i++)
+                for (int i = 0; i <= 3; i++)
                 {
                     Shards.Add(new ShardStateManager($"shard{i}"));
                 }
