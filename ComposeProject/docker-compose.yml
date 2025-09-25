@@ -8,6 +8,7 @@ volumes:
     grafana-data:
     postgres-data:
     timescale-data:
+    questdb-data:
 
 
 x-logging: &default-logging
@@ -151,7 +152,7 @@ services:
         networks:
             - internal
         volumes:
-            - ./data/questdb:/var/lib/questdb
+            - questdb-data:/var/lib/questdb
             - ./conf/questdb/server.conf:/root/.questdb/conf/server.conf
         restart: unless-stopped
         logging: *default-logging

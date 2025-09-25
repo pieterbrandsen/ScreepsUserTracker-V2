@@ -16,6 +16,7 @@ namespace UserTrackerShared.Managers
 
         public ShardStateManager(string Name)
         {
+            _logger.Information($"Creating ShardStateManager for {Name}");
             this.Name = Name;
         }
         public async Task StartAsync()
