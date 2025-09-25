@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Runtime.CompilerServices;
 using System.Text;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
@@ -47,8 +48,8 @@ namespace UserTrackerShared.States
             {
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
-                int maxRetries = 5;
-                int delayMs = 200;
+                int maxRetries = 3;
+                int delayMs = 20;
 
                 while (retryCount < maxRetries)
                 {
@@ -288,6 +289,40 @@ namespace UserTrackerShared.States
 
             var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);
             return Status == HttpStatusCode.OK && Result?.Ok == 1 ? Result.User : null;
+        }
+
+        public static async Task<MarketOrderBook?> GetMarketOrderbook(string shard)
+        {
+            var time = await GetTimeOfShard(shard);
+            if (time == null) return null;
+
+            var marketOrderBook = new MarketOrderBook()
+            {
+                EstimatedTick = time.Time,
+                Shard = shard,
+            };
+            var basePath = $"/api/game/market/orders?shard={shard}&resourceType=";
+            var storeProperties = typeof(Store).GetProperties();
+            foreach (var property in storeProperties)
+            {
+                var resourceType = property.Name;
+                var path = basePath + resourceType;
+                var (Result, Status) = await ExecuteRequestAsync<MarketOrderBookResponse>(HttpMethod.Get, path);
+                if (Status == HttpStatusCode.OK && Result?.Ok == 1 && Result.Items != null)
+                {
+                    foreach (var order in Result.Items)
+                    {
+                        order.ResourceType = resourceType;
+                    }
+                    
+                    var buyOrders = Result.Items.Where(o => o.Type == "buy").ToList();
+                    var sellOrders = Result.Items.Where(o => o.Type == "sell").ToList();
+                    marketOrderBook.Buy.AddRange(buyOrders);
+                    marketOrderBook.Sell.AddRange(sellOrders);
+                }
+            }
+
+            return marketOrderBook;
         }
 
         public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)

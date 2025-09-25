@@ -42,6 +42,8 @@ namespace UserTrackerShared.Helpers
         InfluxDB,
         GraphiteDB,
         TimeScaleDB,
-        QuestDB
+        QuestDB,
+        // TEMP
+        CentralOrderBookTracker,
     }
 }

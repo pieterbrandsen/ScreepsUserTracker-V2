@@ -54,6 +54,7 @@ namespace UserTrackerShared.States
         public static bool WriteHistoryProperties { get; set; }
         public static string ObjectsFolder { get; set; } = string.Empty;
         public static bool LiveAssertRoomHistory { get; set; }
+        public static bool KeepTrackOfOrderBook { get; set; }
 
         public static void Init()
         {
@@ -100,6 +101,7 @@ namespace UserTrackerShared.States
             TicksInObject = Convert.ToInt32(appSettings["TICKS_IN_OBJECT"]);
             GetAllUsers = Convert.ToBoolean(appSettings["GET_ALL_USERS"]);
             StartsShards = Convert.ToBoolean(appSettings["START_SHARDS"]);
+            KeepTrackOfOrderBook = Convert.ToBoolean(appSettings["KEEP_TRACK_OF_ORDER_BOOK"]);
             LogsFolder = appSettings["LOGS_FOLDER"] ?? "";
             if (LogsFolder == "") throw new ArgumentException("No logs folder provided");
             ObjectsFolder = appSettings["OBJECTS_FOLDER"] ?? "";

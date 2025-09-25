@@ -54,6 +54,7 @@ namespace UserTrackerShared.Helpers
                         }
 
                         roomHistoryDto.Update(roomHistory);
+                        if (ConfigSettingsState.KeepTrackOfOrderBook) CentralOrderBookTrackerState.UpdateTerminalRoomStore(shard, name, roomHistory);
                     }
                 }
 
