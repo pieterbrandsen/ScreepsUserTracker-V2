@@ -902,8 +902,9 @@ namespace UserTrackerShared.DBClients
             {
                 if (value.HasValue)
                 {
-                    storeTotals[key] = (int)value.Value;
-                    storeTotal += (int)value.Value;
+                    int intValue = (int)Math.Round(value.Value);
+                    storeTotals[key] = intValue;
+                    storeTotal += intValue;
                 }
             }
 

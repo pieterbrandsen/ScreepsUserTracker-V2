@@ -39,12 +39,17 @@ namespace UserTrackerShared.States
                 }
             }
 
+            await ScreepsSocketState.InitAsync();
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
                 foreach (var shard in Shards)
                 {
-                    await shard.StartAsync();
+                    await shard.LoadAsync();
+                }
+                foreach (var shard in Shards)
+                {
+                    shard.Start();
                 }
             }
 

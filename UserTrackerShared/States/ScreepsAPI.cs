@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UserTrackerShared;
@@ -32,15 +33,80 @@ namespace UserTrackerShared.States
     public static class ScreepsApi
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
-        private static readonly SemaphoreSlim _normalThrottler = new(1);
+        private static readonly SemaphoreSlim _normalThrottler = new(10);
 
-        private static readonly HttpClient _normalHttpClient = new();
+        private static readonly HttpClient _normalHttpClient = new(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            ConnectTimeout = TimeSpan.FromSeconds(5),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+            MaxConnectionsPerServer = 100,
+            EnableMultipleHttp2Connections = true
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(15)
+        };
 
         private static readonly HttpClient _filesHttpClient = new(new SocketsHttpHandler
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            ConnectTimeout = TimeSpan.FromSeconds(10),
-        }); 
+            ConnectTimeout = TimeSpan.FromSeconds(30),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(15),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5)
+        });
+        
+        private static async Task<(HttpResponseMessage? response, int retryCount)> RequestAsync(HttpRequestMessage request)
+        {
+            int maxRetries = 3;
+            int retryCount = 0;
+            int delayMs = 100;
+
+            while (retryCount < maxRetries)
+            {
+                try
+                {
+                    using var clonedRequest = CloneHttpRequestMessage(request);
+                    var response = await _normalHttpClient.SendAsync(clonedRequest);
+                    return (response, retryCount);
+                }
+                catch (HttpRequestException ex) when (ex.InnerException is IOException || ex.InnerException is SocketException)
+                {
+                    // Network errors like "broken pipe" should be retried
+                    retryCount++;
+                    if (retryCount >= maxRetries)
+                    {
+                        _logger.Error(ex, "Failed to send request after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
+                        throw;
+                    }
+
+                    _logger.Warning("Network error on attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}",
+                        retryCount, maxRetries, delayMs, request.RequestUri);
+
+                    await Task.Delay(delayMs);
+                    delayMs *= 2;
+                }
+                catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+                {
+                    // Timeout errors should also be retried
+                    retryCount++;
+                    if (retryCount >= maxRetries)
+                    {
+                        _logger.Error(ex, "Request timeout after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
+                        throw;
+                    }
+
+                    _logger.Warning("Timeout on attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}",
+                        retryCount, maxRetries, delayMs, request.RequestUri);
+
+                    await Task.Delay(delayMs);
+                    delayMs *= 2;
+                }
+            }
+
+            // This should never be reached, but just in case
+            throw new InvalidOperationException("Unexpected end of retry loop");
+        }
         private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();
@@ -49,18 +115,54 @@ namespace UserTrackerShared.States
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
                 int maxRetries = 3;
-                int delayMs = 20;
+                int delayMs = 1000; 
 
                 while (retryCount < maxRetries)
                 {
-                    await Task.Delay(delayMs);
-                    using (var clonedRequest = CloneHttpRequestMessage(request))
+                    try
                     {
-                        response = await _normalHttpClient.SendAsync(clonedRequest);
-                        if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500)
-                            return (response, retryCount);
+                        await Task.Delay(delayMs);
+                        using (var clonedRequest = CloneHttpRequestMessage(request))
+                        {
+                            response = await _normalHttpClient.SendAsync(clonedRequest);
+                            if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500)
+                                return (response, retryCount);
+                        }
+                        retryCount += 1;
+                        delayMs *= 2;
                     }
-                    retryCount += 1;
+                    catch (HttpRequestException ex) when (ex.InnerException is IOException || ex.InnerException is SocketException)
+                    {
+                        // Network errors like "broken pipe" should be retried
+                        retryCount++;
+                        if (retryCount >= maxRetries)
+                        {
+                            _logger.Error(ex, "Failed to send throttled request after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
+                            return (null, retryCount);
+                        }
+                        
+                        _logger.Warning("Network error on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}", 
+                            retryCount, maxRetries, delayMs, request.RequestUri);
+                        
+                        await Task.Delay(delayMs);
+                        delayMs *= 2;
+                    }
+                    catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+                    {
+                        // Timeout errors should also be retried
+                        retryCount++;
+                        if (retryCount >= maxRetries)
+                        {
+                            _logger.Error(ex, "Throttled request timeout after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
+                            return (null, retryCount);
+                        }
+                        
+                        _logger.Warning("Timeout on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}", 
+                            retryCount, maxRetries, delayMs, request.RequestUri);
+                        
+                        await Task.Delay(delayMs);
+                        delayMs *= 2;
+                    }
                 }
                 return (response, retryCount);
             }
@@ -152,11 +254,15 @@ namespace UserTrackerShared.States
                 if (response?.IsSuccessStatusCode ?? false)
                 {
                     var result = await JsonConvertHelper.ReadAndConvertStream<T>(response.Content);
-                    return (result, response.StatusCode);
+                    var statusCode = response.StatusCode;
+                    response?.Dispose(); // Properly dispose the response to return connection to pool
+                    return (result, statusCode);
                 }
                 else
                 {
-                    return (default, response?.StatusCode ?? HttpStatusCode.InternalServerError);
+                    var statusCode = response?.StatusCode ?? HttpStatusCode.InternalServerError;
+                    response?.Dispose(); // Properly dispose the response to return connection to pool
+                    return (default, statusCode);
                 }
             }
             catch (Exception ex)
@@ -291,38 +397,17 @@ namespace UserTrackerShared.States
             return Status == HttpStatusCode.OK && Result?.Ok == 1 ? Result.User : null;
         }
 
-        public static async Task<MarketOrderBook?> GetMarketOrderbook(string shard)
+        public static async Task SendConsoleExpression(string shard, string expression)
         {
-            var time = await GetTimeOfShard(shard);
-            if (time == null) return null;
-
-            var marketOrderBook = new MarketOrderBook()
+            var content = new Dictionary<string, object>()
             {
-                EstimatedTick = time.Time,
-                Shard = shard,
+                { "shard", shard },
+                { "expression", expression }
             };
-            var basePath = $"/api/game/market/orders?shard={shard}&resourceType=";
-            var storeProperties = typeof(Store).GetProperties();
-            foreach (var property in storeProperties)
-            {
-                var resourceType = property.Name;
-                var path = basePath + resourceType;
-                var (Result, Status) = await ExecuteRequestAsync<MarketOrderBookResponse>(HttpMethod.Get, path);
-                if (Status == HttpStatusCode.OK && Result?.Ok == 1 && Result.Items != null)
-                {
-                    foreach (var order in Result.Items)
-                    {
-                        order.ResourceType = resourceType;
-                    }
-                    
-                    var buyOrders = Result.Items.Where(o => o.Type == "buy").ToList();
-                    var sellOrders = Result.Items.Where(o => o.Type == "sell").ToList();
-                    marketOrderBook.Buy.AddRange(buyOrders);
-                    marketOrderBook.Sell.AddRange(sellOrders);
-                }
-            }
-
-            return marketOrderBook;
+            var jsonString = JsonConvert.SerializeObject(content);
+            var body = new StringContent(jsonString, Encoding.UTF8, "application/json");
+            var path = $"/api/user/console";
+            var (_, _) = await ExecuteRequestAsync<OkResponse>(HttpMethod.Post, path, body);
         }
 
         public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)

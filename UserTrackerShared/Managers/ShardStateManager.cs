@@ -19,9 +19,10 @@ namespace UserTrackerShared.Managers
             _logger.Information($"Creating ShardStateManager for {Name}");
             this.Name = Name;
         }
-        public async Task StartAsync()
+
+        public async Task LoadAsync()
         {
-            _logger.Information($"Starting ShardStateManager for {Name}");
+            _logger.Information($"Loading ShardStateManager for {Name}");
             var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
             foreach (var room in response.Rooms)
             {
@@ -31,7 +32,11 @@ namespace UserTrackerShared.Managers
             var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
             _logger.Information(message);
             Screen.AddLog(message);
+        }
 
+        public void Start()
+        {
+            _logger.Information($"Starting ShardStateManager for {Name}");
             _ = StartUpdate();
 
             var setTimeTimer = new Timer(300000);
@@ -86,12 +91,7 @@ namespace UserTrackerShared.Managers
                 if (lastSyncedOrderBookTick < time)
                 {
                     isSyncingOrderBook = true;
-                    var orderBook = await ScreepsApi.GetMarketOrderbook(Name);
-                    if (orderBook != null)
-                    {
-                        CentralOrderBookTrackerState.UpdateMarketOrderBook(orderBook);
-                        lastSyncedOrderBookTick = (long)time;
-                    }
+                    await ScreepsApi.SendConsoleExpression(Name, "JSON.stringify({orderBookTracker: 1, tick: Game.time, orders: Game.market.getAllOrders()})");
                     isSyncingOrderBook = false;
                 }
             }
@@ -112,6 +112,7 @@ namespace UserTrackerShared.Managers
         {
             try
             {
+                return;
                 var syncTime = GetSyncTime();
                 if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
                 if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;

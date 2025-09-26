@@ -1,4 +1,5 @@
-﻿using UserTrackerShared.Helpers;
+﻿using System.Collections.Concurrent;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 
@@ -7,9 +8,9 @@ namespace UserTrackerShared.States
     public static class CentralOrderBookTrackerState
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.CentralOrderBookTracker);
-        private static readonly Serilog.ILogger _logger2 = Logger.GetLogger(LogCategory.CentralOrderBookTracker);
-        public static Dictionary<long, Dictionary<string, MarketOrderBook>> TickShardMarketOrderbookPairs { get; set; } = new();
-        public static Dictionary<long, Dictionary<string, Dictionary<string, Dictionary<string, int>>>> TickShardRoomStorePairs { get; set; } = new();
+        private static readonly Serilog.ILogger _logger2 = Logger.GetLogger(LogCategory.CentralOrderBookTracker2);
+        public static ConcurrentDictionary<long, ConcurrentDictionary<string, MarketOrderBook>> TickShardMarketOrderbookPairs { get; set; } = new();
+        public static ConcurrentDictionary<long, ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>> TickShardRoomStorePairs { get; set; } = new();
 
         public static void UpdateTerminalRoomStore(string shardName, string roomName, ScreepsRoomHistory screepsRoomHistory)
         {
@@ -17,32 +18,31 @@ namespace UserTrackerShared.States
             var terminal = screepsRoomHistory.Structures.Terminals.First().Value;
             var tick = screepsRoomHistory.Tick;
 
-            TickShardRoomStorePairs[tick] = TickShardRoomStorePairs.GetValueOrDefault(tick, new Dictionary<string, Dictionary<string, Dictionary<string, int>>>());
-            TickShardRoomStorePairs[tick][shardName] = TickShardRoomStorePairs[tick].GetValueOrDefault(shardName, new Dictionary<string, Dictionary<string, int>>());
+            TickShardRoomStorePairs[tick] = TickShardRoomStorePairs.GetValueOrDefault(tick, new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>());
+            TickShardRoomStorePairs[tick][shardName] = TickShardRoomStorePairs[tick].GetValueOrDefault(shardName, new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>());
 
-            var terminalData = new Dictionary<string, int>();
+            var terminalData = new ConcurrentDictionary<string, int>();
 
             if (terminal.Store == null) return;
             var properties = typeof(Store).GetProperties();
             foreach (var property in properties)
             {
                 var value = property.GetValue(terminal.Store);
-                terminalData[property.Name] = value != null ? (int)value : 0;
+                if (value == null) continue;
+                terminalData[property.Name] = (int)Math.Round((decimal)value);
             }
 
-            _logger2.Information("Updated Terminal Store Data | Tick: {Tick}, Shard: {Shard}, Room: {Room}, Store: {@Store}",
-                tick, shardName, roomName, terminalData);
             TickShardRoomStorePairs[tick][shardName][roomName] = terminalData;
         }
 
         public static void UpdateMarketOrderBook(MarketOrderBook marketOrderBook)
         {
             var shardName = marketOrderBook.Shard;
-            var tick = marketOrderBook.EstimatedTick;
+            var tick = marketOrderBook.Tick;
 
             if (!TickShardMarketOrderbookPairs.TryGetValue(tick, out var shardDict))
             {
-                shardDict = new Dictionary<string, MarketOrderBook>();
+                shardDict = new ConcurrentDictionary<string, MarketOrderBook>();
                 TickShardMarketOrderbookPairs[tick] = shardDict;
             }
 
@@ -61,9 +61,12 @@ namespace UserTrackerShared.States
 
             foreach (var oldTick in ticksToRemove)
             {
-                TickShardMarketOrderbookPairs[oldTick].Remove(shardName);
-                if (TickShardMarketOrderbookPairs[oldTick].Count == 0)
-                    TickShardMarketOrderbookPairs.Remove(oldTick);
+                if (TickShardMarketOrderbookPairs.TryGetValue(oldTick, out var shardDict))
+                {
+                    shardDict.TryRemove(shardName, out _);
+                    if (shardDict.IsEmpty)
+                        TickShardMarketOrderbookPairs.TryRemove(oldTick, out _);
+                }
             }
         }
 
@@ -113,7 +116,7 @@ namespace UserTrackerShared.States
             List<MarketOrderBookItem> currentBuy, List<MarketOrderBookItem> currentSell,
             List<MarketOrderBookItem> prevBuy, List<MarketOrderBookItem> prevSell)
         {
-            var roomStoreDataInRange = new Dictionary<long, Dictionary<string, Dictionary<string, int>>>();
+            var roomStoreDataInRange = new ConcurrentDictionary<long, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>();
 
             for (long tick = fromTick; tick <= toTick; tick++)
             {
@@ -174,7 +177,7 @@ namespace UserTrackerShared.States
             ProcessOrderList(currentSell, prevSell);
         }
 
-        private static (List<MarketOrderBookItem> prevBuy, List<MarketOrderBookItem> prevSell, long? prevTick) GetPreviousOrderBookState(string shard, long startTick)
+        private static (List<MarketOrderBookItem>? prevBuy, List<MarketOrderBookItem>? prevSell, long? prevTick) GetPreviousOrderBookState(string shard, long startTick)
         {
             // Prefer startTick, otherwise use the last tick before startTick
             if (TickShardMarketOrderbookPairs.TryGetValue(startTick, out var startShardDict) &&

@@ -11,6 +11,10 @@ namespace UserTrackerShared.Models.ScreepsAPI
     {
         [JsonProperty("id")]
         public string Id { get; set; }
+        [JsonProperty("created")]
+        public long Created { get; set; }
+        [JsonProperty("createdTimestamp")]
+        public long CreatedTimestamp { get; set; }
         [JsonProperty("type")]
         public string Type { get; set; }
         [JsonProperty("amount")]
@@ -21,20 +25,28 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public double Price { get; set; }
         [JsonProperty("roomName")]
         public string RoomName { get; set; }
+        [JsonProperty("resourceType")]
         public string ResourceType { get; set; }
     }
     public class MarketOrderBook
     {
+        public MarketOrderBook(string shard, MarketOrderBookResponse response)
+        {
+            Shard = shard;
+            Tick = response.Tick;
+            Buy = response.Orders.Where(o => o.Type == "buy").ToList();
+            Sell = response.Orders.Where(o => o.Type == "sell").ToList();
+        }
         public string Shard { get; set; }
-        public long EstimatedTick { get; set; }
+        public long Tick { get; set; }
         public List<MarketOrderBookItem> Buy { get; set; } = new();
         public List<MarketOrderBookItem> Sell { get; set; } = new();
     }
     public class MarketOrderBookResponse
     {
-        [JsonProperty("ok")]
-        public int Ok { get; set; }
-        [JsonProperty("list")]
-        public List<MarketOrderBookItem> Items { get; set; }
+        [JsonProperty("tick")]
+        public long Tick { get; set; }
+        [JsonProperty("orders")]
+        public List<MarketOrderBookItem> Orders { get; set; }
     }
 }
