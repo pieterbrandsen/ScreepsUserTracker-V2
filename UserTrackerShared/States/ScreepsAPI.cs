@@ -55,7 +55,7 @@ namespace UserTrackerShared.States
             PooledConnectionLifetime = TimeSpan.FromMinutes(15),
             PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5)
         });
-        
+
         private static async Task<(HttpResponseMessage? response, int retryCount)> RequestAsync(HttpRequestMessage request)
         {
             int maxRetries = 3;
@@ -115,7 +115,7 @@ namespace UserTrackerShared.States
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
                 int maxRetries = 3;
-                int delayMs = 1000; 
+                int delayMs = 1000;
 
                 while (retryCount < maxRetries)
                 {
@@ -140,10 +140,10 @@ namespace UserTrackerShared.States
                             _logger.Error(ex, "Failed to send throttled request after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
                             return (null, retryCount);
                         }
-                        
-                        _logger.Warning("Network error on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}", 
+
+                        _logger.Warning("Network error on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}",
                             retryCount, maxRetries, delayMs, request.RequestUri);
-                        
+
                         await Task.Delay(delayMs);
                         delayMs *= 2;
                     }
@@ -156,10 +156,10 @@ namespace UserTrackerShared.States
                             _logger.Error(ex, "Throttled request timeout after {MaxRetries} retries: {RequestUri}", maxRetries, request.RequestUri);
                             return (null, retryCount);
                         }
-                        
-                        _logger.Warning("Timeout on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}", 
+
+                        _logger.Warning("Timeout on throttled attempt {RetryCount}/{MaxRetries}, retrying in {Delay}ms: {RequestUri}",
                             retryCount, maxRetries, delayMs, request.RequestUri);
-                        
+
                         await Task.Delay(delayMs);
                         delayMs *= 2;
                     }
@@ -202,7 +202,7 @@ namespace UserTrackerShared.States
         public static string ScreepsAPIHTTPUrl => ConfigSettingsState.ScreepsHttpUrl;
         public static string ScreepsAPIToken => ConfigSettingsState.ScreepsToken;
 
-        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false)
+        private static async Task<(T? Result, HttpStatusCode Status)> ExecuteRequestAsync<T>(HttpMethod method, string path, StringContent? httpContent = null, bool isHistoryRequest = false, bool dontThrottle = false)
         {
             string reqUrl;
             if (isHistoryRequest)
@@ -248,7 +248,14 @@ namespace UserTrackerShared.States
 
                     request.Headers.Add("X-Token", ScreepsAPIToken);
                     request.Headers.Add("X-Username", ScreepsAPIToken);
-                    (response, retryCount) = await ThrottledRequestAsync(request);
+                    if (!dontThrottle)
+                    {
+                        (response, retryCount) = await ThrottledRequestAsync(request);
+                    }
+                    else
+                    {
+                        (response, retryCount) = await RequestAsync(request);
+                    }
                 }
 
                 if (response?.IsSuccessStatusCode ?? false)
@@ -285,7 +292,7 @@ namespace UserTrackerShared.States
         {
             var path = $"/api/game/time?shard={shard}";
 
-            var (Result, _) = await ExecuteRequestAsync<TimeResponse>(HttpMethod.Get, path);
+            var (Result, _) = await ExecuteRequestAsync<TimeResponse>(HttpMethod.Get, path, dontThrottle: true);
             return Result;
         }
 
@@ -407,7 +414,7 @@ namespace UserTrackerShared.States
             var jsonString = JsonConvert.SerializeObject(content);
             var body = new StringContent(jsonString, Encoding.UTF8, "application/json");
             var path = $"/api/user/console";
-            var (_, _) = await ExecuteRequestAsync<OkResponse>(HttpMethod.Post, path, body);
+            var (_, _) = await ExecuteRequestAsync<OkResponse>(HttpMethod.Post, path, body, dontThrottle: true);
         }
 
         public static async Task<(JObject? Result, HttpStatusCode Status)> GetHistory(string shard, string room, long tick)
