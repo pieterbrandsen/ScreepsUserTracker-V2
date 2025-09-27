@@ -153,11 +153,13 @@ namespace UserTrackerShared.States
                                     // Check for the specific resource type
                                     if (store.TryGetValue(order.ResourceType, out var amount) && amount == diff)
                                     {
+                                        var username = GameState.GetUsernameByRoom(shard, roomName) ?? "Unknown";
                                         var credits = diff * order.Price;
                                         _logger.Information(
-                                            "[Match Found] Tick {Tick} | Order {OrderId} ({OrderRoom}/{Resource}) | Diff={Diff}, Credits={Credits}, MatchedRoom={MatchedRoom}",
+                                            "[Match Found] Tick {Tick} | Order {OrderId} ({Username}/{OrderRoom}/{Resource}) | Diff={Diff}, Credits={Credits}, MatchedRoom={MatchedRoom}",
                                             tickKvp.Key,
                                             order.Id,
+                                            username,
                                             order.RoomName,
                                             order.ResourceType,
                                             diff,

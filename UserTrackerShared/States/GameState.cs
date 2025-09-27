@@ -33,7 +33,7 @@ namespace UserTrackerShared.States
             }
             else
             {
-                for (int i = 0; i <= 3; i++)
+                for (int i = 0; i <= 0; i++)
                 {
                     Shards.Add(new ShardStateManager($"shard{i}"));
                 }
@@ -85,6 +85,15 @@ namespace UserTrackerShared.States
         public static async void OnGetAllUsersTimer()
         {
             await GetAllUsers();
+        }
+
+        public static string? GetUsernameByRoom(string shard, string roomName)
+        {
+            var shardData = Shards.FirstOrDefault(s => s.Name == shard);
+            if (shardData == null) return null;
+
+            shardData.RoomUsernameMap.TryGetValue(roomName, out string? username);
+            return username;
         }
 
         public static async Task GetAllUsers()

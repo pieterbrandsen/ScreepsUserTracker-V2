@@ -60,6 +60,7 @@ namespace UserTrackerShared.Managers
         private bool isSyncing = false;
         private long lastTickUploaded = 0;
         private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new();
+        public ConcurrentDictionary<string, string> RoomUsernameMap = new();
         private long lastSyncedOrderBookTick = 0;
         private bool isSyncingOrderBook;
 
@@ -106,7 +107,7 @@ namespace UserTrackerShared.Managers
 
         private long GetSyncTime()
         {
-            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time - 500) / 100)) * 100);
+            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time-0) / 100)) * 100);
             return syncTime;
         }
 
@@ -182,6 +183,7 @@ namespace UserTrackerShared.Managers
                                         existingData.Combine(roomData);
                                         return existingData;
                                     });
+                                    RoomUsernameMap[kvp.Key] = username;
                                 }
                             }
                             catch (Exception ex)
