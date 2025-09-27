@@ -30,6 +30,10 @@ namespace UserTrackerShared.Models.ScreepsAPI
     }
     public class MarketOrderBook
     {
+        public MarketOrderBook()
+        {
+            
+        }
         public MarketOrderBook(string shard, MarketOrderBookResponse response)
         {
             Shard = shard;

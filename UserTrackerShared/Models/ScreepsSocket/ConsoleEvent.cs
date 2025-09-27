@@ -1,11 +1,14 @@
+using Newtonsoft.Json;
+using System.Text.Json;
+
 namespace UserTrackerShared.Models.ScreepsAPI
 {
     public class ConsoleEvent
     {
-        [JsonPropertyName("messages")]
+        [JsonProperty("messages")]
         public ConsoleMessages? Messages { get; set; }
 
-        [JsonPropertyName("shard")]
+        [JsonProperty("shard")]
         public string? Shard { get; set; }
     }
 }

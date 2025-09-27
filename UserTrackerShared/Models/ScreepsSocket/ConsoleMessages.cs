@@ -1,11 +1,13 @@
+using Newtonsoft.Json;
+
 namespace UserTrackerShared.Models.ScreepsAPI
 {
     public class ConsoleMessages
     {
-        [JsonPropertyName("log")]
-        public List<string>? Log { get; set; }
+        [JsonProperty("log")]
+        public List<string>? Log { get; set; } = new();
 
-        [JsonPropertyName("results")]
-        public List<string>? Results { get; set; }
+        [JsonProperty("results")]
+        public List<string>? Results { get; set; } = new();
     }
 }

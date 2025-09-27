@@ -1,4 +1,5 @@
-﻿using UserTrackerShared.Models.ScreepsAPI;
+﻿using System.Collections.Concurrent;
+using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
 
 namespace UserTracker.Tests.States
@@ -32,19 +33,19 @@ namespace UserTracker.Tests.States
             var orderBook1 = new MarketOrderBook
             {
                 Shard = shard,
-                EstimatedTick = firstTick,
+                Tick = firstTick,
                 Buy = new List<MarketOrderBookItem> { order1 },
                 Sell = new List<MarketOrderBookItem>()
             };
-            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[firstTick] = new Dictionary<string, MarketOrderBook>
+            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[firstTick] = new ConcurrentDictionary<string, MarketOrderBook>
             {
                 [shard] = orderBook1
             };
-            CentralOrderBookTrackerState.TickShardRoomStorePairs[firstTick] = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>
+            CentralOrderBookTrackerState.TickShardRoomStorePairs[firstTick] = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>
             {
-                [shard] = new Dictionary<string, Dictionary<string, int>>
+                [shard] = new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>
                 {
-                    [room] = new Dictionary<string, int>
+                    [room] = new ConcurrentDictionary<string, int>
                     {
                         [resourceType] = 0
                     }
@@ -55,11 +56,11 @@ namespace UserTracker.Tests.States
             // No orderbook for secondTick
 
             // Terminal store for secondTick, with matching diff
-            CentralOrderBookTrackerState.TickShardRoomStorePairs[secondTick] = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>
+            CentralOrderBookTrackerState.TickShardRoomStorePairs[secondTick] = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>
             {
-                [shard] = new Dictionary<string, Dictionary<string, int>>
+                [shard] = new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>
                 {
-                    [room] = new Dictionary<string, int>
+                    [room] = new ConcurrentDictionary<string, int>
                     {
                         [resourceType] = 100
                     }
@@ -77,19 +78,19 @@ namespace UserTracker.Tests.States
             var orderBook3 = new MarketOrderBook
             {
                 Shard = shard,
-                EstimatedTick = thirdTick,
+                Tick = thirdTick,
                 Buy = new List<MarketOrderBookItem> { order3 },
                 Sell = new List<MarketOrderBookItem>()
             };
-            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[thirdTick] = new Dictionary<string, MarketOrderBook>
+            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[thirdTick] = new ConcurrentDictionary<string, MarketOrderBook>
             {
                 [shard] = orderBook3
             };
-            CentralOrderBookTrackerState.TickShardRoomStorePairs[thirdTick] = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>
+            CentralOrderBookTrackerState.TickShardRoomStorePairs[thirdTick] = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>
             {
-                [shard] = new Dictionary<string, Dictionary<string, int>>
+                [shard] = new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>
                 {
-                    [room] = new Dictionary<string, int>
+                    [room] = new ConcurrentDictionary<string, int>
                     {
                         [resourceType] = 100
                     }
@@ -127,19 +128,19 @@ namespace UserTracker.Tests.States
             var orderBook1 = new MarketOrderBook
             {
                 Shard = shard,
-                EstimatedTick = firstTick,
+                Tick = firstTick,
                 Buy = new List<MarketOrderBookItem> { order1 },
                 Sell = new List<MarketOrderBookItem>()
             };
-            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[firstTick] = new Dictionary<string, MarketOrderBook>
+            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[firstTick] = new ConcurrentDictionary<string, MarketOrderBook>
             {
                 [shard] = orderBook1
             };
-            CentralOrderBookTrackerState.TickShardRoomStorePairs[firstTick] = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>
+            CentralOrderBookTrackerState.TickShardRoomStorePairs[firstTick] = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>
             {
-                [shard] = new Dictionary<string, Dictionary<string, int>>
+                [shard] = new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>
                 {
-                    [room] = new Dictionary<string, int>
+                    [room] = new ConcurrentDictionary<string, int>
                     {
                         [resourceType] = 0
                     }
@@ -157,11 +158,11 @@ namespace UserTracker.Tests.States
             var orderBook2 = new MarketOrderBook
             {
                 Shard = shard,
-                EstimatedTick = secondTick,
+                Tick = secondTick,
                 Buy = new List<MarketOrderBookItem> { order2 },
                 Sell = new List<MarketOrderBookItem>()
             };
-            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[secondTick] = new Dictionary<string, MarketOrderBook>
+            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[secondTick] = new ConcurrentDictionary<string, MarketOrderBook>
             {
                 [shard] = orderBook2
             };
@@ -178,19 +179,19 @@ namespace UserTracker.Tests.States
             var orderBook3 = new MarketOrderBook
             {
                 Shard = shard,
-                EstimatedTick = thirdTick,
+                Tick = thirdTick,
                 Buy = new List<MarketOrderBookItem> { order3 },
                 Sell = new List<MarketOrderBookItem>()
             };
-            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[thirdTick] = new Dictionary<string, MarketOrderBook>
+            CentralOrderBookTrackerState.TickShardMarketOrderbookPairs[thirdTick] = new ConcurrentDictionary<string, MarketOrderBook>
             {
                 [shard] = orderBook3
             };
-            CentralOrderBookTrackerState.TickShardRoomStorePairs[thirdTick] = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>
+            CentralOrderBookTrackerState.TickShardRoomStorePairs[thirdTick] = new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>
             {
-                [shard] = new Dictionary<string, Dictionary<string, int>>
+                [shard] = new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>
                 {
-                    [room] = new Dictionary<string, int>
+                    [room] = new ConcurrentDictionary<string, int>
                     {
                         [resourceType] = 100
                     }

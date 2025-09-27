@@ -1,94 +1,140 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using Socket.Io.Client.Core;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Net.WebSockets;
+using System.Reactive.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using UserTrackerShared.Models.ScreepsAPI;
+using Websocket.Client;
 
 namespace UserTrackerShared.States
 {
     public static class ScreepsSocket
     {
-        private static SocketIoClient? _socket;
-        private static readonly JsonSerializerOptions _jsonOpts = new()
+        private static Uri? _uri;
+        private static WebsocketClient? _client;
+
+        private static bool _authed;
+        private static string? _token => ConfigSettingsState.ScreepsToken;
+        private static string? _userId => "5ba4aa669fc1f31f7c8f0809";
+
+        // Public state
+        public static bool IsConnected => _client?.IsRunning ?? false;
+        public static bool IsAuthed => _authed;
+
+        public static void Init()
         {
-            PropertyNameCaseInsensitive = true
-        };
+            var baseUrl = ConfigSettingsState.ScreepsHttpUrl;
+            var wsUrl = new Uri(new Uri(baseUrl.Replace("http", "wss")), "socket/websocket");
+            _uri = wsUrl;
 
-        public static async Task InitAsync()
-        {
-            string socketPath = "/socket";
-            var token = ConfigSettingsState.ScreepsToken;
-            var baseUrl = ConfigSettingsState.ScreepsHttpsUrl;
-            if (_socket != null)
+            _client = new WebsocketClient(_uri)
             {
-                return;
-            }
-
-            _socket = new SocketIoClient(baseUrl.TrimEnd('/'), new SocketIoOptions
-            {
-                Path = socketPath,
-                Transports = new[] { Transport.WebSocket, Transport.Polling }
-            });
-
-            _socket.OnConnected += async (_, __) =>
-            {
-                await _socket.Emit("auth", token);
-                await _socket.Emit("subscribe", "console");
+                ReconnectTimeout = TimeSpan.FromSeconds(60),
+                ErrorReconnectTimeout = TimeSpan.FromSeconds(5)
             };
 
-            _socket.On("console", (_, args) => HandleConsoleArgs(args));
+            _client.MessageReceived.Subscribe(msg =>
+            {
+                if (!string.IsNullOrWhiteSpace(msg.Text))
+                {
+                    try
+                    {
+                        if (!msg.Text.StartsWith("[")) return;
+                        var arr = JsonConvert.DeserializeObject<object[]>(msg.Text);
+                        if (arr?.Length == 2 && arr[1] is JObject obj)
+                        {
+                            var eventData = obj.ToObject<ConsoleEvent>();
+                            if (eventData?.Shard != null)
+                                HandleMessage(eventData);
+                        }
 
-            await _socket.ConnectAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        // accept
+                    }
+                }
+            });
+
+            _client.ReconnectionHappened.Subscribe(_ =>
+            {
+                _authed = false;
+                if (!string.IsNullOrEmpty(_token))
+                {
+                    var discard = AuthAndSubscribeAsync(_token);
+                }
+            });
+
+            _client.DisconnectionHappened.Subscribe(_ =>
+            {
+                _authed = false;
+            });
+        }
+
+        public static async Task ConnectAsync(CancellationToken ct = default)
+        {
+            if (_client == null) throw new InvalidOperationException("Call Init() first.");
+            await _client.Start();
+
+            if (!string.IsNullOrEmpty(_token))
+            {
+                await AuthAndSubscribeAsync(_token);
+            }
         }
 
         public static async Task DisconnectAsync()
         {
-            if (_socket == null) return;
-
-            await _socket.DisconnectAsync();
-            _socket.Dispose();
-            _socket = null;
+            if (_client == null) return;
+            await _client.Stop(WebSocketCloseStatus.NormalClosure, "Closed by client");
         }
 
-        private static void HandleConsole(IReadOnlyList<string> logs, IReadOnlyList<string> results, string shard)
+        private static async Task AuthAndSubscribeAsync(string token)
         {
-            if (results.Count > 0)
-            {
-                foreach (var res in results)
+            if (_client == null) throw new InvalidOperationException("Socket not initialized.");
+            if (_authed) return;
+
+            await _client.SendInstant($"auth {token}");
+
+            _client.MessageReceived
+                .Where(m => m.Text != null && m.Text.StartsWith("auth"))
+                .Take(1)
+                .Subscribe(async m =>
                 {
-                    if (!res.Contains("orderBookTracker")) continue;
-                    var orderBookResponse = JsonConvert.DeserializeObject<MarketOrderBookResponse>(res);
-                    CentralOrderBookState.UpdateMarketOrderBook(new MarketOrderBook(shard, orderBookResponse));
-                }
+                    var parts = m.Text!.Split(' ');
+                    if (parts.Length >= 2 && parts[1] == "ok")
+                    {
+                        _authed = true;
+
+                        if (!string.IsNullOrEmpty(_userId))
+                        {
+                            await _client.SendInstant($"subscribe user:{_userId}/console");
+                        }
+                    }
+                });
+        }
+
+        private static void HandleMessage(ConsoleEvent consoleEvent)
+        {
+            if (consoleEvent.Messages == null) return;
+            foreach (var result in consoleEvent.Messages.Results)
+            {
+                if (!result.Contains("orderBookTracker")) return;
+
+                var orderbookResponse = JsonConvert.DeserializeObject<MarketOrderBookResponse>(result);
+                if (orderbookResponse == null) return;
+                var orderBook = new MarketOrderBook(consoleEvent.Shard, orderbookResponse);
+                CentralOrderBookTrackerState.UpdateMarketOrderBook(orderBook);
             }
         }
 
-        private static void HandleConsoleArgs(object?[] args)
+        public static void Dispose()
         {
-            if (args is null || args.Length == 0 || args[0] is null)
-                return;
-
-            string json = args[0] switch
-            {
-                string s => s,
-                JsonElement je => je.GetRawText(),
-                _ => JsonSerializer.Serialize(args[0])
-            };
-
-            ConsoleEvent? ev;
-            try
-            {
-                ev = JsonSerializer.Deserialize<ConsoleEvent>(json, _jsonOpts);
-            }
-            catch
-            {
-                return; // ignore malformed messages
-            }
-
-            if (ev == null || ev.Shard == null) return;
-
-            var logs = (IReadOnlyList<string>)(ev.Messages?.Log ?? new List<string>());
-            var results = (IReadOnlyList<string>)(ev.Messages?.Results ?? new List<string>());
-
-            HandleConsole(logs, results, ev.Shard);
+            _client?.Dispose();
         }
     }
 }

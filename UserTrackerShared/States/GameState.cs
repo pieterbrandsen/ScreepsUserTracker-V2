@@ -39,7 +39,9 @@ namespace UserTrackerShared.States
                 }
             }
 
-            await ScreepsSocketState.InitAsync();
+            ScreepsSocket.Init();
+            await ScreepsSocket.ConnectAsync();
+
             if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
