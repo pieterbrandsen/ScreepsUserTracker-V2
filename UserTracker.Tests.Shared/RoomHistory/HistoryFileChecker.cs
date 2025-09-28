@@ -14,7 +14,6 @@ namespace UserTracker.Tests.RoomHistory
             var seenProperties = new Dictionary<string, long>();
             long changesProcessed = 0;
             var roomHistory = new ScreepsRoomHistory();
-            roomHistory.HistoryChangesDictionary = new Dictionary<string, Dictionary<string, object?>>();
             var roomHistoryDto = new ScreepsRoomHistoryDto();
 
             roomData.TryGetValue("timestamp", out JToken? jTokenTime);

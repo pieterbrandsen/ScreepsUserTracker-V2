@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
+using System.ComponentModel.DataAnnotations;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
@@ -12,29 +14,57 @@ namespace UserTrackerShared.States
         public static ConcurrentDictionary<long, ConcurrentDictionary<string, MarketOrderBook>> TickShardMarketOrderbookPairs { get; set; } = new();
         public static ConcurrentDictionary<long, ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>> TickShardRoomStorePairs { get; set; } = new();
 
-        public static void UpdateTerminalRoomStore(string shardName, string roomName, ScreepsRoomHistory screepsRoomHistory)
+        private static Dictionary<(string, string), int> GetStoreChanges(Dictionary<string, Dictionary<string, object?>> historyChanges)
+        {
+            var allStoreChanges = new Dictionary<(string, string), int>();
+            foreach (var changeKvp in historyChanges)
+            {
+                var id = changeKvp.Key;
+                var storeChanges = changeKvp.Value.Where(s => s.Key.StartsWith("store."));
+                foreach (var storeChange in storeChanges)
+                {
+                    var resource = storeChange.Key.Substring("store.".Length);
+                    var change = Convert.ToInt32(storeChange.Value);
+                    var key = (id, resource);
+                    allStoreChanges[key] = change;
+                }
+            }
+            return allStoreChanges;
+        }
+
+        public static void UpdateTerminalRoomStore(string shardName, string roomName, ScreepsRoomHistory prevScreepsRoomHistory, ScreepsRoomHistory screepsRoomHistory)
         {
             if (screepsRoomHistory.Structures.Terminals.Count == 0) return;
-            var terminal = screepsRoomHistory.Structures.Terminals.First().Value;
-            var tick = screepsRoomHistory.Tick;
-            // TODO: FIX
-            if (tick % 100 == 0) return;
 
+            var currTerminal = screepsRoomHistory.Structures.Terminals.Values.First();
+            var prevTerminal = prevScreepsRoomHistory.Structures.Terminals.Values.FirstOrDefault(t => t.Id == currTerminal.Id);
+
+            var changes = new Dictionary<(string, string), int>();
+            var currAllStoreChanges = GetStoreChanges(screepsRoomHistory.HistoryChangesDictionary);
+            // in creep in range check for if any combinations between prev and curr store get back to terminal total store. 
+
+
+            var tick = screepsRoomHistory.Tick;
             TickShardRoomStorePairs[tick] = TickShardRoomStorePairs.GetValueOrDefault(tick, new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>());
             TickShardRoomStorePairs[tick][shardName] = TickShardRoomStorePairs[tick].GetValueOrDefault(shardName, new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>());
 
-            var terminalData = new ConcurrentDictionary<string, int>();
+            var creepsInRange = screepsRoomHistory.Creeps.OwnedCreeps.Where(c => (c.Value.X - currTerminal.X) * -1 <= 2 && (c.Value.Y - currTerminal.Y) * -1 <= 2);
+            var currCreepsInRange = screepsRoomHistory.Creeps.OwnedCreeps.Where(c => (c.Value.X - currTerminal.X) * -1 <= 2 && (c.Value.Y - currTerminal.Y) * -1 <= 2);
 
-            if (terminal.Store == null) return;
+            var terminalStoreChanges = new ConcurrentDictionary<string, int>();
+            if (currTerminal.Store == null || prevTerminal == null) return;
             var properties = typeof(Store).GetProperties();
             foreach (var property in properties)
             {
-                var value = property.GetValue(terminal.Store);
-                if (value == null) continue;
-                terminalData[property.Name] = (int)Math.Round((decimal)value);
+                var currValue = Convert.ToInt32(property.GetValue(currTerminal.Store) ?? 0);
+                var prevValue = Convert.ToInt32(property.GetValue(prevTerminal.Store) ?? 0);
+                var value = currValue - prevValue;
+                if (value == 0) continue;
+
+                terminalStoreChanges[property.Name] = value;
             }
 
-            TickShardRoomStorePairs[tick][shardName][roomName] = terminalData;
+            TickShardRoomStorePairs[tick][shardName][roomName] = terminalStoreChanges;
         }
 
         public static void UpdateMarketOrderBook(MarketOrderBook marketOrderBook)
@@ -141,7 +171,7 @@ namespace UserTrackerShared.States
                         // Calculate the difference in filled amount
                         var prevFilled = prevOrder.Amount - prevOrder.RemainingAmount;
                         var currFilled = order.Amount - order.RemainingAmount;
-                        var diff = currFilled - prevFilled;
+                        var diff = currFilled - prevFilled * (order.Type == "buy" ? -1 : 1);
 
                         if (diff != 0 && !string.IsNullOrEmpty(order.ResourceType))
                         {
@@ -152,8 +182,7 @@ namespace UserTrackerShared.States
                                 {
                                     var roomName = roomKvp.Key;
                                     var store = roomKvp.Value;
-                                    // Check for the specific resource type
-                                    // TODO: Remove min 2500+ 
+                                    // todo: remove 2500 check
                                     if (store.TryGetValue(order.ResourceType, out var amount) && amount == diff && amount > 2500)
                                     {
                                         var username = GameState.GetUsernameByRoom(shard, roomName) ?? "Unknown";

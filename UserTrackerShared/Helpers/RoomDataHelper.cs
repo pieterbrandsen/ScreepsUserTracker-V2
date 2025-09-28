@@ -11,7 +11,7 @@ namespace UserTrackerShared.Helpers
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
 
-        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom, ConcurrentDictionary<string, object> userLocks)
+        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom, ConcurrentDictionary<string, object> userLocks, ConcurrentDictionary<string, ScreepsRoomHistory> lastScreepsRoomHistory)
         {
             try
             {
@@ -26,6 +26,11 @@ namespace UserTrackerShared.Helpers
                 {
                     roomHistoryDto = new ScreepsRoomHistoryDto();
                     dataByRoom[name] = roomHistoryDto;
+                }
+                if (!lastScreepsRoomHistory.TryGetValue(name, out ScreepsRoomHistory? prevRoomHistory))
+                {
+                    prevRoomHistory = new ScreepsRoomHistory();
+                    lastScreepsRoomHistory[name] = prevRoomHistory;
                 }
                 roomData.TryGetValue("timestamp", out JToken? jTokenTime);
                 if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
@@ -54,7 +59,8 @@ namespace UserTrackerShared.Helpers
                         }
 
                         roomHistoryDto.Update(roomHistory);
-                        if (ConfigSettingsState.KeepTrackOfOrderBook) CentralOrderBookTrackerState.UpdateTerminalRoomStore(shard, name, roomHistory);
+                        if (ConfigSettingsState.KeepTrackOfOrderBook) CentralOrderBookTrackerState.UpdateTerminalRoomStore(shard, name, prevRoomHistory, roomHistory);
+                        lastScreepsRoomHistory[name] = roomHistory;
                     }
                 }
 

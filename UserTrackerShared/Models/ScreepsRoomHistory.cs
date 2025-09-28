@@ -1459,6 +1459,6 @@ namespace UserTrackerShared.Models
         public Structures Structures { get; set; } = new Structures();
         public Dictionary<string, string> TypeMap { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, string> ObjectUserMap { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, Dictionary<string, object?>>? HistoryChangesDictionary { get; set; }
+        public Dictionary<string, Dictionary<string, object?>> HistoryChangesDictionary { get; set; } = new Dictionary<string, Dictionary<string, object?>>();
     }
 }

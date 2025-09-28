@@ -60,6 +60,7 @@ namespace UserTrackerShared.Managers
         private bool isSyncing = false;
         private long lastTickUploaded = 0;
         private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new();
+        private ConcurrentDictionary<string, ScreepsRoomHistory> lastScreepsRoomHistory = new();
         public ConcurrentDictionary<string, string> RoomUsernameMap = new();
         private long lastSyncedOrderBookTick = 0;
         private bool isSyncingOrderBook;
@@ -145,7 +146,7 @@ namespace UserTrackerShared.Managers
                         {
                             try
                             {
-                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks);
+                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks, lastScreepsRoomHistory);
                                 resultCodes.AddOrUpdate(statusResult, 1, (key, value) => value + 1);
                             }
                             catch (Exception ex)

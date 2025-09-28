@@ -444,10 +444,7 @@ namespace UserTrackerShared.Helpers
                         roomHistory.TypeMap.Add(id, changes["type"]?.ToString() ?? "unknown");
                     }
 
-                    if (roomHistory.HistoryChangesDictionary != null)
-                    {
-                        roomHistory.HistoryChangesDictionary[id] = changes;
-                    }
+                    roomHistory.HistoryChangesDictionary[id] = changes;
                 }
                 else
                 {
