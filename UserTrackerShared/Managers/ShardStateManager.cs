@@ -94,7 +94,6 @@ namespace UserTrackerShared.Managers
                     isSyncingOrderBook = true;
                     lastSyncedOrderBookTick = (long)time;
                     await ScreepsApi.SendConsoleExpression(Name, "JSON.stringify({orderBookTracker: 1, tick: Game.time, orders: Game.market.getAllOrders()})");
-                    _logger.Information($"Requested order book data for shard {Name} at tick {time}");
                     isSyncingOrderBook = false;
                 }
             }
@@ -107,7 +106,7 @@ namespace UserTrackerShared.Managers
 
         private long GetSyncTime()
         {
-            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time-0) / 100)) * 100);
+            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time - 100) / 100)) * 100);
             return syncTime;
         }
 

@@ -33,7 +33,7 @@ namespace UserTrackerShared.States
             }
             else
             {
-                for (int i = 0; i <= 0; i++)
+                for (int i = 0; i <= 3; i++)
                 {
                     Shards.Add(new ShardStateManager($"shard{i}"));
                 }
@@ -103,8 +103,8 @@ namespace UserTrackerShared.States
             {
                 var seasons = leaderboardsResponse.Select(kv => kv.Key).OrderDescending().ToList();
                 var currentSeason = seasons.FirstOrDefault();
-                
-                var leaderboardList = leaderboardsResponse.Where(kv=>kv.Key != currentSeason).Select(kv => kv.Value).ToList();
+
+                var leaderboardList = leaderboardsResponse.Where(kv => kv.Key != currentSeason).Select(kv => kv.Value).ToList();
                 foreach (var (gclLeaderboard, powerLeaderboard) in leaderboardList)
                 {
                     foreach (var leaderboardSpot in gclLeaderboard)

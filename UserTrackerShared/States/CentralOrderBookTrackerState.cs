@@ -17,6 +17,8 @@ namespace UserTrackerShared.States
             if (screepsRoomHistory.Structures.Terminals.Count == 0) return;
             var terminal = screepsRoomHistory.Structures.Terminals.First().Value;
             var tick = screepsRoomHistory.Tick;
+            // TODO: FIX
+            if (tick % 100 == 0) return;
 
             TickShardRoomStorePairs[tick] = TickShardRoomStorePairs.GetValueOrDefault(tick, new ConcurrentDictionary<string, ConcurrentDictionary<string, ConcurrentDictionary<string, int>>>());
             TickShardRoomStorePairs[tick][shardName] = TickShardRoomStorePairs[tick].GetValueOrDefault(shardName, new ConcurrentDictionary<string, ConcurrentDictionary<string, int>>());
@@ -151,14 +153,17 @@ namespace UserTrackerShared.States
                                     var roomName = roomKvp.Key;
                                     var store = roomKvp.Value;
                                     // Check for the specific resource type
-                                    if (store.TryGetValue(order.ResourceType, out var amount) && amount == diff)
+                                    // TODO: Remove min 2500+ 
+                                    if (store.TryGetValue(order.ResourceType, out var amount) && amount == diff && amount > 2500)
                                     {
                                         var username = GameState.GetUsernameByRoom(shard, roomName) ?? "Unknown";
                                         var credits = diff * order.Price;
                                         _logger.Information(
-                                            "[Match Found] Tick {Tick} | Order {OrderId} ({Username}/{OrderRoom}/{Resource}) | Diff={Diff}, Credits={Credits}, MatchedRoom={MatchedRoom}",
+                                            "[Match Found] Tick {Tick} | Order {Direction} {OrderId} ({Shard}/{Username}/{OrderRoom}/{Resource}) | Diff={Diff}, Credits={Credits}, MatchedRoom={MatchedRoom}",
                                             tickKvp.Key,
+                                            order.Type,
                                             order.Id,
+                                            shard,
                                             username,
                                             order.RoomName,
                                             order.ResourceType,
