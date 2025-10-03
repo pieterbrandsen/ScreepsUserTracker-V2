@@ -146,7 +146,6 @@ namespace UserTrackerShared.DBClients
                             Interlocked.Add(ref _flushedPointCount, 1);
                         }
 
-
                         await sender.AtAsync(firstPoint.Timestamp * 1_000_000);
                     }
                     catch (Exception ex)
@@ -156,7 +155,7 @@ namespace UserTrackerShared.DBClients
                 }
 
                 await FlushSender(sender);
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
 

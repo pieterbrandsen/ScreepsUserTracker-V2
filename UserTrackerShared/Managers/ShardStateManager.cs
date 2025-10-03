@@ -49,7 +49,7 @@ namespace UserTrackerShared.Managers
         private long LastSyncTime { get; set; }
         public long Time { get; set; }
         public List<string> Rooms { get; set; } = [];
-        private bool isSyncing = false;
+        public bool IsSyncing = false;
         private long lastTickUploaded = 0;
         private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new();
 
@@ -60,8 +60,6 @@ namespace UserTrackerShared.Managers
             if (timeResponse != null && Time != timeResponse.Time)
             {
                 Time = timeResponse.Time;
-                if (isSyncing) return;
-                isSyncing = true;
                 _ = StartSync();
             }
         }
@@ -74,20 +72,19 @@ namespace UserTrackerShared.Managers
 
         private async Task StartSync()
         {
+            var syncTime = GetSyncTime();
+            if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
+            if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;
+
+            var ticksToBeSynced = syncTime - LastSyncTime;
+            if (ticksToBeSynced <= 0 || IsSyncing) return;
+            IsSyncing = true;
+
+            var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
+            _logger.Warning(message);
+            
             try
             {
-                var syncTime = GetSyncTime();
-                if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
-                if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;
-
-                var ticksToBeSynced = syncTime - LastSyncTime;
-                if (ticksToBeSynced <= 0)
-                {
-                    isSyncing = false;
-                    return;
-                }
-                var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
-                _logger.Warning(message);
                 for (long i = LastSyncTime; i < syncTime; i += 100)
                 {
                     var resultCodes = new ConcurrentDictionary<int, int>();
@@ -200,7 +197,7 @@ namespace UserTrackerShared.Managers
             }
             finally
             {
-                isSyncing = false;
+                IsSyncing = false;
             }
         }
     }

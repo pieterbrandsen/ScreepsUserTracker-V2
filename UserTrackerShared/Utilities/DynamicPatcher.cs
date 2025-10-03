@@ -15,9 +15,6 @@ namespace UserTrackerShared.Utilities
             Other = 3,
             DictionaryValue = 4,
         }
-        private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> _propertyCache = new();
-        private static readonly ConcurrentDictionary<Type, Type> _dictValueTypeCache = new();
-
         public static void ApplyPatch(object target, Dictionary<string, object?> changes)
         {
             ArgumentNullException.ThrowIfNull(target);
@@ -64,10 +61,8 @@ namespace UserTrackerShared.Utilities
         }
         private static PropertyInfo GetPropFromCache(Type type, string propName)
         {
-            return _propertyCache
-                 .GetOrAdd(type, t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                      .ToDictionary(p => p.Name, p => p))
-                 .GetValueOrDefault(propName)
+            return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                                      .ToDictionary(p => p.Name, p => p).GetValueOrDefault(propName)
                  ?? throw new InvalidOperationException($"Property '{propName}' not found on '{type.Name}'");
         }
 
@@ -123,12 +118,9 @@ namespace UserTrackerShared.Utilities
         {
             if (!dict.Contains(key) || dict[key] == null)
             {
-                var valType = _dictValueTypeCache.GetOrAdd(type, t =>
-                {
-                    var iface = t.GetInterfaces().First(i =>
+                 var iface = type.GetInterfaces().First(i =>
                         i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-                    return iface.GetGenericArguments()[1];
-                });
+                var valType = iface.GetGenericArguments()[1];
                 dict[key] = Activator.CreateInstance(valType)!;
             }
             current = dict[key]!;
