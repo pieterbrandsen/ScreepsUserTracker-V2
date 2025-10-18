@@ -1,0 +1,435 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 12,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "questdb-questdb-datasource",
+                "uid": "P2596F1C8E12435D2"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "lastNotNull",
+                        "mean"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.0.1+security-01",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "questdb-questdb-datasource",
+                        "uid": "P2596F1C8E12435D2"
+                    },
+                    "format": 0,
+                    "meta": {
+                        "builderOptions": {
+                            "fields": [],
+                            "limit": "",
+                            "mode": "list",
+                            "timeField": ""
+                        }
+                    },
+                    "queryType": "sql",
+                    "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(ticksBehind) AS \" \",\r\n  shard AS \"metric\"\r\nFROM mmo_performance\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\nand shard in ($Shard)\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+                    "refId": "A",
+                    "selectedFormat": 2
+                }
+            ],
+            "title": "Ticks behind",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "questdb-questdb-datasource",
+                "uid": "P2596F1C8E12435D2"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "ms"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "mean"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Mean",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.0.1+security-01",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "questdb-questdb-datasource",
+                        "uid": "P2596F1C8E12435D2"
+                    },
+                    "format": 0,
+                    "meta": {
+                        "builderOptions": {
+                            "fields": [],
+                            "limit": "",
+                            "mode": "list",
+                            "timeField": ""
+                        }
+                    },
+                    "queryType": "sql",
+                    "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(timeTakenMs) AS \" \",\r\n  shard AS \"metric\"\r\nFROM mmo_performance\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\nand shard in ($Shard)\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+                    "refId": "A",
+                    "selectedFormat": 2
+                }
+            ],
+            "title": "Time taken",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "questdb-questdb-datasource",
+                "uid": "P2596F1C8E12435D2"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    },
+                    "unit": "none"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": "/.*200/"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "green",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": "/.*403/"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byRegexp",
+                            "options": "/.*404/"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 24,
+                "x": 0,
+                "y": 8
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "calcs": [
+                        "mean"
+                    ],
+                    "displayMode": "table",
+                    "placement": "right",
+                    "showLegend": true,
+                    "sortBy": "Mean",
+                    "sortDesc": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.0.1+security-01",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "questdb-questdb-datasource",
+                        "uid": "P2596F1C8E12435D2"
+                    },
+                    "format": 0,
+                    "meta": {
+                        "builderOptions": {
+                            "fields": [],
+                            "limit": "",
+                            "mode": "list",
+                            "timeField": ""
+                        }
+                    },
+                    "queryType": "sql",
+                    "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  shard,\r\n  avg(resultCodes_200) as \"200\",\r\n  avg(resultCodes_403) as \"403\",\r\n  avg(resultCodes_404) as \"404\"\r\nFROM mmo_performance\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\nand shard in ($Shard)\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR\r\n",
+                    "refId": "A",
+                    "selectedFormat": 2
+                }
+            ],
+            "title": "Result codes",
+            "type": "timeseries"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "text": "All",
+                    "value": [
+                        "$__all"
+                    ]
+                },
+                "datasource": {
+                    "type": "questdb-questdb-datasource",
+                    "uid": "P2596F1C8E12435D2"
+                },
+                "definition": "SELECT distinct\n  shard\nFROM mmo_performance",
+                "includeAll": true,
+                "multi": true,
+                "name": "Shard",
+                "options": [],
+                "query": "SELECT distinct\n  shard\nFROM mmo_performance",
+                "refresh": 1,
+                "regex": "",
+                "sort": 3,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-7d",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "MMO Performance Puller",
+    "uid": "d56db32d-655f-4e65-bd06-2841b6191523",
+    "version": 13
+}

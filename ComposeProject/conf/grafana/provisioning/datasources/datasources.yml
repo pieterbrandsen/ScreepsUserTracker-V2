@@ -19,7 +19,6 @@ datasources:
     id: 2
     type: graphite
     access: proxy
-    isDefault: true
     url: http://carbon-api:8081
     jsonData:
       graphiteVersion: "1.1"
@@ -51,4 +50,19 @@ datasources:
       server: "questdb"
       tlsMode: "disable"
       username: "admin"
+    editable: true
+  - name: Query Middleware
+    id: 5
+    type: yesoreyeram-infinity-datasource
+    isDefault: true
+    access: proxy
+    url: http://query-middleware:9001
+    jsonData:
+      auth_method: "none"
+      timeout: 30000
+      custom_headers:
+        - name: "Content-Type"
+          value: "application/json"
+        - name: "Accept"
+          value: "application/json"
     editable: true

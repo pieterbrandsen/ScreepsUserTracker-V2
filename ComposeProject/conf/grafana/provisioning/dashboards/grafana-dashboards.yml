@@ -9,35 +9,11 @@ providers:
   updateIntervalSeconds: 600
   options:
     path: /var/lib/grafana/dashboards/performance
-- name: 'performanceGraphite'
-  folder: 'Performance - Graphite'
+- name: 'Data'
+  folder: 'Data'
   type: file
   disableDeletion: false
   editable: true
   updateIntervalSeconds: 600
   options:
-    path: /var/lib/grafana/dashboards/performanceGraphite
-- name: 'performanceTimescale'
-  folder: 'Performance - TimescaleDB'
-  type: file
-  disableDeletion: false
-  editable: true
-  updateIntervalSeconds: 600
-  options:
-    path: /var/lib/grafana/dashboards/performanceTimescale
-- name: 'dataGraphite'
-  folder: 'Data - Graphite'
-  type: file
-  disableDeletion: false
-  editable: true
-  updateIntervalSeconds: 600
-  options:
-    path: /var/lib/grafana/dashboards/dataGraphite
-- name: 'dataTimescale'
-  folder: 'Data - TimescaleDB'
-  type: file
-  disableDeletion: false
-  editable: true
-  updateIntervalSeconds: 600
-  options:
-    path: /var/lib/grafana/dashboards/dataTimescale
+    path: /var/lib/grafana/dashboards/data

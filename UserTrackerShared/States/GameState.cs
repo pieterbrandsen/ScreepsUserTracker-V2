@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Timers;
 using UserTrackerShared.DBClients;
+using UserTrackerShared.Helpers;
 using UserTrackerShared.Managers;
 using UserTrackerShared.Models;
 using Timer = System.Timers.Timer;
@@ -9,6 +10,7 @@ namespace UserTrackerShared.States
 {
     public static class GameState
     {
+        private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
         public static List<ShardStateManager> Shards { get; set; } = new List<ShardStateManager>();
         public static ConcurrentDictionary<string, ScreepsUser> Users { get; set; } = new();
 
@@ -82,6 +84,7 @@ namespace UserTrackerShared.States
 
         public static async Task GetAllUsers()
         {
+            _logger.Information("Getting all users from leaderboard");
             var leaderboardsResponse = await ScreepsApi.GetAllSeasonsLeaderboard();
             if (leaderboardsResponse != null)
             {
@@ -130,6 +133,7 @@ namespace UserTrackerShared.States
 
         private static async void OnUpdateUsersLeaderboardTimer()
         {
+            _logger.Information("Updating users leaderboard data");
             var userIdsUpdated = new HashSet<string>();
 
             var (gclLeaderboard, powerLeaderboard) = await ScreepsApi.GetCurrentSeasonLeaderboard();
@@ -194,6 +198,7 @@ namespace UserTrackerShared.States
         }
         private static async void OnUpdateAdminUtilsDataTimer()
         {
+            _logger.Information("Updating admin utils data");
             var adminUtilsResponse = await ScreepsApi.GetAdminUtilsStats();
             if (adminUtilsResponse != null)
             {

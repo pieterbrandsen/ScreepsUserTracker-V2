@@ -1086,7 +1086,7 @@ namespace UserTrackerShared.DBClients
                 var database = $"{ConfigSettingsState.ServerName}_room_history";
                 var questDBHistoryDTO = GetQuestDBDto(screepsRoomHistory);
 
-                _logger.Information("Uploading room history data for {Shard}/{Room} at tick {Tick} (user: {Username})", shard, room, tick, username);
+                // _logger.Information("Uploading room history data for {Shard}/{Room} at tick {Tick} (user: {Username})", shard, room, tick, username);
                 QuestDBClientWriter.UploadRoomHistoryData(database, shard, room, tick, timestamp, username, questDBHistoryDTO);
             }
             catch (Exception e)

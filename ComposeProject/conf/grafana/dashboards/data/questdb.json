@@ -1,0 +1,314 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 16,
+    "links": [],
+    "panels": [
+        {
+            "datasource": {
+                "type": "yesoreyeram-infinity-datasource",
+                "uid": "PD579E7FC1F358F95"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.0.1+security-01",
+            "targets": [
+                {
+                    "columns": [
+                        {
+                            "selector": "time",
+                            "text": "",
+                            "type": "timestamp"
+                        },
+                        {
+                            "selector": "metric",
+                            "text": "",
+                            "type": "string"
+                        },
+                        {
+                            "selector": "structures",
+                            "text": "",
+                            "type": "number"
+                        },
+                        {
+                            "selector": "aa",
+                            "text": "",
+                            "type": "number"
+                        }
+                    ],
+                    "datasource": {
+                        "type": "yesoreyeram-infinity-datasource",
+                        "uid": "PD579E7FC1F358F95"
+                    },
+                    "filters": [],
+                    "format": "timeseries",
+                    "global_query_id": "",
+                    "parser": "backend",
+                    "refId": "A",
+                    "root_selector": "data",
+                    "source": "url",
+                    "type": "json",
+                    "url": "http://query-middleware:9001/api/execute",
+                    "url_options": {
+                        "body_content_type": "text/plain",
+                        "body_type": "raw",
+                        "data": "{\r\n  \"data\": \"structureCount,tick\",\r\n  \"dataNames\": \"structures,aa\",\r\n  \"usedDataType\": \"${UsedDataType}\",\r\n  \"shards\": ${Shards},\r\n  \"users\": ${Users},\r\n  \"rooms\": ${Rooms},\r\n  \"fromTime\": \"${__from:date}\",\r\n  \"toTime\": \"${__to:date}\",\r\n  \"sampleInterval\": \"${SampleByInterval}\"\r\n}",
+                        "method": "POST"
+                    }
+                }
+            ],
+            "title": "New panel",
+            "type": "timeseries"
+        }
+    ],
+    "preload": false,
+    "schemaVersion": 41,
+    "tags": [],
+    "templating": {
+        "list": [
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": [
+                        "shard1"
+                    ],
+                    "value": [
+                        "shard1"
+                    ]
+                },
+                "datasource": {
+                    "type": "questdb-questdb-datasource",
+                    "uid": "P2596F1C8E12435D2"
+                },
+                "definition": "SELECT distinct\n  shard\nFROM mmo_global_history",
+                "includeAll": true,
+                "multi": true,
+                "name": "Shards",
+                "options": [],
+                "query": "SELECT distinct\n  shard\nFROM mmo_global_history",
+                "refresh": 1,
+                "regex": "",
+                "sort": 3,
+                "type": "query"
+            },
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": [
+                        "6g3y"
+                    ],
+                    "value": [
+                        "6g3y"
+                    ]
+                },
+                "datasource": {
+                    "type": "questdb-questdb-datasource",
+                    "uid": "P2596F1C8E12435D2"
+                },
+                "definition": "SELECT distinct\n  user\nFROM mmo_user_history\nwhere shard in ($Shards)",
+                "includeAll": true,
+                "multi": true,
+                "name": "Users",
+                "options": [],
+                "query": "SELECT distinct\n  user\nFROM mmo_user_history\nwhere shard in ($Shards)",
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": [
+                        "E11N8"
+                    ],
+                    "value": [
+                        "E11N8"
+                    ]
+                },
+                "datasource": {
+                    "type": "questdb-questdb-datasource",
+                    "uid": "P2596F1C8E12435D2"
+                },
+                "definition": "SELECT distinct\n  room\nFROM mmo_room_history\nwhere shard in ($Shards)\nand user in ($Users)",
+                "includeAll": true,
+                "multi": true,
+                "name": "Rooms",
+                "options": [],
+                "query": "SELECT distinct\n  room\nFROM mmo_room_history\nwhere shard in ($Shards)\nand user in ($Users)",
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": "global",
+                    "value": "global"
+                },
+                "label": "Select data type",
+                "name": "UsedDataType",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "global",
+                        "value": "global"
+                    },
+                    {
+                        "selected": false,
+                        "text": "user",
+                        "value": "user"
+                    },
+                    {
+                        "selected": false,
+                        "text": "room",
+                        "value": "room"
+                    }
+                ],
+                "query": "global,user,room",
+                "type": "custom"
+            },
+            {
+                "allowCustomValue": false,
+                "current": {
+                    "text": "4h",
+                    "value": "4h"
+                },
+                "name": "SampleByInterval",
+                "options": [
+                    {
+                        "selected": false,
+                        "text": "15m",
+                        "value": "15m"
+                    },
+                    {
+                        "selected": false,
+                        "text": "1h",
+                        "value": "1h"
+                    },
+                    {
+                        "selected": true,
+                        "text": "4h",
+                        "value": "4h"
+                    },
+                    {
+                        "selected": false,
+                        "text": "12h",
+                        "value": "12h"
+                    },
+                    {
+                        "selected": false,
+                        "text": "1d",
+                        "value": "1d"
+                    },
+                    {
+                        "selected": false,
+                        "text": "7d",
+                        "value": "7d"
+                    }
+                ],
+                "query": "15m,1h,4h,12h,1d,7d",
+                "type": "custom"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-7d",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "MMO Data",
+    "uid": "5670eabc-01c4-45b0-8357-eae910707f91",
+    "version": 14
+}
