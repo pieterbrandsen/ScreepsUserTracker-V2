@@ -39,7 +39,8 @@ namespace UserTrackerShared.States
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
-        }); 
+        });
+
         private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();

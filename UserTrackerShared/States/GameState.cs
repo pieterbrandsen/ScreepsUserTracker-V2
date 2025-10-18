@@ -41,7 +41,6 @@ namespace UserTrackerShared.States
                 }
             }
 
-            if (ConfigSettingsState.GetAllUsers) await GetAllUsers();
             if (ConfigSettingsState.StartsShards)
             {
                 foreach (var shard in Shards)
@@ -50,15 +49,20 @@ namespace UserTrackerShared.States
                 }
             }
 
+            await UpdateUsersLeaderboard();
             var onSetLeaderboardTimer = new TimerScheduleHelper(
                 "UpdateUsersLeaderboard",
                 OnUpdateUsersLeaderboardTimer,
                 [0, 6, 12, 18]);
-            var onGetAllUsersTimer = new TimerScheduleHelper(
-                "GetAllUsers",
-                OnGetAllUsersTimer,
-                [0],
-                daysOfMonth: [3, 10]);
+            if (ConfigSettingsState.GetAllUsers)
+            {
+                await GetAllUsers();
+                var onGetAllUsersTimer = new TimerScheduleHelper(
+                    "GetAllUsers",
+                    OnGetAllUsersTimer,
+                    [0],
+                    daysOfMonth: [3, 10]);
+            }
         }
 
         private static async Task<string?> GetUser(string userId)
@@ -73,6 +77,7 @@ namespace UserTrackerShared.States
         }
         private static async Task WriteAllUsers()
         {
+            _logger.Information("Writing all users to database");
             foreach (var user in Users)
             {
                 await DBClient.WriteSingleUserData(user.Value);
@@ -135,10 +140,16 @@ namespace UserTrackerShared.States
 
         private static async void OnUpdateUsersLeaderboardTimer()
         {
+            await UpdateUsersLeaderboard();
+        }
+
+        private static async Task UpdateUsersLeaderboard()
+        {
             _logger.Information("Updating users leaderboard data");
             var userIdsUpdated = new HashSet<string>();
 
             var (gclLeaderboard, powerLeaderboard) = await ScreepsApi.GetCurrentSeasonLeaderboard();
+            _logger.Information("Fetched current season leaderboard data");
             foreach (var leaderboardSpot in gclLeaderboard)
             {
                 if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
@@ -174,6 +185,7 @@ namespace UserTrackerShared.States
                     await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
                 }
             }
+            _logger.Information("Updating user GCL and Power ranks");
 
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
             var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
