@@ -19,11 +19,11 @@ namespace UserTrackerShared.States
             bool isPrivateServer = ConfigSettingsState.ScreepsIsPrivateServer;
             if (isPrivateServer)
             {
-                var signinReponse = await ScreepsApi.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
+                var signinResponse = await ScreepsApi.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
 
-                if (signinReponse == null)
+                if (signinResponse == null)
                     throw new Exception("Failed to sign in");
-                ConfigSettingsState.ScreepsToken = signinReponse.Token;
+                ConfigSettingsState.ScreepsToken = signinResponse.Token;
 
                 Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
 
@@ -51,9 +51,11 @@ namespace UserTrackerShared.States
             }
 
             var onSetLeaderboardTimer = new TimerScheduleHelper(
+                "UpdateUsersLeaderboard",
                 OnUpdateUsersLeaderboardTimer,
                 [0, 6, 12, 18]);
             var onGetAllUsersTimer = new TimerScheduleHelper(
+                "GetAllUsers",
                 OnGetAllUsersTimer,
                 [0],
                 daysOfMonth: [3, 10]);

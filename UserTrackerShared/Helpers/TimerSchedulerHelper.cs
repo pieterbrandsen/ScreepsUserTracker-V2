@@ -1,8 +1,11 @@
+using UserTrackerShared.Helpers;
 using Timer = System.Timers.Timer;
 
 public class TimerScheduleHelper : IDisposable
 {
+    private readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
     private Timer? _timer;
+    private readonly string _name;
     private readonly Action _action;
     private readonly int[] _hours;
     private readonly DayOfWeek[]? _daysOfWeek;
@@ -15,8 +18,9 @@ public class TimerScheduleHelper : IDisposable
     /// <param name="hours">One or more hours in the day (0–23).</param>
     /// <param name="daysOfWeek">Optional: Days of the week. If provided, runs only on these days.</param>
     /// <param name="daysOfMonth">Optional: Days of the month (1–31). If provided, runs only on these dates.</param>
-    public TimerScheduleHelper(Action action, int[] hours, DayOfWeek[]? daysOfWeek = null, int[]? daysOfMonth = null)
+    public TimerScheduleHelper(string name, Action action, int[] hours, DayOfWeek[]? daysOfWeek = null, int[]? daysOfMonth = null)
     {
+        _name = name ?? throw new ArgumentNullException(nameof(name));
         if (hours == null || hours.Length == 0)
             throw new ArgumentException("At least one hour must be specified.", nameof(hours));
 
@@ -114,6 +118,7 @@ public class TimerScheduleHelper : IDisposable
             throw new InvalidOperationException("Could not determine the next schedule.");
 
         double ms = (next.Value - now).TotalMilliseconds;
+        _logger.Information($"Timer {_name} scheduled to run at {next.Value} (in {ms} ms)");
 
         _timer?.Dispose();
         _timer = new Timer(ms);
