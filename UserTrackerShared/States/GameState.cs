@@ -41,6 +41,7 @@ namespace UserTrackerShared.States
                 }
             }
 
+            await UpdateUsersLeaderboard();
             if (ConfigSettingsState.StartsShards)
             {
                 foreach (var shard in Shards)
@@ -49,7 +50,6 @@ namespace UserTrackerShared.States
                 }
             }
 
-            await UpdateUsersLeaderboard();
             var onSetLeaderboardTimer = new TimerScheduleHelper(
                 "UpdateUsersLeaderboard",
                 OnUpdateUsersLeaderboardTimer,
