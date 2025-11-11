@@ -1186,7 +1186,10 @@ namespace UserTrackerShared.DBClients
         {
             try
             {
-                seasonItem.Timestamp = DateTime.SpecifyKind(DateTime.ParseExact(seasonItem.Season, "yyyy-MM", null), DateTimeKind.Utc);
+                var seasonDate = DateTime.ParseExact(seasonItem.Season, "yyyy-MM", null);
+                var endOfMonth = new DateTime(seasonDate.Year, seasonDate.Month, DateTime.DaysInMonth(seasonDate.Year, seasonDate.Month), 23, 59, 59);
+                seasonItem.Timestamp = DateTime.SpecifyKind(endOfMonth, DateTimeKind.Utc);
+
                 var database = $"{ConfigSettingsState.ServerName}_historicalLeaderboard";
                 if (!await ContainsHistoricalLeaderboardData(database, seasonItem))
                 {
