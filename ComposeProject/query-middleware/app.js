@@ -4,12 +4,12 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 
 const app = express();
-app.use(bodyParser.text({ type: '*/*' }));
+app.use(bodyParser.text({ type: '*/*', limit: '50mb' }));
 const PORT = 9001;
 const QUESTDB_URL = 'http://questdb:9000';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 const globalDataTypeFilter = "AND shard IN ({{shards}})";
 const userDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}})";
