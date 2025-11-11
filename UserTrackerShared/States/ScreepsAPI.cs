@@ -31,7 +31,7 @@ namespace UserTrackerShared.States
     public static class ScreepsApi
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
-        private static readonly SemaphoreSlim _normalThrottler = new(1);
+        private static readonly SemaphoreSlim _normalThrottler = new(3);
 
         private static readonly HttpClient _normalHttpClient = new();
 

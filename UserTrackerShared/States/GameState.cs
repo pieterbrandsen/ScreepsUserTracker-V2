@@ -80,6 +80,8 @@ namespace UserTrackerShared.States
             _logger.Information("Writing all users to database");
             foreach (var user in Users)
             {
+                _logger.Information("Writing user {UserId} to database", user.Value.Username);
+                await Task.Delay(10);
                 await DBClient.WriteSingleUserData(user.Value);
             }
         }
@@ -166,6 +168,10 @@ namespace UserTrackerShared.States
                     leaderboardSpot.Type = "gcl";
                     await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
                 }
+                else
+                {
+                    _logger.Warning("User {UserId} not found when updating GCL leaderboard", leaderboardSpot.UserName);
+                }
             }
 
             foreach (var leaderboardSpot in powerLeaderboard)
@@ -183,6 +189,10 @@ namespace UserTrackerShared.States
                     leaderboardSpot.UserName = value.Username;
                     leaderboardSpot.Type = "power";
                     await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
+                }
+                else
+                {
+                    _logger.Warning("User {UserId} not found when updating GCL leaderboard", leaderboardSpot.UserName);
                 }
             }
             _logger.Information("Updating user GCL and Power ranks");

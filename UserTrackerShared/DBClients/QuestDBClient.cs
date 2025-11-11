@@ -224,20 +224,39 @@ namespace UserTrackerShared.DBClients
             try
             {
                 var connectionString = $"http::addr={ConfigSettingsState.QuestDbHost}:{ConfigSettingsState.QuestDbPort};username={ConfigSettingsState.QuestDbUser};password={ConfigSettingsState.QuestDbPassword};auto_flush=off;auto_flush_rows=-1;request_timeout=30000;retry_timeout=30000";
-                var sender = Sender.New(connectionString);
 
-                if (type == "history")
-                    _sharedHistorySender = sender;
-                else if (type == "adminUtils")
-                    _sharedAdminUtilsSender = sender;
-                else if (type == "default")
-                    _sharedSender = sender;
+                const int maxRetries = 3;
+                const int baseDelayMs = 1000;
 
-                return sender;
+                for (int attempt = 1; attempt <= maxRetries; attempt++)
+                {
+                    try
+                    {
+                        var sender = Sender.New(connectionString);
+
+                        if (type == "history")
+                            _sharedHistorySender = sender;
+                        else if (type == "adminUtils")
+                            _sharedAdminUtilsSender = sender;
+                        else if (type == "default")
+                            _sharedSender = sender;
+
+                        _logger.Information("Successfully created QuestDB sender instance of type {Type} on attempt {Attempt}", type, attempt);
+                        return sender;
+                    }
+                    catch (Exception ex) when (attempt < maxRetries)
+                    {
+                        var delay = baseDelayMs * (int)Math.Pow(2, attempt - 1); // Exponential backoff
+                        _logger.Warning(ex, "Failed to create QuestDB sender instance of type {Type} on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}ms", type, attempt, maxRetries, delay);
+                        await Task.Delay(delay);
+                    }
+                }
+
+                throw new InvalidOperationException($"Failed to create QuestDB sender instance of type {type} after {maxRetries} attempts");
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Error creating QuestDB sender instance");
+                _logger.Error(ex, "Error creating QuestDB sender instance of type {Type}", type);
                 throw;
             }
             finally
@@ -253,13 +272,31 @@ namespace UserTrackerShared.DBClients
 
         private static async Task FlushSender(ISender sender)
         {
-            try
+            const int maxRetries = 3;
+            const int baseDelayMs = 500;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                await sender.SendAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error flushing QuestDB sender.");
+                try
+                {
+                    await sender.SendAsync();
+                    if (attempt > 1)
+                    {
+                        _logger.Information("Successfully flushed QuestDB sender on attempt {Attempt}", attempt);
+                    }
+                    return;
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    var delay = baseDelayMs * (int)Math.Pow(2, attempt - 1); // Exponential backoff
+                    _logger.Warning(ex, "Failed to flush QuestDB sender on attempt {Attempt}/{MaxRetries}. Retrying in {Delay}ms", attempt, maxRetries, delay);
+                    await Task.Delay(delay);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Failed to flush QuestDB sender after {MaxRetries} attempts", maxRetries);
+                    throw;
+                }
             }
         }
 
@@ -430,6 +467,7 @@ namespace UserTrackerShared.DBClients
                     .Column("powerRank", user.PowerRank)
                     .AtAsync(DateTime.UtcNow);
 
+                _logger.Information("User {UserId} data uploaded successfully", user.Username);
                 Interlocked.Increment(ref _flushedPointCount);
                 await FlushSender(sender);
             }
