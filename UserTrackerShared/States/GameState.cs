@@ -19,10 +19,7 @@ namespace UserTrackerShared.States
             bool isPrivateServer = ConfigSettingsState.ScreepsIsPrivateServer;
             if (isPrivateServer)
             {
-                var signinResponse = await ScreepsApi.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword);
-
-                if (signinResponse == null)
-                    throw new Exception("Failed to sign in");
+                var signinResponse = await ScreepsAPI.SignIn(ConfigSettingsState.ScreepsUsername, ConfigSettingsState.ScreepsPassword) ?? throw new Exception("Failed to sign in");
                 ConfigSettingsState.ScreepsToken = signinResponse.Token;
 
                 Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
@@ -68,7 +65,7 @@ namespace UserTrackerShared.States
 
         private static async Task<string?> GetUser(string userId)
         {
-            var userResponse = await ScreepsApi.GetUser(userId);
+            var userResponse = await ScreepsAPI.GetUser(userId);
             if (userResponse != null)
             {
                 Users.AddOrUpdate(userId, userResponse, (key, oldValue) => userResponse);
@@ -95,7 +92,7 @@ namespace UserTrackerShared.States
         public static async Task GetAllUsers()
         {
             _leaderboardLogger.Information("Getting all users from leaderboard");
-            var leaderboardsResponse = await ScreepsApi.GetAllSeasonsLeaderboard();
+            var leaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard();
             if (leaderboardsResponse != null)
             {
                 var seasons = leaderboardsResponse.Select(kv => kv.Key).OrderDescending().ToList();
@@ -151,7 +148,7 @@ namespace UserTrackerShared.States
             _leaderboardLogger.Information("Updating users leaderboard data");
             var userIdsUpdated = new HashSet<string>();
 
-            var (gclLeaderboard, powerLeaderboard) = await ScreepsApi.GetCurrentSeasonLeaderboard();
+            var (gclLeaderboard, powerLeaderboard) = await ScreepsAPI.GetCurrentSeasonLeaderboard();
             _leaderboardLogger.Information("Fetched current season leaderboard data");
             foreach (var leaderboardSpot in gclLeaderboard)
             {
@@ -224,7 +221,7 @@ namespace UserTrackerShared.States
         private static async void OnUpdateAdminUtilsDataTimer()
         {
             _leaderboardLogger.Information("Updating admin utils data");
-            var adminUtilsResponse = await ScreepsApi.GetAdminUtilsStats();
+            var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();
             if (adminUtilsResponse != null)
             {
                 DBClient.WriteAdminUtilsData(adminUtilsResponse);

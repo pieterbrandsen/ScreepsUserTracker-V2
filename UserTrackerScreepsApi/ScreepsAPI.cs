@@ -32,6 +32,7 @@ namespace UserTrackerScreepsApi
     public static class ScreepsAPI
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
+        private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
         private static readonly SemaphoreSlim _normalThrottler = new(1);
         private static readonly SemaphoreSlim _filesThrottler = new(500);
 
@@ -240,16 +241,21 @@ namespace UserTrackerScreepsApi
             var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
-        public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
+        
+        private static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetSeasonLeaderboardData(string season)
         {
-            var season = DateTime.Now.ToString("yyyy-MM");
             var gclLeaderboardList = new List<SeaonListItem>();
             var powerLeaderboardList = new List<SeaonListItem>();
 
             int offset = 0;
             int limit = 20;
-            while (true)
+            int iteration = 0;
+            const int maxIterations = 10000;
+            
+            _leaderboardLogger.Information($"Starting leaderboard pull for season {season}");
+            while (iteration < maxIterations)
             {
+                iteration++;
                 var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
                 var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
                 var didSomething = false;
@@ -263,11 +269,33 @@ namespace UserTrackerScreepsApi
                     powerLeaderboardList.AddRange(powerListResponse.List);
                     didSomething = true;
                 }
-                if (!didSomething) break;
+                
+                if (!didSomething)
+                {
+                    _leaderboardLogger.Information($"Completed leaderboard pull for season {season}: {gclLeaderboardList.Count} GCL entries, {powerLeaderboardList.Count} Power entries ({iteration} iterations)");
+                    break;
+                }
+                
                 offset += limit;
+                
+                if (iteration % 50 == 0)
+                {
+                    _leaderboardLogger.Information($"Season {season} progress: {gclLeaderboardList.Count} GCL entries, {powerLeaderboardList.Count} Power entries (iteration {iteration}/{maxIterations})");
+                }
+            }
+            
+            if (iteration >= maxIterations)
+            {
+                _leaderboardLogger.Warning($"Max iterations ({maxIterations}) reached for season {season}. Data may be incomplete: {gclLeaderboardList.Count} GCL, {powerLeaderboardList.Count} Power");
             }
 
             return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList());
+        }
+        
+        public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
+        {
+            var season = DateTime.Now.ToString("yyyy-MM");
+            return await GetSeasonLeaderboardData(season);
         }
 
         public static async Task<Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>> GetAllSeasonsLeaderboard()
@@ -278,29 +306,7 @@ namespace UserTrackerScreepsApi
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var gclLeaderboardList = new List<SeaonListItem>();
-                var powerLeaderboardList = new List<SeaonListItem>();
-
-                int offset = 0;
-                int limit = 20;
-                while (true)
-                {
-                    var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
-                    var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
-                    var didSomething = false;
-                    if (gclListResponse != null && gclListResponse.List.Count > 0)
-                    {
-                        gclLeaderboardList.AddRange(gclListResponse.List);
-                        didSomething = true;
-                    }
-                    if (powerListResponse != null && powerListResponse.List.Count > 0)
-                    {
-                        powerLeaderboardList.AddRange(powerListResponse.List);
-                        didSomething = true;
-                    }
-                    if (!didSomething) break;
-                    offset += limit;
-                }
+                var (gclLeaderboardList, powerLeaderboardList) = await GetSeasonLeaderboardData(season);
 
                 if (gclLeaderboardList.Count + powerLeaderboardList.Count == 0)
                 {

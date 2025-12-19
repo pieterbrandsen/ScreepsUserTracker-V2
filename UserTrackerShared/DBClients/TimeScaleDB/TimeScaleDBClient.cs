@@ -238,7 +238,7 @@ namespace UserTrackerShared.DBClients.TimeScale
                 }
                 else if (!string.IsNullOrEmpty(userId))
                 {
-                    var apiUser = await ScreepsApi.GetUser(userId);
+                    var apiUser = await ScreepsAPI.GetUser(userId);
                     if (apiUser != null)
                     {
                         GameState.Users.AddOrUpdate(userId, apiUser, (key, oldValue) => apiUser);
