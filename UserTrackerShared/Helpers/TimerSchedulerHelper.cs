@@ -3,7 +3,7 @@ using Timer = System.Timers.Timer;
 
 public class TimerScheduleHelper : IDisposable
 {
-    private readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+    private readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.General);
     private Timer? _timer;
     private readonly string _name;
     private readonly Action _action;
@@ -15,9 +15,9 @@ public class TimerScheduleHelper : IDisposable
     /// Create a scheduled timer.
     /// </summary>
     /// <param name="action">Action to execute.</param>
-    /// <param name="hours">One or more hours in the day (0–23).</param>
+    /// <param name="hours">One or more hours in the day (0ï¿½23).</param>
     /// <param name="daysOfWeek">Optional: Days of the week. If provided, runs only on these days.</param>
-    /// <param name="daysOfMonth">Optional: Days of the month (1–31). If provided, runs only on these dates.</param>
+    /// <param name="daysOfMonth">Optional: Days of the month (1ï¿½31). If provided, runs only on these dates.</param>
     public TimerScheduleHelper(string name, Action action, int[] hours, DayOfWeek[]? daysOfWeek = null, int[]? daysOfMonth = null)
     {
         _name = name ?? throw new ArgumentNullException(nameof(name));

@@ -12,18 +12,19 @@ namespace UserTrackerShared.Managers
 {
     public class ShardStateManager
     {
-        private readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.States);
+        private readonly Serilog.ILogger _shardLogger = Logger.GetLogger(LogCategory.Shard);
+        private readonly Serilog.ILogger _performanceLogger = Logger.GetLogger(LogCategory.PullPerformance);
 
         public ShardStateManager(string Name)
         {
-            _logger.Information($"Creating ShardStateManager for {Name}");
+            _shardLogger.Information($"Creating ShardStateManager for {Name}");
             this.Name = Name;
         }
         public async void Start()
         {
             try
             {
-                _logger.Information($"Starting ShardStateManager for {Name}");
+                _shardLogger.Information($"Starting ShardStateManager for {Name}");
                 var response = await ScreepsApi.GetAllMapStats(Name, "claim0");
                 foreach (var room in response.Rooms)
                 {
@@ -31,7 +32,7 @@ namespace UserTrackerShared.Managers
                 }
 
                 var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
-                _logger.Information(message);
+                _shardLogger.Information(message);
                 _ = StartUpdate();
 
                 var setTimeTimer = new Timer(300000);
@@ -41,7 +42,7 @@ namespace UserTrackerShared.Managers
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error starting ShardStateManager for {Name}: {ex.Message}");
+                _shardLogger.Error(ex, $"Error starting ShardStateManager for {Name}: {ex.Message}");
             }
         }
 
@@ -81,7 +82,7 @@ namespace UserTrackerShared.Managers
             IsSyncing = true;
 
             var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
-            _logger.Warning(message);
+            _shardLogger.Warning(message);
             
             try
             {
@@ -107,7 +108,7 @@ namespace UserTrackerShared.Managers
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(ex, "Error processing room {Room} for tick {Tick}", room, i);
+                                _shardLogger.Error(ex, "Error processing room {Room} for tick {Tick}", room, i);
                                 resultCodes.AddOrUpdate(500, 1, (key, value) => value + 1); // Error code
                             }
                             finally
@@ -143,7 +144,7 @@ namespace UserTrackerShared.Managers
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(ex, "Error uploading room data for {Room}", kvp.Key);
+                                _shardLogger.Error(ex, "Error uploading room data for {Room}", kvp.Key);
                             }
                         }
                         dataByRoom.Clear();
@@ -157,7 +158,7 @@ namespace UserTrackerShared.Managers
                             }
                             catch (Exception ex)
                             {
-                                _logger.Error(ex, "Error uploading user data for {User}", userKvp.Key);
+                                _shardLogger.Error(ex, "Error uploading user data for {User}", userKvp.Key);
                             }
                         }
 
@@ -181,7 +182,7 @@ namespace UserTrackerShared.Managers
                     {
                         var totalMicroSeconds = totalMilliseconds * 1000;
                         var performanceLogMessage = $"{Name}:{i} took {totalMilliseconds} milliseconds, is {ticksBehind} ticks behind and took {Math.Round(Convert.ToDouble(totalMicroSeconds / Rooms.Count), 2)} microseconds per room on average";
-                        _logger.Information(performanceLogMessage);
+                        _performanceLogger.Information(performanceLogMessage);
                         Screen.AddLog(performanceLogMessage);
                     }
                     catch (Exception)
@@ -193,7 +194,7 @@ namespace UserTrackerShared.Managers
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error syncing shard {Name}: {ex.Message}");
+                _shardLogger.Error(ex, $"Error syncing shard {Name}: {ex.Message}");
             }
             finally
             {

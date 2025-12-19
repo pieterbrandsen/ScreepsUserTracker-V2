@@ -174,8 +174,8 @@ namespace UserTrackerShared.Migrations
                     b.Property<int>("Rank")
                         .HasColumnType("integer");
 
-                    b.Property<int>("Score")
-                        .HasColumnType("integer");
+                    b.Property<long>("Score")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Season")
                         .IsRequired()

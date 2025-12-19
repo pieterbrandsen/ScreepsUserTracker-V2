@@ -35,10 +35,15 @@ namespace UserTrackerShared.Helpers
 
     public enum LogCategory
     {
+        // Main
+        General,
+        // Detailed
+        Leaderboard,
+        Shard,
         ScreepsAPI,
-        States,
         HistoryProcessor,
         PullPerformance,
+        // Db's
         InfluxDB,
         GraphiteDB,
         TimeScaleDB,
