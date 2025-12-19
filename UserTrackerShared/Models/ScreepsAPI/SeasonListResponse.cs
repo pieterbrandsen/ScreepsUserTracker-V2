@@ -14,7 +14,7 @@ namespace UserTrackerShared.Models.ScreepsAPI
         public string UserId { get; set; } = null!;
         public string UserName { get; set; } = null!;
         [JsonProperty("score")]
-        public int Score { get; set; }
+        public long Score { get; set; }
         [JsonProperty("rank")]
         public int Rank { get; set; }
         public DateTime Timestamp { get; set; }

@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Text;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
@@ -123,7 +124,42 @@ namespace UserTrackerScreepsApi
                     await _filesThrottler.WaitAsync();
                     try
                     {
-                        response = await _filesHttpClient.GetAsync(reqUrl);
+                        const int maxRetries = 3;
+                        Exception? lastException = null;
+                        
+                        for (int attempt = 0; attempt <= maxRetries; attempt++)
+                        {
+                            try
+                            {
+                                if (attempt > 0)
+                                {
+                                    var delayMs = 100 * (int)Math.Pow(2, attempt - 1);
+                                    await Task.Delay(delayMs);
+                                    retryCount++;
+                                }
+                                
+                                response = await _filesHttpClient.GetAsync(reqUrl);
+                                lastException = null;
+                                break;
+                            }
+                            catch (HttpRequestException ex) when (attempt < maxRetries && 
+                                (ex.InnerException is IOException || ex.InnerException is SocketException))
+                            {
+                                lastException = ex;
+                                _logger.Warning($"Retry {attempt + 1}/{maxRetries} for {reqUrl}: {ex.Message}");
+                            }
+                            catch (Exception ex) when (attempt < maxRetries)
+                            {
+                                lastException = ex;
+                                _logger.Warning($"Retry {attempt + 1}/{maxRetries} for {reqUrl}: {ex.Message}");
+                            }
+                        }
+                        
+                        if (lastException != null)
+                        {
+                            _logger.Error(lastException, reqUrl);
+                            return (default, HttpStatusCode.InternalServerError);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -152,7 +188,7 @@ namespace UserTrackerScreepsApi
                     (response, retryCount) = await ThrottledRequestAsync(request);
                 }
 
-                var infoMessage = "{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
+                var infoMessage = $"{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
                 _logger.Information(infoMessage);
 
                 if (response?.IsSuccessStatusCode ?? false)
@@ -347,7 +383,6 @@ namespace UserTrackerScreepsApi
             int min = startIndex;
             int max = startIndex + layerSize;
 
-            // Corner
             for (int x = min; x < max; x++)
             {
                 for (int y = min; y < max; y++)
@@ -400,7 +435,6 @@ namespace UserTrackerScreepsApi
             MapStatsResponse mapStatsResponse = new();
 
 
-            // N & E
             var data = await GetAllMapsStatsOfDirection(shard, statName, true, true, 0);
             if (data != null)
             {
@@ -411,7 +445,6 @@ namespace UserTrackerScreepsApi
                     .Concat(data.Users.Where(user => !mapStatsResponse.Users.ContainsKey(user.Key)))
                     .ToDictionary();
             }
-            //// S & E
             data = await GetAllMapsStatsOfDirection(shard, statName, false, true, 0);
             if (data != null)
             {
@@ -423,7 +456,6 @@ namespace UserTrackerScreepsApi
                     .ToDictionary();
             }
 
-            //// N & E
             data = await GetAllMapsStatsOfDirection(shard, statName, true, false, 0);
             if (data != null)
             {
@@ -434,7 +466,6 @@ namespace UserTrackerScreepsApi
                     .Concat(data.Users.Where(user => !mapStatsResponse.Users.ContainsKey(user.Key)))
                     .ToDictionary();
             }
-            //// S & W
             data = await GetAllMapsStatsOfDirection(shard, statName, false, false, 0);
             if (data != null)
             {
