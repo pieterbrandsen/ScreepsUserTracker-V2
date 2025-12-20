@@ -1,16 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
-using Npgsql;
-using System;
-using System.Collections.Concurrent;
-using System.Reactive;
+﻿using Microsoft.Extensions.DependencyInjection;
 using UserTrackerShared.DBClients.TimeScaleDB;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.Models.TimeScaleDB;
 using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 
 
 namespace UserTrackerShared.DBClients.TimeScale
@@ -189,14 +184,14 @@ namespace UserTrackerShared.DBClients.TimeScale
                 var entity = new TimeScaleAdminUtilsDto
                 {
                     Server = serverName,
-                    Objects= data.Objects,
+                    Objects = data.Objects,
                     Ticks = data.Ticks,
                     Users = data.Users,
                     ActiveUsers = data.ActiveUsers,
                     ActiveRooms = data.ActiveRooms,
                     TotalRooms = data.TotalRooms,
                     OwnedRooms = data.OwnedRooms,
-                    GameTime = data.GameTime,   
+                    GameTime = data.GameTime,
                 };
                 db.AdminUtilsData.Add(entity);
                 db.SaveChanges();
@@ -214,7 +209,7 @@ namespace UserTrackerShared.DBClients.TimeScale
             {
                 await Task.Delay(TimeSpan.FromSeconds(10));
                 using var scope = _scopeFactory.CreateScope();
-                
+
                 var flushed = Interlocked.Exchange(ref _writtenDataCount, 0);
                 _logger.Information("Added {Flushed} rows in the last 10 seconds", flushed);
             }

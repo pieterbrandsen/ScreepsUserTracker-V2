@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
@@ -83,7 +82,7 @@ namespace UserTrackerShared.Managers
 
             var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
             _shardLogger.Warning(message);
-            
+
             try
             {
                 for (long i = LastSyncTime; i < syncTime; i += 100)

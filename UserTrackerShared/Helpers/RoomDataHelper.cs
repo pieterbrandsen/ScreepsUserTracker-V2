@@ -4,6 +4,7 @@ using System.Net;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Models;
 using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.Helpers
 {
@@ -40,7 +41,7 @@ namespace UserTrackerShared.Helpers
                         long tickNumber = roomHistory.Base + i;
                         roomHistory.Tick = tickNumber;
 
-                        if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
+                        if (jObjectTicks != null && jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                         {
                             try
                             {

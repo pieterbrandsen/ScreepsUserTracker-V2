@@ -2,11 +2,11 @@
 using Newtonsoft.Json.Linq;
 using System.Net.Sockets;
 using System.Text;
-using UserTrackerShared;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.DBClients
 {

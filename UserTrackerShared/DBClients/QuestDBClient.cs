@@ -11,6 +11,7 @@ using UserTrackerShared.Models;
 using UserTrackerShared.Models.Db;
 using UserTrackerShared.Models.ScreepsAPI;
 using UserTrackerShared.States;
+using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.DBClients
 {
@@ -1101,7 +1102,7 @@ namespace UserTrackerShared.DBClients
             return questDBHistoryDTO;
         }
 
-        public static async void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             try
             {

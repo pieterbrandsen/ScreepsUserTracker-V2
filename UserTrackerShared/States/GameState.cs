@@ -1,9 +1,9 @@
 ﻿using System.Collections.Concurrent;
-using System.Timers;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Managers;
 using UserTrackerShared.Models;
+using UserTrackerShared.Utilities;
 using Timer = System.Timers.Timer;
 
 namespace UserTrackerShared.States

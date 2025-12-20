@@ -7,17 +7,17 @@ using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
-using System.Net.Sockets;
 using System.Text;
 using UserTrackerShared;
 using UserTrackerShared.Helpers;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.ScreepsAPI;
+using UserTrackerShared.States;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
 
-namespace UserTrackerScreepsApi
+namespace UserTrackerShared.Utilities
 {
-    public static class JSONConvertHelper
+    public static class JsonConvertHelper
     {
         public static async Task<T?> ReadAndConvertStream<T>(HttpContent httpContent)
         {
@@ -32,9 +32,7 @@ namespace UserTrackerScreepsApi
     public static class ScreepsAPI
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
-        private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
-        private static readonly SemaphoreSlim _normalThrottler = new(1);
-        private static readonly SemaphoreSlim _filesThrottler = new(500);
+        private static readonly SemaphoreSlim _normalThrottler = new(3);
 
         private static readonly HttpClient _normalHttpClient = new();
 
@@ -43,17 +41,20 @@ namespace UserTrackerScreepsApi
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
         });
-        private static async Task<(HttpResponseMessage? response, int retyCount)> ThrottledRequestAsync(HttpRequestMessage request)
+
+        private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
         {
             await _normalThrottler.WaitAsync();
             try
             {
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
+                int maxRetries = 5;
+                int delayMs = 200;
 
-                while (retryCount < 100)
+                while (retryCount < maxRetries)
                 {
-                    await Task.Delay(50);
+                    await Task.Delay(delayMs);
                     using (var clonedRequest = CloneHttpRequestMessage(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
@@ -122,54 +123,14 @@ namespace UserTrackerScreepsApi
                 HttpResponseMessage? response = null;
                 if (isHistoryRequest)
                 {
-                    await _filesThrottler.WaitAsync();
                     try
                     {
-                        const int maxRetries = 3;
-                        Exception? lastException = null;
-                        
-                        for (int attempt = 0; attempt <= maxRetries; attempt++)
-                        {
-                            try
-                            {
-                                if (attempt > 0)
-                                {
-                                    var delayMs = 100 * (int)Math.Pow(2, attempt - 1);
-                                    await Task.Delay(delayMs);
-                                    retryCount++;
-                                }
-                                
-                                response = await _filesHttpClient.GetAsync(reqUrl);
-                                lastException = null;
-                                break;
-                            }
-                            catch (HttpRequestException ex) when (attempt < maxRetries && 
-                                (ex.InnerException is IOException || ex.InnerException is SocketException))
-                            {
-                                lastException = ex;
-                                _logger.Warning($"Retry {attempt + 1}/{maxRetries} for {reqUrl}: {ex.Message}");
-                            }
-                            catch (Exception ex) when (attempt < maxRetries)
-                            {
-                                lastException = ex;
-                                _logger.Warning($"Retry {attempt + 1}/{maxRetries} for {reqUrl}: {ex.Message}");
-                            }
-                        }
-                        
-                        if (lastException != null)
-                        {
-                            _logger.Error(lastException, reqUrl);
-                            return (default, HttpStatusCode.InternalServerError);
-                        }
+                        response = await _filesHttpClient.GetAsync(reqUrl);
                     }
                     catch (Exception ex)
                     {
                         _logger.Error(ex, reqUrl);
                         return (default, HttpStatusCode.InternalServerError);
-                    }
-                    finally
-                    {
-                        _filesThrottler.Release();
                     }
                 }
                 else
@@ -189,12 +150,9 @@ namespace UserTrackerScreepsApi
                     (response, retryCount) = await ThrottledRequestAsync(request);
                 }
 
-                var infoMessage = $"{reqUrl} - {response?.StatusCode ?? HttpStatusCode.InternalServerError} - {retryCount}";
-                _logger.Information(infoMessage);
-
                 if (response?.IsSuccessStatusCode ?? false)
                 {
-                    var result = await JSONConvertHelper.ReadAndConvertStream<T>(response.Content);
+                    var result = await JsonConvertHelper.ReadAndConvertStream<T>(response.Content);
                     return (result, response.StatusCode);
                 }
                 else
@@ -241,21 +199,16 @@ namespace UserTrackerScreepsApi
             var (Result, _) = await ExecuteRequestAsync<SeasonListResponse>(HttpMethod.Get, path);
             return Result;
         }
-        
-        private static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetSeasonLeaderboardData(string season)
+        public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power)> GetCurrentSeasonLeaderboard()
         {
-            var gclLeaderboardList = new List<SeaonListItem>();
-            var powerLeaderboardList = new List<SeaonListItem>();
+            var season = DateTime.Now.ToString("yyyy-MM");
+            var gclLeaderboardList = new List<SeasonListItem>();
+            var powerLeaderboardList = new List<SeasonListItem>();
 
             int offset = 0;
             int limit = 20;
-            int iteration = 0;
-            const int maxIterations = 10000;
-            
-            _leaderboardLogger.Information($"Starting leaderboard pull for season {season}");
-            while (iteration < maxIterations)
+            while (true)
             {
-                iteration++;
                 var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
                 var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
                 var didSomething = false;
@@ -269,44 +222,44 @@ namespace UserTrackerScreepsApi
                     powerLeaderboardList.AddRange(powerListResponse.List);
                     didSomething = true;
                 }
-                
-                if (!didSomething)
-                {
-                    _leaderboardLogger.Information($"Completed leaderboard pull for season {season}: {gclLeaderboardList.Count} GCL entries, {powerLeaderboardList.Count} Power entries ({iteration} iterations)");
-                    break;
-                }
-                
+                if (!didSomething) break;
                 offset += limit;
-                
-                if (iteration % 50 == 0)
-                {
-                    _leaderboardLogger.Information($"Season {season} progress: {gclLeaderboardList.Count} GCL entries, {powerLeaderboardList.Count} Power entries (iteration {iteration}/{maxIterations})");
-                }
-            }
-            
-            if (iteration >= maxIterations)
-            {
-                _leaderboardLogger.Warning($"Max iterations ({maxIterations}) reached for season {season}. Data may be incomplete: {gclLeaderboardList.Count} GCL, {powerLeaderboardList.Count} Power");
             }
 
             return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList());
         }
-        
-        public static async Task<(List<SeaonListItem> gcl, List<SeaonListItem> power)> GetCurrentSeasonLeaderboard()
-        {
-            var season = DateTime.Now.ToString("yyyy-MM");
-            return await GetSeasonLeaderboardData(season);
-        }
 
-        public static async Task<Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>> GetAllSeasonsLeaderboard()
+        public static async Task<Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>> GetAllSeasonsLeaderboard()
         {
-            var leaderboardsList = new Dictionary<string, (List<SeaonListItem> gcl, List<SeaonListItem> power)>();
+            var leaderboardsList = new Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>();
 
             var lastSeasonEmpty = false;
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var (gclLeaderboardList, powerLeaderboardList) = await GetSeasonLeaderboardData(season);
+                var gclLeaderboardList = new List<SeasonListItem>();
+                var powerLeaderboardList = new List<SeasonListItem>();
+
+                int offset = 0;
+                int limit = 20;
+                while (true)
+                {
+                    var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
+                    var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
+                    var didSomething = false;
+                    if (gclListResponse != null && gclListResponse.List.Count > 0)
+                    {
+                        gclLeaderboardList.AddRange(gclListResponse.List);
+                        didSomething = true;
+                    }
+                    if (powerListResponse != null && powerListResponse.List.Count > 0)
+                    {
+                        powerLeaderboardList.AddRange(powerListResponse.List);
+                        didSomething = true;
+                    }
+                    if (!didSomething) break;
+                    offset += limit;
+                }
 
                 if (gclLeaderboardList.Count + powerLeaderboardList.Count == 0)
                 {
@@ -365,7 +318,7 @@ namespace UserTrackerScreepsApi
             var jsonString = JsonConvert.SerializeObject(content);
             var body = new StringContent(jsonString, Encoding.UTF8, "application/json");
 
-            var (Result, Status) = await ExecuteRequestAsync<MapStatsResponse>(HttpMethod.Post, path, body);
+            var (Result, _) = await ExecuteRequestAsync<MapStatsResponse>(HttpMethod.Post, path, body);
             if (Result != null)
             {
                 Result.Rooms = Result.Rooms.Where(s => s.Value.Status != "out of borders").ToDictionary();
@@ -389,6 +342,7 @@ namespace UserTrackerScreepsApi
             int min = startIndex;
             int max = startIndex + layerSize;
 
+            // Corner
             for (int x = min; x < max; x++)
             {
                 for (int y = min; y < max; y++)
@@ -441,6 +395,7 @@ namespace UserTrackerScreepsApi
             MapStatsResponse mapStatsResponse = new();
 
 
+            // N & E
             var data = await GetAllMapsStatsOfDirection(shard, statName, true, true, 0);
             if (data != null)
             {
@@ -451,6 +406,7 @@ namespace UserTrackerScreepsApi
                     .Concat(data.Users.Where(user => !mapStatsResponse.Users.ContainsKey(user.Key)))
                     .ToDictionary();
             }
+            //// S & E
             data = await GetAllMapsStatsOfDirection(shard, statName, false, true, 0);
             if (data != null)
             {
@@ -462,6 +418,7 @@ namespace UserTrackerScreepsApi
                     .ToDictionary();
             }
 
+            //// N & E
             data = await GetAllMapsStatsOfDirection(shard, statName, true, false, 0);
             if (data != null)
             {
@@ -472,6 +429,7 @@ namespace UserTrackerScreepsApi
                     .Concat(data.Users.Where(user => !mapStatsResponse.Users.ContainsKey(user.Key)))
                     .ToDictionary();
             }
+            //// S & W
             data = await GetAllMapsStatsOfDirection(shard, statName, false, false, 0);
             if (data != null)
             {
@@ -487,4 +445,3 @@ namespace UserTrackerScreepsApi
         }
     }
 }
-
