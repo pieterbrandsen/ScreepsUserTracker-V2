@@ -136,6 +136,7 @@ namespace UserTrackerShared.States
                     }
                 }
             }
+            _leaderboardLogger.Information("Completed getting all users from leaderboard");
         }
 
         private static async void OnUpdateUsersLeaderboardTimer()
@@ -217,6 +218,7 @@ namespace UserTrackerShared.States
                 powerRank += group.Count();
             }
             await WriteAllUsers();
+            _leaderboardLogger.Information("Completed updating users leaderboard data");
         }
         private static async void OnUpdateAdminUtilsDataTimer()
         {
