@@ -53,7 +53,7 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static void WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
+        public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
         {
             // if (ConfigSettingsState.InfluxDbEnabled)
             // {
@@ -69,7 +69,7 @@ namespace UserTrackerShared.DBClients
             // }
             if (ConfigSettingsState.QuestDbEnabled)
             {
-                QuestDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
+                await QuestDBClientState.WriteScreepsRoomHistory(shard, room, tick, timestamp, screepsRoomHistory);
             }
         }
 

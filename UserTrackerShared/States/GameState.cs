@@ -84,9 +84,28 @@ namespace UserTrackerShared.States
             }
         }
 
-        public static async void OnGetAllUsersTimer()
+        public static async Task OnGetAllUsersTimer()
         {
-            await GetAllUsers();
+            try
+            {
+                await GetAllUsers();
+            }
+            catch (Exception ex)
+            {
+                _leaderboardLogger.Error(ex, "Error occurred during scheduled GetAllUsers task");
+            }
+        }
+
+        private static async Task OnUpdateUsersLeaderboardTimer()
+        {
+            try
+            {
+                await UpdateUsersLeaderboard();
+            }
+            catch (Exception ex)
+            {
+                _leaderboardLogger.Error(ex, "Error occurred during scheduled UpdateUsersLeaderboard task");
+            }
         }
 
         public static async Task GetAllUsers()
@@ -137,11 +156,6 @@ namespace UserTrackerShared.States
                 }
             }
             _leaderboardLogger.Information("Completed getting all users from leaderboard");
-        }
-
-        private static async void OnUpdateUsersLeaderboardTimer()
-        {
-            await UpdateUsersLeaderboard();
         }
 
         private static async Task UpdateUsersLeaderboard()

@@ -35,7 +35,16 @@ namespace UserTrackerShared.Utilities
         private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
         private static readonly SemaphoreSlim _normalThrottler = new(3);
 
-        private static readonly HttpClient _normalHttpClient = new();
+        private static readonly HttpClient _normalHttpClient = new(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            ConnectTimeout = TimeSpan.FromSeconds(10),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(30)
+        };
 
         private static readonly HttpClient _filesHttpClient = new(new SocketsHttpHandler
         {
@@ -55,7 +64,11 @@ namespace UserTrackerShared.Utilities
 
                 while (retryCount < maxRetries)
                 {
-                    await Task.Delay(delayMs);
+                    if (retryCount > 0)
+                    {
+                        await Task.Delay(delayMs);
+                    }
+
                     using (var clonedRequest = CloneHttpRequestMessage(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
@@ -206,6 +219,7 @@ namespace UserTrackerShared.Utilities
             var gclLeaderboardList = new List<SeasonListItem>();
             var powerLeaderboardList = new List<SeasonListItem>();
 
+            _leaderboardLogger.Information($"Starting leaderboard fetch for season {season}");
             int offset = 0;
             int limit = 20;
             int iterationCount = 0;
@@ -228,11 +242,6 @@ namespace UserTrackerShared.Utilities
                 if (!didSomething) break;
                 offset += limit;
                 iterationCount++;
-
-                if (iterationCount % 50 == 0)
-                {
-                    _leaderboardLogger.Information($"Leaderboard progress for {season}: {iterationCount} iterations, offset {offset}, {gclLeaderboardList.Count} GCL items, {powerLeaderboardList.Count} power items");
-                }
             }
 
             _leaderboardLogger.Information($"Leaderboard completed for {season}: {iterationCount} total iterations, {gclLeaderboardList.Count} GCL items, {powerLeaderboardList.Count} power items");

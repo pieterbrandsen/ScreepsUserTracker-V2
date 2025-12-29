@@ -77,20 +77,18 @@ namespace UserTrackerShared.DBClients
 
             _historyChannel = Channel.CreateUnbounded<QuestHistoryPointDataParameter>(new UnboundedChannelOptions
             {
-                SingleReader = false,
+                SingleReader = true,
                 SingleWriter = false
             });
 
             _adminUtilsChannel = Channel.CreateUnbounded<QuestAdminUtilsPointDataParameter>(new UnboundedChannelOptions
             {
-                SingleReader = false,
+                SingleReader = true,
                 SingleWriter = false
             });
 
             Task.Run(HistoryWorkerLoop);
             Task.Run(AdminUtilsWorkerLoop);
-
-            // Start a background task to log status.
             Task.Run(LogStatusPeriodically);
 
             _logger.Information("Worker tasks started.");
@@ -103,106 +101,115 @@ namespace UserTrackerShared.DBClients
 
         private static async Task HistoryWorkerLoop()
         {
-            while (_isRunning)
+            try
             {
-                if (_historyChannel == null) continue;
-                // Create a temporary dictionary to group points per bucket.
-                if (!await _historyChannel.Reader.WaitToReadAsync())
-                    continue;
-
-                var sender = await GetSenderInstanceAsync("history");
-                var batchDict = new Dictionary<string, List<QuestHistoryPointDataParameter>>();
-                int batchCount = 0;
-
-                // Read items from the channel up to the batch size.
-                while (_historyChannel.Reader.TryRead(out var item))
+                _logger.Information("History worker loop started, waiting for data...");
+                while (_isRunning)
                 {
-                    var batchKey = GetBatchKey(item);
-                    if (!batchDict.ContainsKey(batchKey))
-                        batchDict[batchKey] = new List<QuestHistoryPointDataParameter>();
+                    if (_historyChannel == null) continue;
+                    if (!await _historyChannel.Reader.WaitToReadAsync())
+                        continue;
 
-                    batchDict[batchKey].Add(item);
-                    batchCount++;
-                    Interlocked.Decrement(ref _pendingPointCount);
-                }
-                _logger.Information("Processing batch of {BatchCount} rows", batchCount);
-
-                // Process each bucket's batch.
-                foreach (var kvp in batchDict)
-                {
-                    try
+                    var sender = await GetSenderInstanceAsync("history");
+                    var batchDict = new Dictionary<string, List<QuestHistoryPointDataParameter>>();
+                    int batchCount = 0;
+                    while (_historyChannel.Reader.TryRead(out var item))
                     {
-                        var firstPoint = kvp.Value.FirstOrDefault();
-                        if (firstPoint == null) continue;
+                        var batchKey = GetBatchKey(item);
+                        if (!batchDict.ContainsKey(batchKey))
+                            batchDict[batchKey] = [];
 
-                        sender.Table(firstPoint.Database)
-                            .Symbol("shard", firstPoint.Shard)
-                            .Symbol("room", firstPoint.Room)
-                            .Symbol("user", firstPoint.Username)
-                            .Column("tick", firstPoint.Tick);
+                        batchDict[batchKey].Add(item);
+                        batchCount++;
+                        Interlocked.Decrement(ref _pendingPointCount);
+                    }
+                    _logger.Information("Processing batch of {BatchCount} data points", batchCount);
 
-                        foreach (var point in kvp.Value)
+                    foreach (var kvp in batchDict)
+                    {
+                        try
                         {
-                            sender = QuestDBPointHelper.UpdateHistoryPoint(sender, point);
-                            Interlocked.Add(ref _flushedPointCount, 1);
+                            var firstPoint = kvp.Value.FirstOrDefault();
+                            if (firstPoint == null) continue;
+
+                            sender.Table(firstPoint.Database)
+                                .Symbol("shard", firstPoint.Shard)
+                                .Symbol("room", firstPoint.Room)
+                                .Symbol("user", firstPoint.Username)
+                                .Column("tick", firstPoint.Tick);
+
+                            foreach (var point in kvp.Value)
+                            {
+                                sender = QuestDBPointHelper.UpdateHistoryPoint(sender, point);
+                                Interlocked.Add(ref _flushedPointCount, 1);
+                            }
+
+                            await sender.AtAsync(firstPoint.Timestamp * 1_000_000);
                         }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(ex, "Error writing batch to QuestDB");
+                        }
+                    }
 
-                        await sender.AtAsync(firstPoint.Timestamp * 1_000_000);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex, "Error writing batch to QuestDB");
-                    }
+                    await FlushSender(sender);
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
-
-                await FlushSender(sender);
-                await Task.Delay(TimeSpan.FromSeconds(1));
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error in HistoryWorkerLoop");
             }
         }
 
         private static async Task AdminUtilsWorkerLoop()
         {
-            while (_isRunning)
+            try
             {
-                if (_adminUtilsChannel == null) continue;
-                // Create a temporary dictionary to group points per bucket.
-                if (!await _adminUtilsChannel.Reader.WaitToReadAsync())
-                    continue;
-
-                var sender = await GetSenderInstanceAsync("adminUtils");
-                var batchDict = new Dictionary<string, List<QuestAdminUtilsPointDataParameter>>();
-                int batchCount = 0;
-
-                // Read items from the channel up to the batch size.
-                while (_adminUtilsChannel.Reader.TryRead(out var item))
+                _logger.Information("AdminUtils worker loop started.");
+                while (_isRunning)
                 {
-                    if (!batchDict.ContainsKey(item.Database))
-                        batchDict[item.Database] = new List<QuestAdminUtilsPointDataParameter>();
+                    if (_adminUtilsChannel == null) continue;
+                    if (!await _adminUtilsChannel.Reader.WaitToReadAsync())
+                        continue;
 
-                    batchDict[item.Database].Add(item);
-                    batchCount++;
-                    Interlocked.Decrement(ref _pendingPointCount);
-                }
+                    var sender = await GetSenderInstanceAsync("adminUtils");
+                    var batchDict = new Dictionary<string, List<QuestAdminUtilsPointDataParameter>>();
+                    int batchCount = 0;
 
-                // Process each bucket's batch.
-                foreach (var kvp in batchDict)
-                {
-                    try
+                    while (_adminUtilsChannel.Reader.TryRead(out var item))
                     {
-                        foreach (var point in kvp.Value)
+                        if (!batchDict.ContainsKey(item.Database))
+                            batchDict[item.Database] = new List<QuestAdminUtilsPointDataParameter>();
+
+                        batchDict[item.Database].Add(item);
+                        batchCount++;
+                        Interlocked.Decrement(ref _pendingPointCount);
+                    }
+
+                    foreach (var kvp in batchDict)
+                    {
+                        try
                         {
-                            await QuestDBPointHelper.InsertAdminUtilsPoint(sender, point);
-                            Interlocked.Add(ref _flushedPointCount, 1);
+                            foreach (var point in kvp.Value)
+                            {
+                                await QuestDBPointHelper.InsertAdminUtilsPoint(sender, point);
+                                Interlocked.Add(ref _flushedPointCount, 1);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Error(ex, "Error writing batch to QuestDB");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex, "Error writing batch to QuestDB");
-                    }
-                }
 
-                await FlushSender(sender);
-                await Task.Delay(TimeSpan.FromSeconds(5));
+                    await FlushSender(sender);
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Error starting AdminUtilsWorkerLoop");
             }
         }
 
@@ -303,14 +310,40 @@ namespace UserTrackerShared.DBClients
 
         public static void AddPoint(QuestHistoryPointDataParameter pointParameters)
         {
-            _historyChannel?.Writer.TryWrite(pointParameters);
-            Interlocked.Increment(ref _pendingPointCount);
+            if (_historyChannel == null)
+            {
+                _logger.Warning("History channel is null, cannot add point");
+                return;
+            }
+
+            var written = _historyChannel.Writer.TryWrite(pointParameters);
+            if (written)
+            {
+                Interlocked.Increment(ref _pendingPointCount);
+            }
+            else
+            {
+                _logger.Warning("Failed to write to history channel - channel may be full or closed");
+            }
         }
 
         public static void AddPoint(QuestAdminUtilsPointDataParameter pointParameters)
         {
-            _adminUtilsChannel?.Writer.TryWrite(pointParameters);
-            Interlocked.Increment(ref _pendingPointCount);
+            if (_adminUtilsChannel == null)
+            {
+                _logger.Warning("AdminUtils channel is null, cannot add point");
+                return;
+            }
+
+            var written = _adminUtilsChannel.Writer.TryWrite(pointParameters);
+            if (written)
+            {
+                Interlocked.Increment(ref _pendingPointCount);
+            }
+            else
+            {
+                _logger.Warning("Failed to write to adminUtils channel - channel may be full or closed");
+            }
         }
 
         public static void UploadRoomHistoryData(string database, string shard, string room, long tick, long timestamp, string username, object obj)
@@ -468,7 +501,6 @@ namespace UserTrackerShared.DBClients
                     .Column("powerRank", user.PowerRank)
                     .AtAsync(DateTime.UtcNow);
 
-                _logger.Information("User {UserId} data uploaded successfully", user.Username);
                 Interlocked.Increment(ref _flushedPointCount);
                 await FlushSender(sender);
             }

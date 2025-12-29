@@ -129,7 +129,7 @@ namespace UserTrackerShared.Managers
                             try
                             {
                                 var roomData = kvp.Value;
-                                DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
+                                _ = DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
 
                                 if (!string.IsNullOrEmpty(roomData.UserId) && GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
                                 {
