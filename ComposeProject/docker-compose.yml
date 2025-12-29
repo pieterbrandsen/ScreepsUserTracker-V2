@@ -167,3 +167,15 @@ services:
             - internal
         restart: unless-stopped
         logging: *default-logging
+        healthcheck:
+            test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9001/api/query" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
+        environment:
+            - QUESTDB_PG_HOST=questdb
+            - QUESTDB_PG_PORT=8812
+            - QUESTDB_PG_USER=${QUESTDB_ADMIN_USER}
+            - QUESTDB_PG_PASSWORD=${QUESTDB_ADMIN_PASS}
+            - QUESTDB_PG_DATABASE=qdb

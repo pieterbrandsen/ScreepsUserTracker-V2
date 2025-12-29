@@ -2,14 +2,46 @@ import express from 'express';
 import axios from 'axios';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import http from 'http';
+import https from 'https';
+import pg from 'pg';
+
+const { Pool } = pg;
 
 const app = express();
-app.use(bodyParser.text({ type: '*/*', limit: '50mb' }));
+app.use(bodyParser.text({ type: '*/*', limit: '500mb' }));
 const PORT = 9001;
 const QUESTDB_URL = 'http://questdb:9000';
 
+const pgPool = new Pool({
+  host: process.env.QUESTDB_PG_HOST || 'questdb',
+  port: parseInt(process.env.QUESTDB_PG_PORT || '8812'),
+  user: process.env.QUESTDB_PG_USER,
+  password: process.env.QUESTDB_PG_PASSWORD,
+  database: process.env.QUESTDB_PG_DATABASE || 'qdb',
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 600000,
+  query_timeout: 600000,
+  statement_timeout: 600000
+});
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 300000,
+  maxSockets: 100,
+  maxFreeSockets: 10,
+  timeout: 600000
+});
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 300000,
+  maxSockets: 100,
+  maxFreeSockets: 10,
+  timeout: 600000
+});
+
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: '500mb' }));
 
 const globalDataTypeFilter = "AND shard IN ({{shards}})";
 const userDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}})";
@@ -28,15 +60,12 @@ ALIGN TO CALENDAR`,
 function parseLooseBody(bodyText) {
   if (!bodyText || typeof bodyText !== "string") return {};
 
-  // 1️⃣ Try valid JSON
   try {
     return JSON.parse(bodyText);
   } catch { }
 
   let normalized = bodyText;
 
-  // --- PREVENT date/time breakage ---
-  // Wrap timestamps temporarily with a placeholder
   const timestamps = [];
   normalized = normalized.replace(
     /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g,
@@ -47,7 +76,6 @@ function parseLooseBody(bodyText) {
     }
   );
 
-  // 2️⃣ Convert {a,b,c} → ["a","b","c"]
   normalized = normalized.replace(
     /:\s*\{([^}]*)\}/gs,
     (_, inner) => {
@@ -61,7 +89,6 @@ function parseLooseBody(bodyText) {
     }
   );
 
-  // 3️⃣ Quote bare values like shards: shard3
   normalized = normalized.replace(
     /:\s*([A-Za-z0-9_.\-]+)/g,
     (m, val) => {
@@ -70,10 +97,7 @@ function parseLooseBody(bodyText) {
     }
   );
 
-  // 4️⃣ Remove trailing commas
   normalized = normalized.replace(/,(\s*[\]}])/g, '$1');
-
-  // --- RESTORE timestamps ---
   normalized = normalized.replace(/"__TS(\d+)__"/g, (_, idx) => `"${timestamps[idx]}"`);
 
   try {
@@ -175,6 +199,9 @@ app.get('/api/query', (req, res) => {
 });
 
 app.post('/api/execute', async (req, res) => {
+  req.setTimeout(900000);
+  res.setTimeout(900000);
+  
   const params = parseLooseBody(req.body);
   params.metric = getMetric(params.usedDataType);
   let finalQuery = '';
@@ -191,19 +218,43 @@ app.post('/api/execute', async (req, res) => {
     }
 
     finalQuery = substituteParameters(baseQuery.query, params);
-    console.log('Executing Query:', finalQuery.trim());
-    const questResponse = await axios.get(`${QUESTDB_URL}/exec`, {
-      params: { query: finalQuery.trim() },
-      timeout: 30000
-    });
+    console.log('\r\n\r\nExecuting Query Length:', finalQuery.trim().length, 'chars');
+    const queryLength = finalQuery.trim().length;
+    
+    if (queryLength > 8000) {
+      console.log('Using PostgreSQL wire protocol (query too long for REST API)');
+      const pgResult = await pgPool.query(finalQuery.trim());
+      const dataArray = pgResult.rows.map(row => Object.values(row));
+      console.log(`Query executed successfully via PG, returned ${dataArray.length} rows.`);
+      
+      res.json({
+        executedQuery: finalQuery.trim(),
+        parameters: params,
+        data: transformData(params, dataArray)
+      });
+    } else {
+      console.log('Using REST API');
+      const questResponse = await axios.get(`${QUESTDB_URL}/exec`, {
+        params: { 
+          query: finalQuery.trim(),
+          count: true
+        },
+        timeout: 600000,
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        httpAgent: httpAgent,
+        httpsAgent: httpsAgent
+      });
+      
+      const dataArray = questResponse.data?.dataset || questResponse.data || [];
+      console.log(`Query executed successfully via REST, returned ${dataArray.length} rows.`);
 
-    const dataArray = questResponse.data?.dataset || questResponse.data || [];
-
-    res.json({
-      executedQuery: finalQuery.trim(),
-      parameters: params,
-      data: transformData(params, dataArray)
-    });
+      res.json({
+        executedQuery: finalQuery.trim(),
+        parameters: params,
+        data: transformData(params, dataArray)
+      });
+    }
   } catch (error) {
     console.error('Query execution error:', error.message);
     console.error('Executed Query:', finalQuery.trim());
@@ -249,7 +300,7 @@ app.get('/api/debug', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Query Middleware running on port ${PORT}`);
   console.log(`Available endpoints:`);
   console.log(`  GET /api/query - Get base query template info`);
@@ -258,3 +309,6 @@ app.listen(PORT, () => {
   console.log(`\nScreeps Base Query Template:`);
   console.log(`\nParameters: ${baseQuery.params.join(', ')}`);
 });
+server.timeout = 900000;
+server.keepAliveTimeout = 900000;
+server.headersTimeout = 910000;
