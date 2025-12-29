@@ -154,7 +154,7 @@ function substituteParameters(query, params) {
       let updatedValue = '';
       const dataFields = value.split(',').map(v => v.trim());
       for (let i = 0; i < dataFields.length; i++) {
-        updatedValue += `avg(${dataFields[i]}) AS ${dataNames[i]}`;
+        updatedValue += `avg(${dataFields[i]}) AS '${dataNames[i]}'`;
         if (i < dataFields.length - 1) {
           updatedValue += ', ';
         }
@@ -201,7 +201,7 @@ app.get('/api/query', (req, res) => {
 app.post('/api/execute', async (req, res) => {
   req.setTimeout(900000);
   res.setTimeout(900000);
-  
+
   const params = parseLooseBody(req.body);
   params.metric = getMetric(params.usedDataType);
   let finalQuery = '';
@@ -220,13 +220,13 @@ app.post('/api/execute', async (req, res) => {
     finalQuery = substituteParameters(baseQuery.query, params);
     console.log('\r\n\r\nExecuting Query Length:', finalQuery.trim().length, 'chars');
     const queryLength = finalQuery.trim().length;
-    
+
     if (queryLength > 8000) {
       console.log('Using PostgreSQL wire protocol (query too long for REST API)');
       const pgResult = await pgPool.query(finalQuery.trim());
       const dataArray = pgResult.rows.map(row => Object.values(row));
       console.log(`Query executed successfully via PG, returned ${dataArray.length} rows.`);
-      
+
       res.json({
         executedQuery: finalQuery.trim(),
         parameters: params,
@@ -235,7 +235,7 @@ app.post('/api/execute', async (req, res) => {
     } else {
       console.log('Using REST API');
       const questResponse = await axios.get(`${QUESTDB_URL}/exec`, {
-        params: { 
+        params: {
           query: finalQuery.trim(),
           count: true
         },
@@ -245,7 +245,7 @@ app.post('/api/execute', async (req, res) => {
         httpAgent: httpAgent,
         httpsAgent: httpsAgent
       });
-      
+
       const dataArray = questResponse.data?.dataset || questResponse.data || [];
       console.log(`Query executed successfully via REST, returned ${dataArray.length} rows.`);
 
