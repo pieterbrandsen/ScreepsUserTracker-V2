@@ -39,18 +39,23 @@ namespace UserTrackerShared.States
             }
 
             await UpdateUsersLeaderboard();
-            var onSetLeaderboardTimer = new CronWorker(
+            var updateLeaderboardWorker = new CronWorker(
                 "UpdateUsersLeaderboard",
-                "0 */6 * * *",
+                "* * * * *",
                 OnUpdateUsersLeaderboardTimer);
+            _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
+
 
             if (ConfigSettingsState.GetAllUsers)
             {
                 await GetAllUsers();
-                var onGetAllUsersTimer = new CronWorker(
+
+                var getAllUsersWorker = new CronWorker(
                     "GetAllUsers",
                     "0 0 0 1,11,21,31 * *",
                     OnGetAllUsersTimer);
+                _ = getAllUsersWorker.StartAsync(new CancellationTokenSource().Token);
+
             }
 
             if (ConfigSettingsState.StartsShards)
