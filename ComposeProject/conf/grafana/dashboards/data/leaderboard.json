@@ -135,7 +135,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_currentLeaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'gcl' and rank <= 10000000\r\n  SAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'gcl' and rank <= 10000000\r\n  SAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -244,7 +244,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_currentLeaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'power' and rank <= 10000000\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'power' and rank <= 10000000\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -366,7 +366,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historicalLeaderboard\r\nwhere type='gcl' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historical_leaderboard\r\nwhere type='gcl' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -475,7 +475,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historicalLeaderboard\r\nwhere type='power' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historical_leaderboard\r\nwhere type='power' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }

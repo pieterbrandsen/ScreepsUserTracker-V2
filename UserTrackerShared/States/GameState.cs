@@ -39,19 +39,18 @@ namespace UserTrackerShared.States
             }
 
             await UpdateUsersLeaderboard();
-            var onSetLeaderboardTimer = new TimerScheduleHelper(
+            var onSetLeaderboardTimer = new CronWorker(
                 "UpdateUsersLeaderboard",
-                OnUpdateUsersLeaderboardTimer,
-                [0, 6, 12, 18]);
+                "0 */6 * * *",
+                OnUpdateUsersLeaderboardTimer);
 
             if (ConfigSettingsState.GetAllUsers)
             {
                 await GetAllUsers();
-                var onGetAllUsersTimer = new TimerScheduleHelper(
+                var onGetAllUsersTimer = new CronWorker(
                     "GetAllUsers",
-                    OnGetAllUsersTimer,
-                    [0],
-                    daysOfMonth: [3, 10]);
+                    "0 0 0 1,11,21,31 * *",
+                    OnGetAllUsersTimer);
             }
 
             if (ConfigSettingsState.StartsShards)
@@ -84,7 +83,7 @@ namespace UserTrackerShared.States
             }
         }
 
-        public static async Task OnGetAllUsersTimer()
+        public static async Task OnGetAllUsersTimer(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -96,7 +95,7 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async Task OnUpdateUsersLeaderboardTimer()
+        private static async Task OnUpdateUsersLeaderboardTimer(CancellationToken cancellationToken = default)
         {
             try
             {
