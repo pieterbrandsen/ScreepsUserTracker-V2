@@ -41,7 +41,7 @@ namespace UserTrackerShared.States
             await UpdateUsersLeaderboard();
             var updateLeaderboardWorker = new CronWorker(
                 "UpdateUsersLeaderboard",
-                "* * * * *",
+                "0 */6 * * *",
                 OnUpdateUsersLeaderboardTimer);
             _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
 
