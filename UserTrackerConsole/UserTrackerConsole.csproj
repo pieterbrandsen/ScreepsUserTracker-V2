@@ -27,12 +27,12 @@
     <GCLatencyLevel>0</GCLatencyLevel>
   </PropertyGroup>
 
-  <PropertyGroup>
-      <AppConfig>$(APP_CONFIG_FILE)</AppConfig>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+      <AppConfig>App.Live.config</AppConfig>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(APP_CONFIG_FILE)' == ''">
-      <AppConfig>App.Live.config</AppConfig>
+  <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+      <AppConfig>App.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>
