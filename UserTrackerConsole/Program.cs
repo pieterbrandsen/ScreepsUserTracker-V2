@@ -1,15 +1,11 @@
-﻿using System;
-using UserTrackerShared.DBClients;
-using UserTrackerShared.States;
-using UserTrackerShared.Utilities;
+namespace UserTrackerConsole;
 
-
-ConfigSettingsState.Init();
-Screen.Init();
-DBClient.Init();
-await GameState.InitAsync();
-
-while (true)
+internal static class Program
 {
-    Thread.Sleep(10000); // Wait for 10 seconds
+    private static async Task<int> Main()
+    {
+        using var lifetime = new ConsoleLifetime();
+        var app = new ConsoleApp();
+        return await app.RunAsync(lifetime.Token);
+    }
 }
