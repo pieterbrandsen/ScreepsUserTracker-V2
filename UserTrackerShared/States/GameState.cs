@@ -41,7 +41,7 @@ namespace UserTrackerShared.States
             await UpdateUsersLeaderboard();
             var updateLeaderboardWorker = new CronWorker(
                 "UpdateUsersLeaderboard",
-                "* * * * *",
+                "0 */6 * * *",
                 OnUpdateUsersLeaderboardTimer);
             _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
 
@@ -52,7 +52,7 @@ namespace UserTrackerShared.States
 
                 var getAllUsersWorker = new CronWorker(
                     "GetAllUsers",
-                    "0 0 0 1,11,21,31 * *",
+                    "0 0 1,11,21,31 * *",
                     OnGetAllUsersTimer);
                 _ = getAllUsersWorker.StartAsync(new CancellationTokenSource().Token);
 
@@ -169,6 +169,8 @@ namespace UserTrackerShared.States
 
             var (gclLeaderboard, powerLeaderboard) = await ScreepsAPI.GetCurrentSeasonLeaderboard();
             _leaderboardLogger.Information("Fetched current season leaderboard data");
+
+            _leaderboardLogger.Information("Updating user data from gcl leaderboard entries");
             foreach (var leaderboardSpot in gclLeaderboard)
             {
                 if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
@@ -191,6 +193,7 @@ namespace UserTrackerShared.States
                 }
             }
 
+            _leaderboardLogger.Information("Updating user data from power leaderboard entries");
             foreach (var leaderboardSpot in powerLeaderboard)
             {
                 if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
@@ -212,8 +215,8 @@ namespace UserTrackerShared.States
                     _leaderboardLogger.Warning("User {UserId} not found when updating GCL leaderboard", leaderboardSpot.UserName);
                 }
             }
-            _leaderboardLogger.Information("Updating user GCL and Power ranks");
 
+            _leaderboardLogger.Information("Updating user GCL and Power ranks");
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
             var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
             int gclRank = 1;
@@ -235,7 +238,10 @@ namespace UserTrackerShared.States
                 }
                 powerRank += group.Count();
             }
+
+            _leaderboardLogger.Information("Writing all users to database");
             await WriteAllUsers();
+
             _leaderboardLogger.Information("Completed updating users leaderboard data");
         }
         private static async void OnUpdateAdminUtilsDataTimer()

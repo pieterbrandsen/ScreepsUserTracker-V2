@@ -33,7 +33,8 @@ namespace UserTrackerShared.Utilities
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.ScreepsAPI);
         private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
-        private static readonly SemaphoreSlim _normalThrottler = new(3);
+        private static readonly Dictionary<string, SemaphoreSlim> _pathThrottlers = new();
+        private static readonly object _throttlerLock = new();
 
         private static readonly HttpClient _normalHttpClient = new(new SocketsHttpHandler
         {
@@ -52,9 +53,25 @@ namespace UserTrackerShared.Utilities
             ConnectTimeout = TimeSpan.FromSeconds(10),
         });
 
-        private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request)
+        private static SemaphoreSlim GetThrottlerForPath(string path)
         {
-            await _normalThrottler.WaitAsync();
+            var pathWithoutQuery = path.Split('?')[0];
+
+            lock (_throttlerLock)
+            {
+                if (!_pathThrottlers.TryGetValue(pathWithoutQuery, out var throttler))
+                {
+                    throttler = new SemaphoreSlim(1);
+                    _pathThrottlers[pathWithoutQuery] = throttler;
+                }
+                return throttler;
+            }
+        }
+
+        private static async Task<(HttpResponseMessage? response, int retryCount)> ThrottledRequestAsync(HttpRequestMessage request, string path)
+        {
+            var throttler = GetThrottlerForPath(path);
+            await throttler.WaitAsync();
             try
             {
                 var retryCount = 0;
@@ -62,6 +79,7 @@ namespace UserTrackerShared.Utilities
                 int maxRetries = 5;
                 int delayMs = 200;
 
+                await Task.Delay(delayMs);
                 while (retryCount < maxRetries)
                 {
                     if (retryCount > 0)
@@ -72,6 +90,7 @@ namespace UserTrackerShared.Utilities
                     using (var clonedRequest = CloneHttpRequestMessage(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
+                        _logger.Information($"Request to {request.RequestUri} returned status code {(int)response.StatusCode} on attempt {retryCount + 1}");
                         if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500)
                             return (response, retryCount);
                     }
@@ -81,7 +100,7 @@ namespace UserTrackerShared.Utilities
             }
             finally
             {
-                _normalThrottler.Release();
+                throttler.Release();
             }
         }
 
@@ -161,7 +180,7 @@ namespace UserTrackerShared.Utilities
 
                     request.Headers.Add("X-Token", ScreepsAPIToken);
                     request.Headers.Add("X-Username", ScreepsAPIToken);
-                    (response, retryCount) = await ThrottledRequestAsync(request);
+                    (response, retryCount) = await ThrottledRequestAsync(request, path);
                 }
 
                 if (response?.IsSuccessStatusCode ?? false)
