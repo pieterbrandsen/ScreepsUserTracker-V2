@@ -27,7 +27,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AppConfig>App.Live.config</AppConfig>
+    <AppConfig Condition="Exists('App.Live.config')">App.Live.config</AppConfig>
+    <AppConfig Condition="!Exists('App.Live.config')">App.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>
