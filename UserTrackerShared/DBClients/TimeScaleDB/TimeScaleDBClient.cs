@@ -40,7 +40,7 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
 
 
-            Task.Run(LogStatusPeriodically);
+            // Task.Run(LogStatusPeriodically);
             //using var masterConn = new NpgsqlConnection(
             //                new NpgsqlConnectionStringBuilder
             //                {
@@ -203,17 +203,17 @@ namespace UserTrackerShared.DBClients.TimeScale
             }
         }
 
-        private static async Task LogStatusPeriodically()
-        {
-            while (true)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(10));
-                using var scope = _scopeFactory.CreateScope();
+        // private static async Task LogStatusPeriodically()
+        // {
+        //     while (true)
+        //     {
+        //         await Task.Delay(TimeSpan.FromSeconds(10));
+        //         using var scope = _scopeFactory.CreateScope();
 
-                var flushed = Interlocked.Exchange(ref _writtenDataCount, 0);
-                _logger.Information("Added {Flushed} rows in the last 10 seconds", flushed);
-            }
-        }
+        //         var flushed = Interlocked.Exchange(ref _writtenDataCount, 0);
+        //         _logger.Information("Added {Flushed} rows in the last 10 seconds", flushed);
+        //     }
+        // }
     }
 
 

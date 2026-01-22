@@ -6,7 +6,7 @@ namespace UserTrackerConsole;
 
 internal sealed class ConsoleApp
 {
-    public async Task<int> RunAsync(CancellationToken token)
+    public static async Task<int> RunAsync(CancellationToken token)
     {
         try
         {

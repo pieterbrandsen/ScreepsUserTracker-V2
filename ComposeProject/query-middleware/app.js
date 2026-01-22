@@ -15,7 +15,7 @@ const QUESTDB_URL = 'http://questdb:9000';
 
 const pgPool = new Pool({
   host: process.env.QUESTDB_PG_HOST || 'questdb',
-  port: parseInt(process.env.QUESTDB_PG_PORT || '8812'),
+  port: Number.parseInt(process.env.QUESTDB_PG_PORT || '8812'),
   user: process.env.QUESTDB_PG_USER,
   password: process.env.QUESTDB_PG_PASSWORD,
   database: process.env.QUESTDB_PG_DATABASE || 'qdb',
@@ -67,29 +67,29 @@ function parseLooseBody(bodyText) {
   let normalized = bodyText;
 
   const timestamps = [];
-  normalized = normalized.replace(
+  normalized = normalized.replaceAll(
     /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g,
     (match) => {
-      const matchWithoutZ = match.replace(/Z$/, '');
+      const matchWithoutZ = match.replaceAll(/Z$/, '');
       timestamps.push(matchWithoutZ);
       return `__TS${timestamps.length - 1}__`;
     }
   );
 
-  normalized = normalized.replace(
+  normalized = normalized.replaceAll(
     /:\s*\{([^}]*)\}/gs,
     (_, inner) => {
       const items = inner
         .split(/,(?![^"]*")/)
         .map(v => v.trim())
         .filter(Boolean)
-        .map(v => `"${v.replace(/^["']|["']$/g, '').replace(/"/g, '\\"')}"`)
+        .map(v => `"${v.replaceAll(/^["']|["']$/g, '').replaceAll(/"/g, '\\"')}"`)
         .join(',');
       return `: [${items}]`;
     }
   );
 
-  normalized = normalized.replace(
+  normalized = normalized.replaceAll(
     /:\s*([A-Za-z0-9_.\-]+)/g,
     (m, val) => {
       if (/^["[{]/.test(val)) return m;
@@ -97,8 +97,8 @@ function parseLooseBody(bodyText) {
     }
   );
 
-  normalized = normalized.replace(/,(\s*[\]}])/g, '$1');
-  normalized = normalized.replace(/"__TS(\d+)__"/g, (_, idx) => `"${timestamps[idx]}"`);
+  normalized = normalized.replaceAll(/,(\s*[\]}])/g, '$1');
+  normalized = normalized.replaceAll(/"__TS(\d+)__"/g, (_, idx) => `"${timestamps[idx]}"`);
 
   try {
     return JSON.parse(normalized);
@@ -113,9 +113,9 @@ function parseLooseBody(bodyText) {
 // Helper function to format array parameters for SQL IN clauses
 function formatArrayParam(value) {
   if (Array.isArray(value)) {
-    return value.map(v => `'${v.replace(/'/g, "''")}'`).join(',');
+    return value.map(v => `'${v.replaceAll(/'/g, "''")}'`).join(',');
   }
-  return `'${value.replace(/'/g, "''")}'`;
+  return `'${value.replaceAll(/'/g, "''")}'`;
 }
 
 function getMetric(usedDataType) {
@@ -135,11 +135,11 @@ function getMetric(usedDataType) {
 function substituteParameters(query, params) {
   let substituted = query;
   if (params.usedDataType === 'global') {
-    substituted = substituted.replace('{{usedDataTypeFilter}}', globalDataTypeFilter);
+    substituted = substituted.replaceAll('{{usedDataTypeFilter}}', globalDataTypeFilter);
   } else if (params.usedDataType === 'user') {
-    substituted = substituted.replace('{{usedDataTypeFilter}}', userDataTypeFilter);
+    substituted = substituted.replaceAll('{{usedDataTypeFilter}}', userDataTypeFilter);
   } else if (params.usedDataType === 'room') {
-    substituted = substituted.replace('{{usedDataTypeFilter}}', roomDataTypeFilter);
+    substituted = substituted.replaceAll('{{usedDataTypeFilter}}', roomDataTypeFilter);
   }
 
   Object.keys(params).forEach(key => {
@@ -161,7 +161,7 @@ function substituteParameters(query, params) {
       }
       value = updatedValue;
     }
-    substituted = substituted.replace(new RegExp(placeholder, 'g'), value);
+    substituted = substituted.replaceAll(new RegExp(placeholder, 'g'), value);
   });
 
   return substituted;

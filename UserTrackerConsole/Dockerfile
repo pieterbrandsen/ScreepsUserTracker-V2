@@ -24,7 +24,7 @@ COPY . .
 WORKDIR "/src/UserTrackerConsole"
 
 RUN echo "Build stage: APP_CONFIG_FILE=${APP_CONFIG_FILE}"
-RUN dotnet build "./UserTrackerConsole.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./UserTrackerConsole.csproj" -c "$BUILD_CONFIGURATION" -o /app/build
 
 # Publish stage (creates final output)
 FROM build AS publish
@@ -33,7 +33,7 @@ ARG APP_CONFIG_FILE
 ENV APP_CONFIG_FILE=${APP_CONFIG_FILE}
 
 RUN echo "Publish stage: APP_CONFIG_FILE=${APP_CONFIG_FILE}"
-RUN dotnet publish "./UserTrackerConsole.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./UserTrackerConsole.csproj" -c "$BUILD_CONFIGURATION" -o /app/publish /p:UseAppHost=false
 
 # Final runtime stage
 FROM base AS final

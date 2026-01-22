@@ -115,7 +115,7 @@ namespace UserTrackerShared.DBClients
             }
 
             // Start a background task to log status.
-            Task.Run(LogStatusPeriodically);
+            // Task.Run(LogStatusPeriodically);
 
             _logger.Information("Worker tasks started.");
         }
@@ -162,15 +162,15 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        private static async Task LogStatusPeriodically()
-        {
-            while (true)
-            {
-                await Task.Delay(TimeSpan.FromSeconds(10));
-                var flushed = Interlocked.Exchange(ref _flushedPointCount, 0);
-                _logger.Information("Flushed {Flushed} points in the last 10 seconds", flushed);
-            }
-        }
+        // private static async Task LogStatusPeriodically()
+        // {
+        //     while (true)
+        //     {
+        //         await Task.Delay(TimeSpan.FromSeconds(10));
+        //         var flushed = Interlocked.Exchange(ref _flushedPointCount, 0);
+        //         _logger.Information("Flushed {Flushed} points in the last 10 seconds", flushed);
+        //     }
+        // }
     }
 
     public static class GraphiteDBClientState
