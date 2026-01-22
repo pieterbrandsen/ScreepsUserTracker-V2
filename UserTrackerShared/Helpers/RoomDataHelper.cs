@@ -11,12 +11,23 @@ namespace UserTrackerShared.Helpers
     public static class RoomDataHelper
     {
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.Shard);
+        internal static Func<string, string, long, Task<(JObject?, HttpStatusCode)>> HistoryFetcher { get; set; } = ScreepsAPI.GetHistory;
+
+        internal static void SetHistoryFetcher(Func<string, string, long, Task<(JObject?, HttpStatusCode)>> fetcher)
+        {
+            HistoryFetcher = fetcher;
+        }
+
+        internal static void ResetHistoryFetcher()
+        {
+            HistoryFetcher = ScreepsAPI.GetHistory;
+        }
 
         public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom, ConcurrentDictionary<string, object> userLocks)
         {
             try
             {
-                var (roomData, Result) = await ScreepsAPI.GetHistory(shard, name, tick);
+                var (roomData, Result) = await HistoryFetcher(shard, name, tick);
                 if (roomData == null)
                 {
                     return (int)Result;
