@@ -25,7 +25,12 @@ namespace UserTracker.Tests.States
         }
         private static JObject ParseFile(string fileName)
         {
-            using var reader = new StreamReader(@"C:\Users\Pieter\source\repos\ScreepsUserTracker-V2\UserTracker.Tests\Files\"+fileName);
+            var filePath = Path.Combine(
+                AppContext.BaseDirectory,
+                "Files",
+                fileName
+            );
+            using var reader = new StreamReader(filePath);
             using var jsonReader = new JsonTextReader(reader);
             return JObject.Load(jsonReader);
         }
