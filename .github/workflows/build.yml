@@ -43,6 +43,6 @@ jobs:
         shell: powershell
         run: |
           .\.sonar\scanner\dotnet-sonarscanner begin /k:"pieterbrandsen_ScreepsUserTracker-V2" /o:"pieterbrandsen" /d:sonar.scanner.scanAll=false /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage/coverage.opencover.xml" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.scanner.scanAll=false
-          dotnet build
+          dotnet build -c Release
           dotnet test --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=TestResults/coverage/
           .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
