@@ -28,15 +28,12 @@
   </PropertyGroup>
 
   <PropertyGroup>
-      <AppConfig>App.Live.config</AppConfig>
+    <AppConfig Condition="Exists('App.Live.config')">App.Live.config</AppConfig>
+    <AppConfig Condition="!Exists('App.Live.config')">App.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
   </ItemGroup>
-
-  <Target Name="EnsureLiveConfig" BeforeTargets="Build" Condition="!Exists('App.Live.config') And Exists('App.config')">
-    <Copy SourceFiles="App.config" DestinationFiles="App.Live.config" SkipUnchangedFiles="true" />
-  </Target>
 
 </Project>
