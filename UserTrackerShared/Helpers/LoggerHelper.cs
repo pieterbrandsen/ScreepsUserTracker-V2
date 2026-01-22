@@ -11,7 +11,8 @@ namespace UserTrackerShared.Helpers
         {
             if (string.IsNullOrWhiteSpace(ConfigSettingsState.LogsFolder))
             {
-                throw new InvalidOperationException("Logs folder is not configured.");
+                ConfigSettingsState.LogsFolder = "/Logs";
+                //throw new InvalidOperationException("Logs folder is not configured.");
             }
             string logDirectory = Path.Combine(ConfigSettingsState.LogsFolder, category.ToString().ToLower());
             Directory.CreateDirectory(logDirectory);

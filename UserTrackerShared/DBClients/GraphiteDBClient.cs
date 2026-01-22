@@ -10,7 +10,13 @@ using UserTrackerShared.Utilities;
 
 namespace UserTrackerShared.DBClients
 {
-    public class GraphiteBatchClient : IDisposable
+    internal interface IGraphiteBatchClient
+    {
+        void AddMetric(string metricPath, double value, long timestamp);
+        void Flush();
+    }
+
+    public class GraphiteBatchClient : IDisposable, IGraphiteBatchClient
     {
         private readonly string _host;
         private readonly int _port;
@@ -88,10 +94,15 @@ namespace UserTrackerShared.DBClients
         private static readonly JsonSerializer _serializer = JsonSerializer.CreateDefault();
         private static readonly Serilog.ILogger _logger = Logger.GetLogger(LogCategory.GraphiteDB);
         private static bool _isInitialized = false;
-        private static GraphiteBatchClient _client = new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, ConfigSettingsState.GraphiteDbPort);
+        private static IGraphiteBatchClient _client = CreateDefaultClient();
 
         // Counters for statistics.
         private static long _flushedPointCount = 0;
+
+        private static IGraphiteBatchClient CreateDefaultClient()
+        {
+            return new GraphiteBatchClient(ConfigSettingsState.GraphiteDbHost, ConfigSettingsState.GraphiteDbPort);
+        }
 
         public static void Init()
         {
@@ -150,20 +161,32 @@ namespace UserTrackerShared.DBClients
                 _serializer.Serialize(writer, obj);
                 JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
 
-                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
-                {
-                    _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
-                }
-                Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error in UploadData");
-            }
+        foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
+        {
+            _client.AddMetric($"{prefix}{shard}.{username}.{room}.{kvp.Key}", Convert.ToInt64(kvp.Value), timestamp);
+        }
+        Interlocked.Add(ref _flushedPointCount, flattenedData.Count);
+    }
+    catch (Exception ex)
+    {
+        _logger.Error(ex, "Error in UploadData");
+    }
+}
+
+        internal static void SetClientForTesting(IGraphiteBatchClient client)
+        {
+            _client = client;
         }
 
-        // private static async Task LogStatusPeriodically()
-        // {
+        internal static void ResetClientForTesting()
+        {
+            _client = CreateDefaultClient();
+            Interlocked.Exchange(ref _flushedPointCount, 0);
+            _isInitialized = false;
+        }
+
+// private static async Task LogStatusPeriodically()
+// {
         //     while (true)
         //     {
         //         await Task.Delay(TimeSpan.FromSeconds(10));
