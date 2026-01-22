@@ -11,11 +11,13 @@ namespace UserTracker.HistoryFileTesterConsole
             PendingPartsFolder = Path.Combine(BaseFolder, "PendingZipParts");
             FinishedPartsFolder = Path.Combine(BaseFolder, "FinishedZipParts");
             RepackFolder = Path.Combine(BaseFolder, "Repack");
+            FailedZipsFolder = Path.Combine(BaseFolder, "FailedZips");
 
             Console.WriteLine($"Initializing ZipPartHandler with base folder: {baseFolder}");
             Console.WriteLine($"  - PendingPartsFolder: {PendingPartsFolder}");
             Console.WriteLine($"  - FinishedPartsFolder: {FinishedPartsFolder}");
             Console.WriteLine($"  - RepackFolder: {RepackFolder}");
+            Console.WriteLine($"  - FailedZipsFolder: {FailedZipsFolder}");
 
             if (!Directory.Exists(PendingPartsFolder))
             {
@@ -27,6 +29,11 @@ namespace UserTracker.HistoryFileTesterConsole
                 Directory.CreateDirectory(FinishedPartsFolder);
                 Console.WriteLine($"Created FinishedPartsFolder");
             }
+            if (!Directory.Exists(FailedZipsFolder))
+            {
+                Directory.CreateDirectory(FailedZipsFolder);
+                Console.WriteLine($"Created FailedZipsFolder");
+            }
 
             ExecuteRepackOfZips();
         }
@@ -35,6 +42,7 @@ namespace UserTracker.HistoryFileTesterConsole
         private static string PendingPartsFolder { get; set; } = string.Empty;
         private static string FinishedPartsFolder { get; set; } = string.Empty;
         private static string RepackFolder { get; set; } = string.Empty;
+        private static string FailedZipsFolder { get; set; } = string.Empty;
 
         private static string GenerateHashForFiles(string tempFolder, List<string> files)
         {
@@ -84,8 +92,8 @@ namespace UserTracker.HistoryFileTesterConsole
                 File.Move(path, backupZipPath);
                 originalZipMoved = true;
 
-                //var historyFolder = new HistoryFolderClass(BaseFolder, targetLocation);
-                //await historyFolder.Start();
+                var historyFolder = new HistoryFolderClass(BaseFolder, targetLocation);
+                await historyFolder.Start();
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Creating finished zip");
                 await System.IO.Compression.ZipFile.CreateFromDirectoryAsync(targetLocation, finishedPartPath, System.IO.Compression.CompressionLevel.Optimal, false);
@@ -94,7 +102,17 @@ namespace UserTracker.HistoryFileTesterConsole
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Cleaning up temporary files");
                 Directory.Delete(targetLocation, true);
-                File.Delete(backupZipPath);
+
+                if (historyFolder.HadBadFiles)
+                {
+                    var failedZipPath = GetFailedZipPath(Path.GetFileName(path));
+                    File.Move(backupZipPath, failedZipPath);
+                    Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Moved original zip to FailedZips: {Path.GetFileName(failedZipPath)}");
+                }
+                else
+                {
+                    File.Delete(backupZipPath);
+                }
 
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] ✓ Finished handling zip part: {fileNameWithoutExtension}");
             }
@@ -133,6 +151,20 @@ namespace UserTracker.HistoryFileTesterConsole
 
                 throw;
             }
+        }
+
+        private static string GetFailedZipPath(string originalFileName)
+        {
+            var failedZipPath = Path.Combine(FailedZipsFolder, originalFileName);
+            if (!File.Exists(failedZipPath))
+            {
+                return failedZipPath;
+            }
+
+            var name = Path.GetFileNameWithoutExtension(originalFileName);
+            var ext = Path.GetExtension(originalFileName);
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
+            return Path.Combine(FailedZipsFolder, $"{name}_{timestamp}{ext}");
         }
 
         public static List<string> GetPendingParts()

@@ -10,8 +10,8 @@ namespace UserTrackerShared.Helpers
 {
     public static class FileWriterManager
     {
-        private static readonly string HistoryDirectoryPath = @$"{ConfigSettingsState.ObjectsFolder}\History";
-        private static readonly string KeysDirectoryPath = @$"{ConfigSettingsState.ObjectsFolder}\Keys";
+        private static string HistoryDirectoryPath => Path.Combine(ConfigSettingsState.ObjectsFolder, "History");
+        private static string KeysDirectoryPath => Path.Combine(ConfigSettingsState.ObjectsFolder, "Keys");
 
         private static readonly ConcurrentDictionary<string, JObject> HistoryCache = new();
 

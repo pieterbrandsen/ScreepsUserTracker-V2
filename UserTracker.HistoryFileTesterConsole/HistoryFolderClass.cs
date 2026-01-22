@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Threading;
 using System.Timers;
 using UserTracker.Tests.RoomHistory;
 using UserTrackerShared.Helpers;
@@ -30,6 +31,9 @@ namespace UserTracker.HistoryFileTesterConsole
         private readonly HashSet<string> _badFiles = new HashSet<string>();
         private readonly ConcurrentDictionary<string, int> _badFileErrorCounts = new ConcurrentDictionary<string, int>();
         private readonly ConcurrentDictionary<string, long> _seenPropertiesDict = new ConcurrentDictionary<string, long>();
+        private int _badFilesFoundThisRun = 0;
+
+        public bool HadBadFiles => _badFilesFoundThisRun > 0;
 
         private void LoadExistingErrorCounts(string path)
         {
@@ -63,7 +67,7 @@ namespace UserTracker.HistoryFileTesterConsole
             _seenPropertiesPath = Path.Combine(basePath, "seenProperties.txt");
             _badFilesErrorsPath = Path.Combine(basePath, "badErrors.txt");
 
-            _historyFilesLocation = Path.Combine(readFolder, "History");
+            _historyFilesLocation = readFolder;
             _goodFilesPath = Path.Combine(readFolder, "good.txt");
 
             if (!Directory.Exists(_historyFilesLocation))
@@ -104,7 +108,7 @@ namespace UserTracker.HistoryFileTesterConsole
                     .SelectMany(subdir => Directory.EnumerateFiles(subdir)))
                 .OrderBy(File.GetCreationTimeUtc)
                 .Where(file =>
-                (HistoryConfigSettingsState.InluceGoodFiles && _goodFiles.Contains(file))
+                (HistoryConfigSettingsState.IncludeGoodFiles && _goodFiles.Contains(file))
                 || (HistoryConfigSettingsState.IncludeBadFiles && _badFiles.Contains(file))
                 || (HistoryConfigSettingsState.IncludeUnknownFiles && !_goodFiles.Contains(file) && !_badFiles.Contains(file)))
                 .ToList();
@@ -112,7 +116,7 @@ namespace UserTracker.HistoryFileTesterConsole
             var filesCount = _files.Count();
             Console.WriteLine($"Found {filesCount} files to parse in {readFolder}, started at {DateTime.Now.ToLongTimeString()}");
 
-            Timer? onSave = new Timer(60 * 1000);
+            Timer? onSave = new Timer(1 * 1000);
             onSave.Elapsed += OnSaveTimer;
             onSave.AutoReset = true;
             onSave.Enabled = true;
@@ -215,6 +219,7 @@ namespace UserTracker.HistoryFileTesterConsole
             }
             catch (Exception e)
             {
+                Interlocked.Increment(ref _badFilesFoundThisRun);
                 _linesToBeWrittenBad.Add(file);
                 _badFileErrorCounts.AddOrUpdate(
                    e.Message + Environment.NewLine + e.StackTrace,

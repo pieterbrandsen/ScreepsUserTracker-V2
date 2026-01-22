@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+using System;
 using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using UserTrackerShared.Helpers;
+using AppSettingsReader = UserTrackerShared.Helpers.AppSettingsReader;
 
 namespace UserTrackerShared.States
 {
@@ -57,57 +54,55 @@ namespace UserTrackerShared.States
 
         public static void Init()
         {
-            Init(ConfigurationManager.AppSettings);
+            Init(new AppSettingsReader(ConfigurationManager.AppSettings));
         }
 
-        private static void Init(NameValueCollection appSettings)
+        private static void Init(AppSettingsReader reader)
         {
-            RunningHistoryTested = Convert.ToBoolean(appSettings["RUNNING_HISTORY_TESTED"]);
+            RunningHistoryTested = reader.GetRequiredBool("RUNNING_HISTORY_TESTED");
 
-            ScreepsToken = appSettings["SCREEPS_API_TOKEN"] ?? "";
-            ScreepsHttpsUrl = appSettings["SCREEPS_API_HTTPS_URL"] ?? "";
-            ScreepsHttpUrl = appSettings["SCREEPS_API_HTTP_URL"] ?? "";
+            ScreepsToken = reader.GetString("SCREEPS_API_TOKEN");
+            ScreepsHttpsUrl = reader.GetString("SCREEPS_API_HTTPS_URL");
+            ScreepsHttpUrl = reader.GetString("SCREEPS_API_HTTP_URL");
             ScreepsIsPrivateServer = ScreepsHttpsUrl != "https://screeps.com";
-            ScreepsUsername = appSettings["SCREEPS_API_USERNAME"] ?? "";
-            ScreepsPassword = appSettings["SCREEPS_API_PASSWORD"] ?? "";
-            ScreepsShardName = appSettings["SCREEPS_SHARDNAME"] ?? "";
+            ScreepsUsername = reader.GetString("SCREEPS_API_USERNAME");
+            ScreepsPassword = reader.GetString("SCREEPS_API_PASSWORD");
+            ScreepsShardName = reader.GetString("SCREEPS_SHARDNAME");
 
-            ServerName = appSettings["SERVER_NAME"] ?? "";
+            ServerName = reader.GetString("SERVER_NAME");
 
-            InfluxDbEnabled = Convert.ToBoolean(appSettings["INFLUXDB_ENABLED"]);
-            InfluxDbHost = appSettings["INFLUXDB_HOST"] ?? "";
-            InfluxDbToken = appSettings["INFLUXDB_TOKEN"] ?? "";
+            InfluxDbEnabled = reader.GetRequiredBool("INFLUXDB_ENABLED");
+            InfluxDbHost = reader.GetString("INFLUXDB_HOST");
+            InfluxDbToken = reader.GetString("INFLUXDB_TOKEN");
 
-            GraphiteDbEnabled = Convert.ToBoolean(appSettings["GRAPHITE_ENABLED"]);
-            GraphiteDbHost = appSettings["GRAPHITE_HOST"] ?? "";
-            GraphiteDbPort = Convert.ToInt32(appSettings["GRAPHITE_PORT"] ?? "");
+            GraphiteDbEnabled = reader.GetRequiredBool("GRAPHITE_ENABLED");
+            GraphiteDbHost = reader.GetString("GRAPHITE_HOST");
+            GraphiteDbPort = reader.GetRequiredInt("GRAPHITE_PORT");
 
-            TimeScaleDbEnabled = Convert.ToBoolean(appSettings["TIMESCALE_ENABLED"]);
-            TimeScaleDbHost = appSettings["TIMESCALE_HOST"] ?? "";
-            TimeScaleDbPort = Convert.ToInt32(appSettings["TIMESCALE_PORT"] ?? "");
-            TimeScaleDbDBName = appSettings["TIMESCALE_DB"] ?? "";
-            TimeScaleDbUser = appSettings["TIMESCALE_USERNAME"] ?? "";
-            TimeScaleDbPassword = appSettings["TIMESCALE_PASSWORD"] ?? "";
+            TimeScaleDbEnabled = reader.GetRequiredBool("TIMESCALE_ENABLED");
+            TimeScaleDbHost = reader.GetString("TIMESCALE_HOST");
+            TimeScaleDbPort = reader.GetRequiredInt("TIMESCALE_PORT");
+            TimeScaleDbDBName = reader.GetString("TIMESCALE_DB");
+            TimeScaleDbUser = reader.GetString("TIMESCALE_USERNAME");
+            TimeScaleDbPassword = reader.GetString("TIMESCALE_PASSWORD");
 
-            QuestDbEnabled = Convert.ToBoolean(appSettings["QUESTDB_ENABLED"]);
-            QuestDbHost = appSettings["QUESTDB_HOST"] ?? "";
-            QuestDbPort = Convert.ToInt32(appSettings["QUESTDB_PORT"] ?? "");
-            QuestDbUser = appSettings["QUESTDB_USERNAME"] ?? "";
-            QuestDbPassword = appSettings["QUESTDB_PASSWORD"] ?? "";
+            QuestDbEnabled = reader.GetRequiredBool("QUESTDB_ENABLED");
+            QuestDbHost = reader.GetString("QUESTDB_HOST");
+            QuestDbPort = reader.GetRequiredInt("QUESTDB_PORT");
+            QuestDbUser = reader.GetString("QUESTDB_USERNAME");
+            QuestDbPassword = reader.GetString("QUESTDB_PASSWORD");
 
-            PullBackwardsTickAmount = Convert.ToInt32(appSettings["PULL_BACKWARDS_TICK_AMOUNT"]);
-            TicksInFile = Convert.ToInt32(appSettings["TICKS_IN_FILE"]);
-            TicksInObject = Convert.ToInt32(appSettings["TICKS_IN_OBJECT"]);
-            GetAllUsers = Convert.ToBoolean(appSettings["GET_ALL_USERS"]);
-            StartsShards = Convert.ToBoolean(appSettings["START_SHARDS"]);
-            LogsFolder = appSettings["LOGS_FOLDER"] ?? "";
-            if (LogsFolder == "") throw new ArgumentException("No logs folder provided");
-            ObjectsFolder = appSettings["OBJECTS_FOLDER"] ?? "";
-            if (ObjectsFolder == "") throw new ArgumentException("No objects folder provided");
+            PullBackwardsTickAmount = reader.GetRequiredInt("PULL_BACKWARDS_TICK_AMOUNT");
+            TicksInFile = reader.GetRequiredInt("TICKS_IN_FILE");
+            TicksInObject = reader.GetRequiredInt("TICKS_IN_OBJECT");
+            GetAllUsers = reader.GetRequiredBool("GET_ALL_USERS");
+            StartsShards = reader.GetRequiredBool("START_SHARDS");
+            LogsFolder = reader.GetRequiredString("LOGS_FOLDER");
+            ObjectsFolder = reader.GetRequiredString("OBJECTS_FOLDER");
 
-            WriteHistoryFiles = Convert.ToBoolean(appSettings["WRITE_HISTORY_FILES"]);
-            WriteHistoryProperties = Convert.ToBoolean(appSettings["WRITE_HISTORY_PROPERTIES"]);
-            LiveAssertRoomHistory = Convert.ToBoolean(appSettings["LIVE_ASSERT_ROOM_HISTORY"]);
+            WriteHistoryFiles = reader.GetRequiredBool("WRITE_HISTORY_FILES");
+            WriteHistoryProperties = reader.GetRequiredBool("WRITE_HISTORY_PROPERTIES");
+            LiveAssertRoomHistory = reader.GetRequiredBool("LIVE_ASSERT_ROOM_HISTORY");
         }
 
         public static void InitTest(AppSettingsSection appSettingsSection)

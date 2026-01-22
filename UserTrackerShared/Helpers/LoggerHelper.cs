@@ -1,5 +1,3 @@
-﻿using Serilog;
-
 namespace UserTrackerShared.Helpers
 {
     using Serilog;
@@ -11,7 +9,7 @@ namespace UserTrackerShared.Helpers
     {
         public static ILogger GetLogger(LogCategory category)
         {
-            if (ConfigSettingsState.LogsFolder == null)
+            if (string.IsNullOrWhiteSpace(ConfigSettingsState.LogsFolder))
             {
                 throw new InvalidOperationException("Logs folder is not configured.");
             }
@@ -25,7 +23,7 @@ namespace UserTrackerShared.Helpers
                     logFilePath,
                     rollingInterval: RollingInterval.Day,  // Create a new file each day
                     retainedFileCountLimit: 31,             // Keep last 31 log files
-                    fileSizeLimitBytes: 100_000_000,        // Max 20MB per file
+                    fileSizeLimitBytes: 100_000_000,        // Max 100MB per file
                     shared: true,                         // Allow multiple processes to log
                     flushToDiskInterval: TimeSpan.FromSeconds(1) // Flush logs quickly
                 )

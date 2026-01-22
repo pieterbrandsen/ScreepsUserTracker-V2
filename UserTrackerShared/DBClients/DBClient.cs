@@ -1,8 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Reactive;
 using UserTrackerShared.DBClients.TimeScale;
 using UserTrackerShared.DBClients.TimeScaleDB;
 using UserTrackerShared.Models;
@@ -16,6 +15,11 @@ namespace UserTrackerShared.DBClients
     {
         public static void Init()
         {
+            InitAsync().GetAwaiter().GetResult();
+        }
+
+        public static async Task InitAsync()
+        {
             if (ConfigSettingsState.InfluxDbEnabled)
             {
                 InfluxDBClientWriter.Init();
@@ -26,8 +30,8 @@ namespace UserTrackerShared.DBClients
             }
             if (ConfigSettingsState.TimeScaleDbEnabled)
             {
-                Task.Delay(30000).Wait();
-                var connString = $"Host={ConfigSettingsState.TimeScaleDbHost};Port={ConfigSettingsState.TimeScaleDbPort};Database={ConfigSettingsState.TimeScaleDbDBName};Username={ConfigSettingsState.TimeScaleDbUser};Password={ConfigSettingsState.TimeScaleDbPassword};";
+                await Task.Delay(TimeSpan.FromSeconds(30));
+                var connString = BuildTimeScaleConnectionString();
                 Screen.AddLog($"TimeScaleDB Connection String: {connString}");
                 var host = Host.CreateDefaultBuilder()
                     .ConfigureLogging(logging =>
@@ -51,6 +55,11 @@ namespace UserTrackerShared.DBClients
             {
                 QuestDBClientWriter.Init();
             }
+        }
+
+        private static string BuildTimeScaleConnectionString()
+        {
+            return $"Host={ConfigSettingsState.TimeScaleDbHost};Port={ConfigSettingsState.TimeScaleDbPort};Database={ConfigSettingsState.TimeScaleDbDBName};Username={ConfigSettingsState.TimeScaleDbUser};Password={ConfigSettingsState.TimeScaleDbPassword};";
         }
 
         public static async Task WriteScreepsRoomHistory(string shard, string room, long tick, long timestamp, ScreepsRoomHistoryDto screepsRoomHistory)
@@ -155,15 +164,6 @@ namespace UserTrackerShared.DBClients
 
         public static async Task WriteCurrentLeaderboardData(SeasonListItem seasonItem)
         {
-            if (ConfigSettingsState.InfluxDbEnabled)
-            {
-            }
-            if (ConfigSettingsState.GraphiteDbEnabled)
-            {
-            }
-            if (ConfigSettingsState.TimeScaleDbEnabled)
-            {
-            }
             if (ConfigSettingsState.QuestDbEnabled)
             {
                 await QuestDBClientState.WriteCurrentLeaderboardData(seasonItem);

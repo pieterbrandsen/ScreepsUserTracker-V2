@@ -1,18 +1,13 @@
-﻿using UserTracker.HistoryFileTesterConsole;
-using UserTrackerShared.DBClients;
 using UserTrackerShared.Helpers;
-using UserTrackerShared.States;
 
-ConfigSettingsState.Init();
-HistoryConfigSettingsState.Init();
-DBClient.Init();
+namespace UserTracker.HistoryFileTesterConsole;
 
-var baseDirectory = HistoryConfigSettingsState.HistoryBasePath;
-ZipPartHandler.Initialize(baseDirectory);
-
-var pendingParts = ZipPartHandler.GetPendingParts();
-foreach (var part in pendingParts)
+internal static class Program
 {
-   await ZipPartHandler.Handle(part);
+    private static async Task<int> Main()
+    {
+        using var lifetime = new ConsoleLifetime();
+        var app = new HistoryFileTesterApp();
+        return await app.RunAsync(lifetime.Token);
+    }
 }
-Console.ReadLine();

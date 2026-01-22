@@ -1,6 +1,6 @@
-namespace UserTrackerConsole;
+namespace UserTrackerShared.Helpers;
 
-internal sealed class ConsoleLifetime : IDisposable
+public sealed class ConsoleLifetime : IDisposable
 {
     private readonly CancellationTokenSource _cts = new();
     private bool _disposed;

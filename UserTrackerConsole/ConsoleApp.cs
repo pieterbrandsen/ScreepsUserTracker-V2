@@ -10,7 +10,7 @@ internal sealed class ConsoleApp
     {
         try
         {
-            Initialize();
+            await InitializeAsync();
             await GameState.InitAsync();
             await WaitForShutdownAsync(token);
             return 0;
@@ -26,11 +26,11 @@ internal sealed class ConsoleApp
         }
     }
 
-    private static void Initialize()
+    private static async Task InitializeAsync()
     {
         ConfigSettingsState.Init();
         Screen.Init();
-        DBClient.Init();
+        await DBClient.InitAsync();
     }
 
     private static Task WaitForShutdownAsync(CancellationToken token)

@@ -24,11 +24,11 @@ namespace UserTrackerShared.States
 
                 Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
 
-                OnUpdateAdminUtilsDataTimer();
+                _ = OnUpdateAdminUtilsDataTimerAsync();
                 var onSetAdminUtilsDataTimer = new Timer(60 * 1000);
                 onSetAdminUtilsDataTimer.AutoReset = true;
                 onSetAdminUtilsDataTimer.Enabled = true;
-                onSetAdminUtilsDataTimer.Elapsed += (s, e) => OnUpdateAdminUtilsDataTimer();
+                onSetAdminUtilsDataTimer.Elapsed += (s, e) => _ = OnUpdateAdminUtilsDataTimerAsync();
             }
             else
             {
@@ -244,7 +244,7 @@ namespace UserTrackerShared.States
 
             _leaderboardLogger.Information("Completed updating users leaderboard data");
         }
-        private static async void OnUpdateAdminUtilsDataTimer()
+        private static async Task OnUpdateAdminUtilsDataTimerAsync()
         {
             _leaderboardLogger.Information("Updating admin utils data");
             var adminUtilsResponse = await ScreepsAPI.GetAdminUtilsStats();

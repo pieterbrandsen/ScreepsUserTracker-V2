@@ -87,7 +87,7 @@ namespace UserTrackerShared.Utilities
                         await Task.Delay(delayMs);
                     }
 
-                    using (var clonedRequest = CloneHttpRequestMessage(request))
+                    using (var clonedRequest = await CloneHttpRequestMessageAsync(request))
                     {
                         response = await _normalHttpClient.SendAsync(clonedRequest);
                         _logger.Information($"Request to {request.RequestUri} returned status code {(int)response.StatusCode} on attempt {retryCount + 1}");
@@ -104,7 +104,7 @@ namespace UserTrackerShared.Utilities
             }
         }
 
-        public static HttpRequestMessage CloneHttpRequestMessage(HttpRequestMessage request)
+        private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request)
         {
             var clone = new HttpRequestMessage(request.Method, request.RequestUri)
             {
@@ -118,7 +118,7 @@ namespace UserTrackerShared.Utilities
 
             if (request.Content != null)
             {
-                var contentBytes = request.Content.ReadAsByteArrayAsync().Result;
+                var contentBytes = await request.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
                 clone.Content = new ByteArrayContent(contentBytes);
 
                 foreach (var header in request.Content.Headers)

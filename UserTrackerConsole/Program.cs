@@ -1,3 +1,5 @@
+using UserTrackerShared.Helpers;
+
 namespace UserTrackerConsole;
 
 internal static class Program
