@@ -27,7 +27,7 @@ namespace UserTracker.Tests.Patcher
         {
             var configFileMap = new ExeConfigurationFileMap
             {
-                ExeConfigFilename = "App.Live.Config"
+                ExeConfigFilename = "App.Config"
             };
             var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
             ConfigSettingsState.InitTest(configuration.AppSettings);
