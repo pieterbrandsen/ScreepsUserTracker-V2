@@ -27,16 +27,16 @@
     <GCLatencyLevel>0</GCLatencyLevel>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+  <PropertyGroup>
       <AppConfig>App.Live.config</AppConfig>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
-      <AppConfig>App.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\UserTrackerShared\UserTrackerShared.csproj" />
   </ItemGroup>
+
+  <Target Name="EnsureLiveConfig" BeforeTargets="Build" Condition="!Exists('App.Live.config') And Exists('App.config')">
+    <Copy SourceFiles="App.config" DestinationFiles="App.Live.config" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
