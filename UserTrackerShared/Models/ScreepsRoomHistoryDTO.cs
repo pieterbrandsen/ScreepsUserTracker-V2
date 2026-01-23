@@ -509,7 +509,7 @@ namespace UserTrackerShared.Models
                 }
             }
         }
-        
+
         public void ProcessCreeps(ScreepsRoomHistory his)
         {
             Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.ConvertCreeps(his.Creeps.OwnedCreeps.Values.ToList<BaseCreep>(), Creeps.OwnedCreeps);
