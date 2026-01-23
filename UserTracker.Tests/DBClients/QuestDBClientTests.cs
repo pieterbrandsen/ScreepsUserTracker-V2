@@ -1,19 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using QuestDB.Senders;
 using QuestDB.Utils;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UserTrackerShared.DBClients;
 using UserTrackerShared.Models;
 using UserTrackerShared.Models.Db;
+using UserTrackerShared.Helpers;
+using UserTrackerShared.States;
 using Xunit;
 
 namespace UserTracker.Tests.DBClients
 {
     public class QuestDBClientTests
     {
+        private static bool _configInitialized;
+
         [Fact]
         public void QuestDBDtoHelper_GetStructureCounts_CalculatesExpectedTotals()
         {
@@ -64,6 +73,34 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(2, structureCounts["terminal"]);
             Assert.Equal(2, structureCounts["tower"]);
             Assert.Equal(1, structureCounts["nuker"]);
+        }
+
+        [Fact]
+        public void QuestDBDtoHelper_IncludesControllerMineralAndDepositCounts()
+        {
+            var history = new ScreepsRoomHistoryDto();
+            history.Structures.Controller.UserId = "player";
+            history.Structures.Mineral.Count = 1;
+            history.Structures.Deposit.Count = 1;
+
+            var (_, _, structureCounts) = QuestDBDtoHelper.GetStructureCounts(history);
+
+            Assert.Equal(1, structureCounts["controller"]);
+            Assert.Equal(1, structureCounts["mineral"]);
+            Assert.Equal(1, structureCounts["deposit"]);
+        }
+
+        [Fact]
+        public void QuestDBClientState_GetQuestDBDto_CalculatesControllerPointsPerTick()
+        {
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            var history = new ScreepsRoomHistoryDto();
+            history.Structures.Controller.Upgraded = 123;
+
+            var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
+            Assert.Equal(123, dto.ControllerPointsPerTick);
         }
 
         [Fact]
@@ -164,6 +201,46 @@ namespace UserTracker.Tests.DBClients
         }
 
         [Fact]
+        public void QuestDBDtoHelper_GetCreepIntentsCounts_ReturnsAllIntentKeys()
+        {
+            var history = new ScreepsRoomHistoryDto();
+            var log = history.Creeps.OwnedCreeps.ActionLog;
+            log.Attack.Count = 1;
+            log.Attacked.Count = 1;
+            log.RangedAttack.Count = 1;
+            log.RangedMassAttack.Count = 1;
+            log.RangedHeal.Count = 1;
+            log.Heal.Count = 1;
+            log.Healed.Count = 1;
+            log.Harvest.Count = 1;
+            log.Repair.Count = 1;
+            log.Build.Count = 1;
+            log.UpgradeController.Count = 1;
+            log.Move.Count = 1;
+            log.Say.Count = 1;
+            log.ReserveController.Count = 1;
+            log.AttackController.Count = 1;
+            log.Produce.Count = 1;
+            log.TransferEnergy.Count = 1;
+            log.RunReaction.Count = 1;
+            log.ReverseReaction.Count = 1;
+            log.Spawned.Count = 1;
+            log.Power.Count = 1;
+
+            var (_, counts) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
+            var expectedKeys = new[]
+            {
+                "attack", "attacked", "ranged_attack", "ranged_mass_attacked",
+                "ranged_heal", "heal", "healed", "harvest", "repair", "build",
+                "upgrade_controller", "move", "say", "reserve_controller",
+                "attack_controller", "produce", "transfer_energy",
+                "run_reaction", "reverse_reaction", "spawned", "power"
+            };
+
+            Assert.Equal(expectedKeys.OrderBy(k => k), counts.Keys.OrderBy(k => k));
+        }
+
+        [Fact]
         public void QuestDBDtoHelper_GetRoomCounts_DetectsReservedAndOtherRooms()
         {
             var reservedHistory = new ScreepsRoomHistoryDto();
@@ -225,6 +302,50 @@ namespace UserTracker.Tests.DBClients
         }
 
         [Fact]
+        public void QuestDBDtoHelper_GetStructureStoreCounts_IncludesEveryPart()
+        {
+            var expectedValues = new Dictionary<string, int>
+            {
+                ["energy"] = 10,
+                ["battery"] = 20,
+                ["h"] = 1,
+                ["o"] = 2,
+                ["u"] = 3,
+                ["l"] = 4,
+                ["k"] = 5,
+                ["z"] = 6,
+                ["x"] = 7,
+                ["g"] = 8,
+                ["power"] = 11,
+                ["ops"] = 12
+            };
+
+            var store = new Store
+            {
+                energy = expectedValues["energy"],
+                battery = expectedValues["battery"],
+                H = expectedValues["h"],
+                O = expectedValues["o"],
+                U = expectedValues["u"],
+                L = expectedValues["l"],
+                K = expectedValues["k"],
+                Z = expectedValues["z"],
+                X = expectedValues["x"],
+                G = expectedValues["g"],
+                power = expectedValues["power"],
+                ops = expectedValues["ops"]
+            };
+
+            var (_, totals) = QuestDBDtoHelper.GetStructureStoreCounts(store);
+
+            Assert.Equal(expectedValues.Count, totals.Count);
+            foreach (var kvp in expectedValues)
+            {
+                Assert.Equal(kvp.Value, totals[kvp.Key]);
+            }
+        }
+
+        [Fact]
         public void QuestDBDtoHelper_GetStoreCounts_MergesAllLocations()
         {
             var history = new ScreepsRoomHistoryDto();
@@ -241,6 +362,176 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(232, total);
             Assert.Equal(215, map["energy"]);
             Assert.Equal(17, map["battery"]);
+        }
+
+        [Fact]
+        public void QuestDBClientState_FromJsonFileProducesQuestDbDto()
+        {
+            var dto = LoadRoomHistoryDto("case1.json");
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            var questDto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { dto })!;
+
+            var (structureCount, placedStructureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(dto);
+            Assert.Equal(structureCount, questDto.StructureCount);
+            Assert.Equal(placedStructureCount, questDto.PlacedStructureCount);
+            Assert.Equal(structureCounts, questDto.StructureCounts);
+
+            var (creepCount, owned, enemy, other, power) = QuestDBDtoHelper.GetCreepCounts(dto);
+            Assert.Equal(creepCount, questDto.CreepCount);
+            Assert.Equal(owned, questDto.OwnedCreepCount);
+            Assert.Equal(enemy, questDto.EnemyCreepCount);
+            Assert.Equal(other, questDto.OtherCreepCount);
+            Assert.Equal(power, questDto.PowerCreepCount);
+
+            var (_, ownedParts) = QuestDBDtoHelper.GetCreepPartsCounts(dto);
+            Assert.Equal(ownedParts, questDto.OwnedCreepPartsCounts);
+
+            var (intentCount, intentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(dto);
+            Assert.Equal(intentCount, questDto.CreepIntentCount);
+            Assert.Equal(intentCounts, questDto.CreepIntentCounts);
+
+            var (ownedRoomCount, reservedRoomCount, otherRoomCount) = QuestDBDtoHelper.GetRoomCounts(dto);
+            Assert.Equal(ownedRoomCount, questDto.OwnedRoomCount);
+            Assert.Equal(reservedRoomCount, questDto.ReservedRoomCount);
+            Assert.Equal(otherRoomCount, questDto.OtherRoomCount);
+
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Level), questDto.ControllerLevel);
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Upgraded), questDto.ControllerPointsPerTick);
+
+            var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(dto);
+            Assert.Equal(storeTotal, questDto.StoreTotal);
+            Assert.Equal(storeTotals, questDto.StoreTotals);
+        }
+
+        [Fact]
+        public void QuestDBClientState_GetQuestDBDto_FullHistory()
+        {
+            var history = new ScreepsRoomHistoryDto();
+            history.Structures.Controller.UserId = "player";
+            history.Structures.Controller.Level = 5;
+            history.Structures.Controller.Progress = 100;
+            history.Structures.Controller.ProgressTotal = 500;
+            history.Structures.Controller.Upgraded = 42;
+            history.Structures.Controller.ReservationUserId = null;
+            history.Structures.Wall.Count = 18m;
+            history.Structures.Container.Count = 3.2m;
+            history.Structures.Storage.Count = 1.4m;
+            history.Structures.Terminal.Count = 2.6m;
+            history.Structures.Link.Count = 2.1m;
+            history.Structures.Spawn.Count = 1.2m;
+            history.Structures.Tower.Count = 2m;
+            history.Structures.Road.Count = 5m;
+            history.Structures.Mineral.Count = 1m;
+            history.Structures.Deposit.Count = 1m;
+
+            history.Creeps.OwnedCreeps.Count = 4;
+            history.Creeps.EnemyCreeps.Count = 2;
+            history.Creeps.OtherCreeps.Count = 1;
+            history.Creeps.PowerCreeps.Count = 1;
+
+            history.Creeps.OwnedCreeps.BodyParts.Move = 4;
+            history.Creeps.OwnedCreeps.BodyParts.Work = 2;
+            history.Creeps.OwnedCreeps.ActionLog.Attack.Count = 1;
+            history.Creeps.OwnedCreeps.ActionLog.Move.Count = 3;
+            history.Creeps.OwnedCreeps.ActionLog.Harvest.Count = 2;
+
+            history.Structures.Storage.Store.energy = 100;
+            history.Structures.Terminal.Store.energy = 50;
+            history.Structures.Terminal.Store.battery = 5;
+            history.Structures.Container.Store.power = 20;
+            history.Structures.Link.Energy = 40;
+
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+            var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
+
+            var (structureCount, placedStructureCount, structureCounts) = QuestDBDtoHelper.GetStructureCounts(history);
+            Assert.Equal(structureCount, dto.StructureCount);
+            Assert.Equal(placedStructureCount, dto.PlacedStructureCount);
+            Assert.Equal(structureCounts, dto.StructureCounts);
+
+            var (creepCount, owned, enemy, other, power) = QuestDBDtoHelper.GetCreepCounts(history);
+            Assert.Equal(creepCount, dto.CreepCount);
+            Assert.Equal(owned, dto.OwnedCreepCount);
+            Assert.Equal(enemy, dto.EnemyCreepCount);
+            Assert.Equal(other, dto.OtherCreepCount);
+            Assert.Equal(power, dto.PowerCreepCount);
+
+            var (ownedPartsCount, ownedParts) = QuestDBDtoHelper.GetCreepPartsCounts(history);
+            Assert.Equal(ownedPartsCount, dto.OwnedCreepPartsCount);
+            Assert.Equal(ownedParts, dto.OwnedCreepPartsCounts);
+
+            var (intentCount, intents) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
+            Assert.Equal(intentCount, dto.CreepIntentCount);
+            Assert.Equal(intents, dto.CreepIntentCounts);
+
+            var (ownedRooms, reservedRooms, otherRooms) = QuestDBDtoHelper.GetRoomCounts(history);
+            Assert.Equal(ownedRooms, dto.OwnedRoomCount);
+            Assert.Equal(reservedRooms, dto.ReservedRoomCount);
+            Assert.Equal(otherRooms, dto.OtherRoomCount);
+
+            Assert.Equal(5, dto.ControllerLevel);
+            Assert.Equal(100, dto.ControllerProgress);
+            Assert.Equal(500, dto.ControllerProgressTotal);
+            Assert.Equal(42, dto.ControllerPointsPerTick);
+
+            var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(history);
+            Assert.Equal(storeTotal, dto.StoreTotal);
+            Assert.Equal(storeTotals, dto.StoreTotals);
+        }
+
+        private static ScreepsRoomHistoryDto LoadRoomHistoryDto(string fileName)
+        {
+            EnsureConfigInitialized();
+            var filePath = Path.Combine(AppContext.BaseDirectory, "Files", fileName);
+            using var reader = new StreamReader(filePath);
+            using var jsonReader = new JsonTextReader(reader);
+            var roomData = JObject.Load(jsonReader);
+            return ProcessRoomHistory(roomData);
+        }
+
+        private static ScreepsRoomHistoryDto ProcessRoomHistory(JObject roomData)
+        {
+            var roomHistory = new ScreepsRoomHistory();
+            var roomHistoryDto = new ScreepsRoomHistoryDto();
+
+            roomData.TryGetValue("timestamp", out JToken? jTokenTime);
+            if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
+            roomData.TryGetValue("base", out JToken? jTokenBase);
+            if (jTokenBase != null) roomHistory.Base = jTokenBase.Value<long>();
+
+            if (roomData.TryGetValue("ticks", out JToken? jTokenTicks) && jTokenTicks is JObject jObjectTicks)
+            {
+                for (int i = 0; i < ConfigSettingsState.TicksInFile; i++)
+                {
+                    long tickNumber = roomHistory.Base + i;
+                    roomHistory.Tick = tickNumber;
+
+                    if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
+                    {
+                        roomHistory = ScreepsRoomHistoryHelper.ComputeTick(tickObject, roomHistory);
+                    }
+                    roomHistoryDto.Update(roomHistory);
+                }
+            }
+
+            return roomHistoryDto;
+        }
+
+        private static void EnsureConfigInitialized()
+        {
+            if (_configInitialized) return;
+            var configFileMap = new ExeConfigurationFileMap
+            {
+                ExeConfigFilename = "App.Config"
+            };
+            var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
+            ConfigSettingsState.InitTest(configuration.AppSettings);
+            _configInitialized = true;
         }
 
         [Fact]
