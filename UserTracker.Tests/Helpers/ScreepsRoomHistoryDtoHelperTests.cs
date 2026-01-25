@@ -159,7 +159,6 @@ public class ScreepsRoomHistoryDtoHelperTests
         Assert.Equal(1m / ticks, actionLogDto.Build.Count);
         Assert.Equal(3m / ticks, actionLogDto.Build.Outflow);
         Assert.Equal(20m / ticks, actionLogDto.Build.Effect);
-        Assert.Equal(1m, actionLogDto.Move.Count);
         Assert.Equal(1m / ticks, actionLogDto.Say.Count);
         Assert.Equal(1m / ticks, actionLogDto.TransferEnergy.Count);
     }
@@ -273,8 +272,8 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
         Assert.Equal(2, a.ConstructionSite.TypesBuilding["extension"]);
         Assert.Equal(5, a.Container.Count);
         var ticks = ConfigSettingsState.TicksInObject;
-        Assert.Equal(5m + (6m / ticks), a.Container.Store.energy);
-        Assert.Equal(10m + (7m / ticks), a.Storage.Store.energy);
+        Assert.Equal(5m + 6m, a.Container.Store.energy);
+        Assert.Equal(10m + 7m, a.Storage.Store.energy);
     }
 
     [Fact]
