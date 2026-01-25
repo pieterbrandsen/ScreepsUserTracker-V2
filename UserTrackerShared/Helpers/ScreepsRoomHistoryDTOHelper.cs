@@ -648,7 +648,7 @@ namespace UserTrackerShared.Helpers
             }
             #endregion
             #region Generic
-            actionLogDto.Move.Count += creep_oldFatigue == 0 ? 1m : 0m / ConfigSettingsState.TicksInObject;
+            //actionLogDto.Move.Count += creep_oldFatigue == 0 ? 1m : 0m / ConfigSettingsState.TicksInObject;
             if (actionLog.Say != null)
             {
                 actionLogDto.Say.Count += 1m / ConfigSettingsState.TicksInObject;
