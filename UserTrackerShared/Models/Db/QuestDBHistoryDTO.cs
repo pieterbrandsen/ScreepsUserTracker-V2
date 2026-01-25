@@ -20,7 +20,6 @@ namespace UserTrackerShared.Models.Db
 
         public int OwnedRoomCount { get; set; }
         public int ReservedRoomCount { get; set; }
-        public int OtherRoomCount { get; set; }
 
         public int? ControllerLevel { get; set; }
         public int? ControllerProgress { get; set; }

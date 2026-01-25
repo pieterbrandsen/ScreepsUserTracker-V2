@@ -242,31 +242,6 @@ namespace UserTracker.Tests.DBClients
         }
 
         [Fact]
-        public void QuestDBDtoHelper_GetRoomCounts_DetectsReservedAndOtherRooms()
-        {
-            var reservedHistory = new ScreepsRoomHistoryDto();
-            reservedHistory.Structures.Controller.ReservationUserId = "runner";
-            var reserved = QuestDBDtoHelper.GetRoomCounts(reservedHistory);
-            Assert.Equal(0, reserved.Item1);
-            Assert.Equal(1, reserved.Item2);
-            Assert.Equal(0, reserved.Item3);
-
-            var ownedHistory = new ScreepsRoomHistoryDto();
-            ownedHistory.Structures.Controller.ReservationUserId = null;
-            var owned = QuestDBDtoHelper.GetRoomCounts(ownedHistory);
-            Assert.Equal(1, owned.Item1);
-            Assert.Equal(0, owned.Item2);
-            Assert.Equal(0, owned.Item3);
-
-            var otherHistory = new ScreepsRoomHistoryDto();
-            otherHistory.Structures.Controller = null!;
-            var other = QuestDBDtoHelper.GetRoomCounts(otherHistory);
-            Assert.Equal(0, other.Item1);
-            Assert.Equal(0, other.Item2);
-            Assert.Equal(1, other.Item3);
-        }
-
-        [Fact]
         public void QuestDBDtoHelper_GetStructureStoreCounts_AggregatesResources()
         {
             var store = new Store
@@ -393,11 +368,6 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(intentCount, questDto.CreepIntentCount);
             Assert.Equal(intentCounts, questDto.CreepIntentCounts);
 
-            var (ownedRoomCount, reservedRoomCount, otherRoomCount) = QuestDBDtoHelper.GetRoomCounts(dto);
-            Assert.Equal(ownedRoomCount, questDto.OwnedRoomCount);
-            Assert.Equal(reservedRoomCount, questDto.ReservedRoomCount);
-            Assert.Equal(otherRoomCount, questDto.OtherRoomCount);
-
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Level), questDto.ControllerLevel);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
@@ -469,11 +439,6 @@ namespace UserTracker.Tests.DBClients
             var (intentCount, intents) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
             Assert.Equal(intentCount, dto.CreepIntentCount);
             Assert.Equal(intents, dto.CreepIntentCounts);
-
-            var (ownedRooms, reservedRooms, otherRooms) = QuestDBDtoHelper.GetRoomCounts(history);
-            Assert.Equal(ownedRooms, dto.OwnedRoomCount);
-            Assert.Equal(reservedRooms, dto.ReservedRoomCount);
-            Assert.Equal(otherRooms, dto.OtherRoomCount);
 
             Assert.Equal(5, dto.ControllerLevel);
             Assert.Equal(100, dto.ControllerProgress);
@@ -647,7 +612,6 @@ namespace UserTracker.Tests.DBClients
                 },
                 OwnedRoomCount = 1,
                 ReservedRoomCount = 0,
-                OtherRoomCount = 0,
                 ControllerLevel = 7,
                 ControllerProgress = 200,
                 ControllerProgressTotal = 1000,
@@ -733,7 +697,6 @@ namespace UserTracker.Tests.DBClients
                 ["creepintentcounts_attack"] = dto.CreepIntentCounts["attack"],
                 ["ownedroomcount"] = dto.OwnedRoomCount,
                 ["reservedroomcount"] = dto.ReservedRoomCount,
-                ["otherroomcount"] = dto.OtherRoomCount,
                 ["controllerlevel"] = dto.ControllerLevel ?? 0,
                 ["controllerprogress"] = dto.ControllerProgress ?? 0,
                 ["controllerprogresstotal"] = dto.ControllerProgressTotal ?? 0,

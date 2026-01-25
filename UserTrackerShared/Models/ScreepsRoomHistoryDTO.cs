@@ -158,6 +158,8 @@ namespace UserTrackerShared.Models
         public decimal ProgressTotal { get; set; } = 0;
         public string UserId { get; set; } = "";
         public string? ReservationUserId { get; set; }
+        public decimal ReservationUserIdCount { get; set; } = 0;
+        public decimal OwnedUserIdCount { get; set; } = 0;
         public decimal Upgraded { get; set; } = 0;
         public new void Clear()
         {
@@ -165,6 +167,9 @@ namespace UserTrackerShared.Models
             Progress = 0;
             ProgressTotal = 0;
             UserId = "";
+            ReservationUserId = "";
+            ReservationUserIdCount = 0;
+            OwnedUserIdCount = 0;
             Upgraded = 0;
             base.Clear();
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using UserTrackerShared.DBClients;
 using UserTrackerShared.Models;
 using UserTrackerShared.States;
 using Xunit;
@@ -291,8 +292,8 @@ namespace UserTracker.Tests.Models
                     Level = 1000,
                     Progress = 1000,
                     ProgressTotal = 1000,
-                    UserId = string.Empty,
-                    ReservationUserId = null,
+                    OwnedUserIdCount = 1000,
+                    ReservationUserIdCount = 1000,
                     Upgraded = 1000
                 },
                 Mineral = new StructureMineralDto { 
@@ -946,6 +947,8 @@ namespace UserTracker.Tests.Models
             Assert.Equal(2000, aggregate.Structures.Controller.Level);
             Assert.Equal(2000, aggregate.Structures.Controller.Progress);
             Assert.Equal(2000, aggregate.Structures.Controller.ProgressTotal);
+            Assert.Equal(2000, aggregate.Structures.Controller.OwnedUserIdCount);
+            Assert.Equal(2000, aggregate.Structures.Controller.ReservationUserIdCount);
             Assert.Equal(2000, aggregate.Structures.Controller.Upgraded);
             Assert.Equal(2000, aggregate.Structures.Mineral.Count);
             Assert.Equal(2000, aggregate.Structures.Deposit.Count);

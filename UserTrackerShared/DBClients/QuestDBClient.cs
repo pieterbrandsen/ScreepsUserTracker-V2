@@ -930,30 +930,7 @@ namespace UserTrackerShared.DBClients
 
             return (creepIntentsCount, creepIntentsCounts);
         }
-        public static (int, int, int) GetRoomCounts(ScreepsRoomHistoryDto history)
-        {
-            int ownedRoomCount = 0;
-            int reservedRoomCount = 0;
-            int otherRoomCount = 0;
 
-            if (history.Structures.Controller == null)
-            {
-                otherRoomCount = 1;
-            }
-            else
-            {
-                if (history.Structures.Controller.ReservationUserId != null)
-                {
-                    reservedRoomCount = 1;
-                }
-                else
-                {
-                    ownedRoomCount = 1;
-                }
-            }
-
-            return (ownedRoomCount, reservedRoomCount, otherRoomCount);
-        }
         public static (int, Dictionary<string, int>) GetStructureStoreCounts(Store store)
         {
             var storeTotals = new Dictionary<string, int>();
@@ -1090,7 +1067,7 @@ namespace UserTrackerShared.DBClients
             var (creepCount, ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
             var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
             var (creepIntentCount, creepIntentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
-            var (ownedRoomCount, reservedRoomCount, otherRoomCount) = QuestDBDtoHelper.GetRoomCounts(screepsRoomHistory);
+            var (ownedRoomCount, reservedRoomCount) = (Convert.ToInt32(screepsRoomHistory.Structures.Controller.OwnedUserIdCount), Convert.ToInt32(screepsRoomHistory.Structures.Controller.ReservationUserIdCount));
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
 
             var questDBHistoryDTO = new QuestDBHistoryDTO()
@@ -1111,7 +1088,6 @@ namespace UserTrackerShared.DBClients
 
                 OwnedRoomCount = ownedRoomCount,
                 ReservedRoomCount = reservedRoomCount,
-                OtherRoomCount = otherRoomCount,
 
                 ControllerLevel = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Level ?? null),
                 ControllerProgress = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Progress ?? null),

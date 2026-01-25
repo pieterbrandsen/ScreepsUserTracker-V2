@@ -114,6 +114,9 @@ namespace UserTrackerShared.Helpers
                 structuresDto.Controller.UserId = structures.Controller.User ?? "";
                 structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User;
                 structuresDto.Controller.Upgraded = structures.Controller._upgraded / ConfigSettingsState.TicksInObject;
+                
+                structuresDto.Controller.OwnedUserIdCount += (structures.Controller.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
+                structuresDto.Controller.ReservationUserIdCount += (structures.Controller.Reservation?.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
             }
             if (structures.Mineral != null)
             {
@@ -287,10 +290,8 @@ namespace UserTrackerShared.Helpers
             structuresDtoA.Controller.Progress += structuresDtoB.Controller.Progress;
             structuresDtoA.Controller.ProgressTotal += structuresDtoB.Controller.ProgressTotal;
             structuresDtoA.Controller.Upgraded += structuresDtoB.Controller.Upgraded;
-            if (string.IsNullOrEmpty(structuresDtoA.Controller.UserId))
-                structuresDtoA.Controller.UserId = structuresDtoB.Controller.UserId;
-            if (string.IsNullOrEmpty(structuresDtoA.Controller.ReservationUserId))
-                structuresDtoA.Controller.ReservationUserId = structuresDtoB.Controller.ReservationUserId;
+            structuresDtoA.Controller.ReservationUserIdCount += structuresDtoB.Controller.ReservationUserIdCount;
+            structuresDtoA.Controller.OwnedUserIdCount += structuresDtoB.Controller.OwnedUserIdCount;
 
             // Mineral, Deposit, Wall
             structuresDtoA.Mineral.Count += structuresDtoB.Mineral.Count;
