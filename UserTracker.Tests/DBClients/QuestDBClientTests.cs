@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using QuestDB.Senders;
 using QuestDB.Utils;
@@ -484,6 +485,88 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(storeTotals, dto.StoreTotals);
         }
 
+        [Fact]
+        public void QuestDBClientWriter_UploadRoomHistoryData_FlattensEveryNumericField()
+        {
+            var dto = CreateSampleQuestDto();
+            var points = CaptureUploadedPoints(() =>
+            {
+                QuestDBClientWriter.UploadRoomHistoryData(
+                    database: "server_room",
+                    shard: "shard",
+                    room: "E1N1",
+                    tick: 123,
+                    timestamp: 456,
+                    username: "hero",
+                    obj: dto);
+            });
+
+            Assert.NotEmpty(points);
+            Assert.All(points, p => Assert.Equal("server_room", p.Measurement));
+            Assert.All(points, p => Assert.Equal("shard", p.Shard));
+            Assert.All(points, p => Assert.Equal("E1N1", p.Room));
+            Assert.All(points, p => Assert.Equal("hero", p.Username));
+
+            var fieldValues = points
+                .GroupBy(p => p.Field)
+                .ToDictionary(g => g.Key, g => g.Last().Value ?? double.NaN);
+
+            foreach (var (field, expectedValue) in CreateExpectedFieldValues(dto))
+            {
+                Assert.True(fieldValues.TryGetValue(field, out var actualValue), $"Missing field {field}");
+                Assert.Equal(expectedValue, actualValue);
+            }
+        }
+
+        [Fact]
+        public void QuestDBClientWriter_UploadUserHistoryData_UsesEmptyRoom()
+        {
+            var dto = CreateSampleQuestDto();
+            var points = CaptureUploadedPoints(() =>
+            {
+                QuestDBClientWriter.UploadUserHistoryData(
+                    database: "server_user",
+                    shard: "shard",
+                    tick: 999,
+                    timestamp: 888,
+                    username: "hero",
+                    obj: dto);
+            });
+
+            Assert.NotEmpty(points);
+            Assert.All(points, p => Assert.Equal("server_user", p.Measurement));
+            Assert.All(points, p => Assert.Equal("shard", p.Shard));
+            Assert.All(points, p => Assert.Equal(string.Empty, p.Room));
+            Assert.All(points, p => Assert.Equal("hero", p.Username));
+
+            var fields = points.Select(p => p.Field).ToHashSet();
+            Assert.Contains("structurecount", fields);
+            Assert.Contains("structurecounts_wall", fields);
+            Assert.Contains("storetotals_energy", fields);
+        }
+
+        [Fact]
+        public void QuestDBClientWriter_UploadGlobalHistoryData_UsesEmptyRoomAndUser()
+        {
+            var dto = CreateSampleQuestDto();
+            var points = CaptureUploadedPoints(() =>
+            {
+                QuestDBClientWriter.UploadGlobalHistoryData(
+                    database: "server_global",
+                    shard: "shard",
+                    tick: 777,
+                    timestamp: 666,
+                    obj: dto);
+            });
+
+            Assert.NotEmpty(points);
+            Assert.All(points, p => Assert.Equal("server_global", p.Measurement));
+            Assert.All(points, p => Assert.Equal("shard", p.Shard));
+            Assert.All(points, p => Assert.Equal(string.Empty, p.Room));
+            Assert.All(points, p => Assert.Equal(string.Empty, p.Username));
+            Assert.Contains("structurecount", points.Select(p => p.Field));
+        }
+
         private static ScreepsRoomHistoryDto LoadRoomHistoryDto(string fileName)
         {
             EnsureConfigInitialized();
@@ -532,6 +615,133 @@ namespace UserTracker.Tests.DBClients
             var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
             ConfigSettingsState.InitTest(configuration.AppSettings);
             _configInitialized = true;
+        }
+
+        private static QuestDBHistoryDTO CreateSampleQuestDto()
+        {
+            return new QuestDBHistoryDTO
+            {
+                StructureCount = 3,
+                PlacedStructureCount = 4,
+                StructureCounts = new Dictionary<string, int>
+                {
+                    ["wall"] = 2,
+                    ["extension"] = 1
+                },
+                CreepCount = 6,
+                OwnedCreepCount = 2,
+                EnemyCreepCount = 1,
+                OtherCreepCount = 2,
+                PowerCreepCount = 1,
+                OwnedCreepPartsCount = 6,
+                OwnedCreepPartsCounts = new Dictionary<string, int>
+                {
+                    ["move"] = 3,
+                    ["work"] = 3
+                },
+                CreepIntentCount = 5,
+                CreepIntentCounts = new Dictionary<string, int>
+                {
+                    ["move"] = 3,
+                    ["attack"] = 2
+                },
+                OwnedRoomCount = 1,
+                ReservedRoomCount = 0,
+                OtherRoomCount = 0,
+                ControllerLevel = 7,
+                ControllerProgress = 200,
+                ControllerProgressTotal = 1000,
+                ControllerPointsPerTick = 3,
+                StoreTotal = 600,
+                StoreTotals = new Dictionary<string, int>
+                {
+                    ["energy"] = 500,
+                    ["battery"] = 100
+                }
+            };
+        }
+
+        private static IReadOnlyList<QuestHistoryPointDataParameter> CaptureUploadedPoints(Action uploadAction)
+        {
+            var channel = InitializeHistoryChannel();
+            try
+            {
+                uploadAction();
+                return ReadHistoryChannel(channel);
+            }
+            finally
+            {
+                ResetHistoryChannel();
+            }
+        }
+
+        private static Channel<QuestHistoryPointDataParameter> InitializeHistoryChannel()
+        {
+            var channel = Channel.CreateUnbounded<QuestHistoryPointDataParameter>(new UnboundedChannelOptions
+            {
+                SingleReader = true,
+                SingleWriter = true
+            });
+
+            SetPrivateField("_historyChannel", channel);
+            SetPrivateField("_pendingPointCount", 0L);
+            return channel;
+        }
+
+        private static void ResetHistoryChannel()
+        {
+            SetPrivateField("_historyChannel", null);
+            SetPrivateField("_pendingPointCount", 0L);
+        }
+
+        private static void SetPrivateField(string fieldName, object? value)
+        {
+            var field = typeof(QuestDBClientWriter).GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(field);
+            field!.SetValue(null, value);
+        }
+
+        private static List<QuestHistoryPointDataParameter> ReadHistoryChannel(Channel<QuestHistoryPointDataParameter> channel)
+        {
+            var points = new List<QuestHistoryPointDataParameter>();
+            while (channel.Reader.TryRead(out var point))
+            {
+                points.Add(point);
+            }
+
+            return points;
+        }
+
+        private static IReadOnlyDictionary<string, double> CreateExpectedFieldValues(QuestDBHistoryDTO dto)
+        {
+            return new Dictionary<string, double>
+            {
+                ["structurecount"] = dto.StructureCount,
+                ["placedstructurecount"] = dto.PlacedStructureCount,
+                ["structurecounts_wall"] = dto.StructureCounts["wall"],
+                ["structurecounts_extension"] = dto.StructureCounts["extension"],
+                ["creepcount"] = dto.CreepCount,
+                ["ownedcreepcount"] = dto.OwnedCreepCount,
+                ["enemycreepcount"] = dto.EnemyCreepCount,
+                ["othercreepcount"] = dto.OtherCreepCount,
+                ["powercreepcount"] = dto.PowerCreepCount,
+                ["ownedcreeppartscount"] = dto.OwnedCreepPartsCount,
+                ["ownedcreeppartscounts_move"] = dto.OwnedCreepPartsCounts["move"],
+                ["ownedcreeppartscounts_work"] = dto.OwnedCreepPartsCounts["work"],
+                ["creepintentcount"] = dto.CreepIntentCount,
+                ["creepintentcounts_move"] = dto.CreepIntentCounts["move"],
+                ["creepintentcounts_attack"] = dto.CreepIntentCounts["attack"],
+                ["ownedroomcount"] = dto.OwnedRoomCount,
+                ["reservedroomcount"] = dto.ReservedRoomCount,
+                ["otherroomcount"] = dto.OtherRoomCount,
+                ["controllerlevel"] = dto.ControllerLevel ?? 0,
+                ["controllerprogress"] = dto.ControllerProgress ?? 0,
+                ["controllerprogresstotal"] = dto.ControllerProgressTotal ?? 0,
+                ["controllerpointspertick"] = dto.ControllerPointsPerTick ?? 0,
+                ["storetotal"] = dto.StoreTotal,
+                ["storetotals_energy"] = dto.StoreTotals["energy"],
+                ["storetotals_battery"] = dto.StoreTotals["battery"]
+            };
         }
 
         [Fact]

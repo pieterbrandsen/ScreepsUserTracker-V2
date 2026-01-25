@@ -5,7 +5,7 @@ namespace UserTrackerShared.Helpers
 {
     public static class ScreepsRoomHistoryDtoHelper
     {
-        private static void UpdateStore(Store currentStore, Store store)
+        private static void ProcessStore(Store currentStore, Store store)
         {
             if (store == null) return;
             
@@ -51,6 +51,55 @@ namespace UserTrackerShared.Helpers
                     }
                     
                     prop.SetValue(currentStore, currentValue + (storeValue / ConfigSettingsState.TicksInObject));
+                 }
+            }
+        }
+        private static void CombineStore(Store currentStore, Store store)
+        {
+            if (store == null) return;
+
+            var storeType = typeof(Store);
+            var properties = storeType.GetProperties();
+
+            foreach (var prop in properties)
+            {
+                if (prop.PropertyType == typeof(decimal?) && prop.CanRead && prop.CanWrite)
+                {
+                    var currentValueRaw = prop.GetValue(currentStore);
+                    var storeValueRaw = prop.GetValue(store);
+
+                    decimal currentValue = 0;
+                    decimal storeValue = 0;
+
+                    if (currentValueRaw != null)
+                    {
+                        if (currentValueRaw is decimal d1)
+                            currentValue = d1;
+                        else if (currentValueRaw is int i1)
+                            currentValue = i1;
+                        else if (currentValueRaw is long l1)
+                            currentValue = l1;
+                        else if (currentValueRaw is double db1)
+                            currentValue = (decimal)db1;
+                        else if (currentValueRaw is float f1)
+                            currentValue = (decimal)f1;
+                    }
+
+                    if (storeValueRaw != null)
+                    {
+                        if (storeValueRaw is decimal d2)
+                            storeValue = d2;
+                        else if (storeValueRaw is int i2)
+                            storeValue = i2;
+                        else if (storeValueRaw is long l2)
+                            storeValue = l2;
+                        else if (storeValueRaw is double db2)
+                            storeValue = (decimal)db2;
+                        else if (storeValueRaw is float f2)
+                            storeValue = (decimal)f2;
+                    }
+
+                    prop.SetValue(currentStore, currentValue + storeValue);
                 }
             }
         }
@@ -104,7 +153,7 @@ namespace UserTrackerShared.Helpers
 
                 if (container.Store != null)
                 {
-                    UpdateStore(structuresDto.Container.Store, container.Store);
+                    ProcessStore(structuresDto.Container.Store, container.Store);
                 }
             }
             foreach (var extension in structures.Extensions.Select(x => x.Value))
@@ -198,7 +247,7 @@ namespace UserTrackerShared.Helpers
 
                 if (storage.Store != null)
                 {
-                    UpdateStore(structuresDto.Storage.Store, storage.Store);
+                    ProcessStore(structuresDto.Storage.Store, storage.Store);
                 }
             }
             foreach (var terminal in structures.Terminals.Select(x => x.Value))
@@ -207,7 +256,7 @@ namespace UserTrackerShared.Helpers
 
                 if (terminal.Store != null)
                 {
-                    UpdateStore(structuresDto.Terminal.Store, terminal.Store);
+                    ProcessStore(structuresDto.Terminal.Store, terminal.Store);
                 }
             }
             foreach (var tombstone in structures.Tombstones.Select(x => x.Value))
@@ -263,7 +312,7 @@ namespace UserTrackerShared.Helpers
 
             // Container
             structuresDtoA.Container.Count += structuresDtoB.Container.Count;
-            UpdateStore(structuresDtoA.Container.Store, structuresDtoB.Container.Store);
+            CombineStore(structuresDtoA.Container.Store, structuresDtoB.Container.Store);
 
             // Extension
             structuresDtoA.Extension.Count += structuresDtoB.Extension.Count;
@@ -306,11 +355,11 @@ namespace UserTrackerShared.Helpers
 
             // Storage
             structuresDtoA.Storage.Count += structuresDtoB.Storage.Count;
-            UpdateStore(structuresDtoA.Storage.Store, structuresDtoB.Storage.Store);
+            CombineStore(structuresDtoA.Storage.Store, structuresDtoB.Storage.Store);
 
             // Terminal
             structuresDtoA.Terminal.Count += structuresDtoB.Terminal.Count;
-            UpdateStore(structuresDtoA.Terminal.Store, structuresDtoB.Terminal.Store);
+            CombineStore(structuresDtoA.Terminal.Store, structuresDtoB.Terminal.Store);
 
             // Tombstone, Tower, Nuker, Nuke
             structuresDtoA.Tombstone.Count += structuresDtoB.Tombstone.Count;
@@ -359,7 +408,7 @@ namespace UserTrackerShared.Helpers
                 ConvertActiongLog(creep.ActionLog ?? new ActionLog(), creepsDto.ActionLog, creepsDtoBodyPart, intentMap, creep._oldFatigue);
                 if (creep.Store != null)
                 {
-                    UpdateStore(creepsDto.Store, creep.Store);
+                    ProcessStore(creepsDto.Store, creep.Store);
                 }
 
                 creepsDto.BodyParts.Move += creepsDtoBodyPart.Move / ConfigSettingsState.TicksInObject;
