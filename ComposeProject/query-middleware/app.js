@@ -70,7 +70,7 @@ function parseLooseBody(bodyText) {
   normalized = normalized.replaceAll(
     /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z)/g,
     (match) => {
-      const matchWithoutZ = match.replaceAll(/Z$/, '');
+      const matchWithoutZ = match.replace(/Z$/, '');
       timestamps.push(matchWithoutZ);
       return `__TS${timestamps.length - 1}__`;
     }
