@@ -113,7 +113,7 @@ namespace UserTrackerShared.Helpers
                 structuresDto.Controller.ProgressTotal += structures.Controller.ProgressTotal / ConfigSettingsState.TicksInObject;
                 structuresDto.Controller.UserId = structures.Controller.User ?? "";
                 structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User;
-                structuresDto.Controller.Upgraded = structures.Controller._upgraded / ConfigSettingsState.TicksInObject;
+                structuresDto.Controller.Upgraded += structures.Controller._upgraded / ConfigSettingsState.TicksInObject;
                 
                 structuresDto.Controller.OwnedUserIdCount += (structures.Controller.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
                 structuresDto.Controller.ReservationUserIdCount += (structures.Controller.Reservation?.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
