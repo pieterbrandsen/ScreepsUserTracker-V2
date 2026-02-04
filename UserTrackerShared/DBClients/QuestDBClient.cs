@@ -580,17 +580,19 @@ namespace UserTrackerShared.DBClients
 
             if (history.Structures.Controller != null)
             {
-                structureCounts["controller"] = 1;
-                structureCount = 1;
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Controller.Count));
+                structureCounts["controller"] = count;
+                structureCount = count;
             }
-
             if (history.Structures.Mineral != null)
             {
-                structureCounts["mineral"] = 1;
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Mineral.Count));
+                structureCounts["mineral"] = count;
             }
             if (history.Structures.Deposit != null)
             {
-                structureCounts["deposit"] = 1;
+                var count = Convert.ToInt32(Math.Floor(history.Structures.Deposit.Count));
+                structureCounts["deposit"] = count;
             }
             if (history.Structures.Wall != null)
             {
