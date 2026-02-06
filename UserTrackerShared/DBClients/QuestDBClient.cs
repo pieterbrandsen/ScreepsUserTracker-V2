@@ -444,12 +444,18 @@ namespace UserTrackerShared.DBClients
 
                 foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
                 {
+                    var key = kvp.Key.ToLower();
                     var keyIncludesUsername = kvp.Key.Contains("users.", StringComparison.OrdinalIgnoreCase);
                     var username = keyIncludesUsername ? kvp.Key.Split('.')[1] : null;
+                    if (keyIncludesUsername)
+                    {
+                        key = kvp.Key.Replace($"users.{username}", "users", StringComparison.OrdinalIgnoreCase);
+                    }
+                    
                     var pointParameters = new QuestAdminUtilsPointDataParameter(
                         database,
                         username,
-                        kvp.Key.ToLower(),
+                        key,
                         Convert.ToDouble(kvp.Value));
                     AddPoint(pointParameters);
                 }

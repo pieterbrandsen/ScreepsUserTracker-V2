@@ -28,8 +28,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AppConfig Condition="Exists('App.Live.config')">App.Live.config</AppConfig>
-    <AppConfig Condition="!Exists('App.Live.config')">App.config</AppConfig>
+    <AppConfig Condition="'$(APP_CONFIG_FILE)' != '' And Exists('$(APP_CONFIG_FILE)')">$(APP_CONFIG_FILE)</AppConfig>
+    <AppConfig Condition="'$(AppConfig)' == '' And Exists('App.Live.config')">App.Live.config</AppConfig>
+    <AppConfig Condition="'$(AppConfig)' == ''">App.config</AppConfig>
   </PropertyGroup>
 
   <ItemGroup>

@@ -24,11 +24,11 @@ namespace UserTrackerShared.States
 
                 Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
 
-                _ = OnUpdateAdminUtilsDataTimerAsync();
-                var onSetAdminUtilsDataTimer = new Timer(60 * 1000);
-                onSetAdminUtilsDataTimer.AutoReset = true;
-                onSetAdminUtilsDataTimer.Enabled = true;
-                onSetAdminUtilsDataTimer.Elapsed += (s, e) => _ = OnUpdateAdminUtilsDataTimerAsync();
+                // _ = OnUpdateAdminUtilsDataTimerAsync();
+                // var onSetAdminUtilsDataTimer = new Timer(60 * 1000);
+                // onSetAdminUtilsDataTimer.AutoReset = true;
+                // onSetAdminUtilsDataTimer.Enabled = true;
+                // onSetAdminUtilsDataTimer.Elapsed += (s, e) => _ = OnUpdateAdminUtilsDataTimerAsync();
             }
             else
             {
