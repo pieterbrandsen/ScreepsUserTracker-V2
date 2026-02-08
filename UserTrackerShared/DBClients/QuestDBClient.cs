@@ -885,8 +885,10 @@ namespace UserTrackerShared.DBClients
 
             return (creepPartsCount, creepPartsCounts);
         }
-        private static (int, Dictionary<string, int>) GetCreepIntentsCounts(ActionLogDto actionLog)
+        private static (int, Dictionary<string, int>,int,int) GetCreepIntentsCounts(ActionLogDto actionLog)
         {
+            int energyInflow = 0;
+            int energyOutflow = 0;
             int creepIntentsCount = 0;
             var creepIntentsCounts = new Dictionary<string, int>()
             {
@@ -936,15 +938,19 @@ namespace UserTrackerShared.DBClients
 
             creepIntentsCount += Convert.ToInt32(actionLog.Harvest.Count);
             creepIntentsCounts["harvest"] = Convert.ToInt32(actionLog.Harvest.Count);
+            energyInflow += Convert.ToInt32(actionLog.Harvest.Inflow);
 
             creepIntentsCount += Convert.ToInt32(actionLog.Repair.Count);
             creepIntentsCounts["repair"] = Convert.ToInt32(actionLog.Repair.Count);
+            energyOutflow += Convert.ToInt32(actionLog.Repair.Outflow);
 
             creepIntentsCount += Convert.ToInt32(actionLog.Build.Count);
             creepIntentsCounts["build"] = Convert.ToInt32(actionLog.Build.Count);
+            energyOutflow += Convert.ToInt32(actionLog.Build.Outflow);
 
             creepIntentsCount += Convert.ToInt32(actionLog.UpgradeController.Count);
             creepIntentsCounts["upgrade_controller"] = Convert.ToInt32(actionLog.UpgradeController.Count);
+            energyOutflow += Convert.ToInt32(actionLog.UpgradeController.Outflow);
 
             creepIntentsCount += Convert.ToInt32(actionLog.Move.Count);
             creepIntentsCounts["move"] = Convert.ToInt32(actionLog.Move.Count);
@@ -977,18 +983,22 @@ namespace UserTrackerShared.DBClients
             creepIntentsCounts["power"] = Convert.ToInt32(actionLog.Power.Count);
 
 
-            return (creepIntentsCount, creepIntentsCounts);
+            return (creepIntentsCount, creepIntentsCounts, energyInflow, energyOutflow);
         }
-        public static (int, Dictionary<string, int>) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
+        public static (int, Dictionary<string, int>, int,int) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
         {
+            var creepEnergyInflow = 0;
+            var creepEnergyOutflow = 0;
             var creepIntentsCounts = new Dictionary<string, int>();
             int creepIntentsCount = 0;
 
             if (history.Creeps.OwnedCreeps != null)
             {
                 var actionLog = history.Creeps.OwnedCreeps.ActionLog;
-                var (count, counts) = GetCreepIntentsCounts(actionLog);
+                var (count, counts, energyInflow, energyOutflow) = GetCreepIntentsCounts(actionLog);
                 creepIntentsCount += count;
+                creepEnergyInflow += energyInflow;
+                creepEnergyOutflow += energyOutflow;
                 foreach (var kvp in counts)
                 {
                     if (creepIntentsCounts.ContainsKey(kvp.Key))
@@ -998,7 +1008,7 @@ namespace UserTrackerShared.DBClients
                 }
             }
 
-            return (creepIntentsCount, creepIntentsCounts);
+            return (creepIntentsCount, creepIntentsCounts, creepEnergyInflow, creepEnergyOutflow);
         }
 
         public static (int, Dictionary<string, int>) GetStructureStoreCounts(Store store)
@@ -1136,7 +1146,7 @@ namespace UserTrackerShared.DBClients
             var (structureCount, placedStructureCounts, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
             var (creepCount, ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
             var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
-            var (creepIntentCount, creepIntentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
+            var (creepIntentCount, creepIntentCounts, creepEnergyInflow, creepEnergyOutflow) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
             var (ownedRoomCount, reservedRoomCount) = (Convert.ToInt32(screepsRoomHistory.Structures.Controller.OwnedUserIdCount), Convert.ToInt32(screepsRoomHistory.Structures.Controller.ReservationUserIdCount));
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
 
@@ -1155,6 +1165,8 @@ namespace UserTrackerShared.DBClients
                 OwnedCreepPartsCounts = ownedCreepPartsCounts,
                 CreepIntentCount = creepIntentCount,
                 CreepIntentCounts = creepIntentCounts,
+                CreepEnergyInflow = creepEnergyInflow,
+                CreepEnergyOutflow = creepEnergyOutflow,
 
                 OwnedRoomCount = ownedRoomCount,
                 ReservedRoomCount = reservedRoomCount,
@@ -1166,7 +1178,7 @@ namespace UserTrackerShared.DBClients
 
                 StoreTotal = Convert.ToInt32(storeTotal),
                 StoreTotals = storeTotals
-            };
+            };,
 
             return questDBHistoryDTO;
         }

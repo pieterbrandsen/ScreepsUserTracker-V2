@@ -15,8 +15,11 @@ namespace UserTrackerShared.Models.Db
 
         public int OwnedCreepPartsCount { get; set; }
         public Dictionary<string, int> OwnedCreepPartsCounts { get; set; } = [];
+
         public int CreepIntentCount { get; set; }
         public Dictionary<string, int> CreepIntentCounts { get; set; } = [];
+        public int CreepEnergyInflow { get; set; }
+        public int CreepEnergyOutflow { get; set; }
 
         public int OwnedRoomCount { get; set; }
         public int ReservedRoomCount { get; set; }
