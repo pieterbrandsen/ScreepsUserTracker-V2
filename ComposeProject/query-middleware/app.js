@@ -45,7 +45,7 @@ app.use(express.json({ limit: '500mb' }));
 
 const globalDataTypeFilter = "AND shard IN ({{shards}})";
 const userDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}})";
-const roomDataTypeFilter = "AND shard IN ({{shards}}) AND room IN ({{rooms}})";
+const roomDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}}) AND room IN ({{rooms}})";
 
 const baseQuery = {
   query: `SELECT timestamp as time, {{data}}, {{metric}}
