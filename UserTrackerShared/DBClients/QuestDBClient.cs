@@ -1,9 +1,7 @@
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using QuestDB;
 using QuestDB.Senders;
-using System.Reflection;
 using System.Text;
 using System.Threading.Channels;
 using UserTrackerShared.Helpers;
@@ -588,22 +586,28 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Controller.Count));
                 structureCounts["controller"] = count;
-                structureCount = count;
+
+                structureCount += count;
             }
             if (history.Structures.Mineral != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Mineral.Count));
                 structureCounts["mineral"] = count;
+
+                structureCount += count;
             }
             if (history.Structures.Deposit != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Deposit.Count));
                 structureCounts["deposit"] = count;
+
+                structureCount += count;
             }
             if (history.Structures.Wall != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Wall.Count));
                 structureCounts["wall"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -616,6 +620,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Container.Count));
                 structureCounts["container"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -623,6 +628,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Extension.Count));
                 structureCounts["extension"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -630,6 +636,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Extractor.Count));
                 structureCounts["extractor"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -637,6 +644,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Factory.Count));
                 structureCounts["factory"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -649,11 +657,14 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.KeeperLair.Count));
                 structureCounts["keeperlair"] = count;
+
+                structureCount += count;
             }
             if (history.Structures.Lab != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Lab.Count));
                 structureCounts["lab"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -661,6 +672,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Link.Count));
                 structureCounts["link"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -668,6 +680,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Observer.Count));
                 structureCounts["observer"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -675,18 +688,21 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Portal.Count));
                 structureCounts["portal"] = count;
+
                 structureCount += count;
             }
             if (history.Structures.PowerBank != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.PowerBank.Count));
                 structureCounts["powerbank"] = count;
+
                 structureCount += count;
             }
             if (history.Structures.PowerSpawn != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.PowerSpawn.Count));
                 structureCounts["powerspawn"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -694,6 +710,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Rampart.Count));
                 structureCounts["rampart"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -701,6 +718,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Road.Count));
                 structureCounts["road"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -708,18 +726,21 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Ruin.Count));
                 structureCounts["ruin"] = count;
+
                 structureCount += count;
             }
             if (history.Structures.Source != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Source.Count));
                 structureCounts["source"] = count;
+
                 structureCount += count;
             }
             if (history.Structures.Spawn != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Spawn.Count));
                 structureCounts["spawn"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -727,6 +748,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Storage.Count));
                 structureCounts["storage"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -734,6 +756,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Terminal.Count));
                 structureCounts["terminal"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -741,12 +764,14 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Tombstone.Count));
                 structureCounts["tombstone"] = count;
+
                 structureCount += count;
             }
             if (history.Structures.Tower != null)
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Tower.Count));
                 structureCounts["tower"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -754,6 +779,7 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Nuker.Count));
                 structureCounts["nuker"] = count;
+
                 structureCount += count;
                 placedStructureCounts += count;
             }
@@ -761,6 +787,8 @@ namespace UserTrackerShared.DBClients
             {
                 var count = Convert.ToInt32(Math.Floor(history.Structures.Nuke.Count));
                 structureCounts["nuke"] = count;
+
+                structureCount += count;
             }
 
             return (structureCount, placedStructureCounts, structureCounts);
@@ -795,8 +823,19 @@ namespace UserTrackerShared.DBClients
         }
         private static (int, Dictionary<string, int>) GetCreepPartsCounts(CountByPartDto countByPart)
         {
-            var creepPartsCounts = new Dictionary<string, int>();
             int creepPartsCount = 0;
+            var creepPartsCounts = new Dictionary<string, int>()
+            {
+                {"attack", 0},
+                {"carry", 0},
+                {"heal", 0},
+                {"move", 0},
+                {"ranged_attack", 0},
+                {"tough", 0},
+                {"work", 0},
+                {"claim", 0 }
+            };
+
 
             creepPartsCount += Convert.ToInt32(countByPart.Attack);
             creepPartsCounts["attack"] = Convert.ToInt32(countByPart.Attack);
@@ -848,8 +887,31 @@ namespace UserTrackerShared.DBClients
         }
         private static (int, Dictionary<string, int>) GetCreepIntentsCounts(ActionLogDto actionLog)
         {
-            var creepIntentsCounts = new Dictionary<string, int>();
             int creepIntentsCount = 0;
+            var creepIntentsCounts = new Dictionary<string, int>()
+            {
+                {"attack", 0},
+                {"attacked", 0},
+                {"ranged_attack", 0},
+                {"ranged_mass_attacked", 0},
+                {"ranged_heal", 0},
+                {"heal", 0},
+                {"healed", 0},
+                {"harvest", 0},
+                {"repair", 0},
+                {"build", 0},
+                {"upgrade_controller", 0},
+                {"move", 0},
+                {"say", 0},
+                {"reserve_controller", 0},
+                {"attack_controller", 0},
+                {"produce", 0},
+                {"transfer_energy", 0},
+                {"run_reaction", 0},
+                {"reverse_reaction", 0},
+                {"spawned", 0},
+                {"power", 0}
+            };
 
             creepIntentsCount += Convert.ToInt32(actionLog.Attack.Count);
             creepIntentsCounts["attack"] = Convert.ToInt32(actionLog.Attack.Count);
