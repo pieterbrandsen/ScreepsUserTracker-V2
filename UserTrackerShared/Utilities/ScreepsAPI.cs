@@ -131,6 +131,7 @@ namespace UserTrackerShared.Utilities
         }
 
         public static string ScreepsAPIUrl => ConfigSettingsState.ScreepsHttpsUrl;
+        public static string ScreepsAPIPrefix => ConfigSettingsState.ScreepsHttpsPrefix;
         public static string ScreepsAPIHTTPUrl => ConfigSettingsState.ScreepsHttpUrl;
         public static string ScreepsAPIToken => ConfigSettingsState.ScreepsToken;
 
@@ -141,10 +142,15 @@ namespace UserTrackerShared.Utilities
             {
                 reqUrl = ScreepsAPIHTTPUrl + path;
             }
+            else if (!path.StartsWith("/auth"))
+            {
+                reqUrl = $"{ScreepsAPIUrl}{ScreepsAPIPrefix}{path}";
+            }
             else
             {
                 reqUrl = ScreepsAPIUrl + path;
             }
+
             if (method == HttpMethod.Post && httpContent == null)
             {
                 throw new ArgumentNullException(nameof(httpContent));

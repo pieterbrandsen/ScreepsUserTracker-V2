@@ -11,6 +11,7 @@ namespace UserTrackerShared.States
 
         public static string ScreepsToken { get; set; } = string.Empty;
         public static string ScreepsHttpsUrl { get; set; } = string.Empty;
+        public static string ScreepsHttpsPrefix { get; set; } = string.Empty;
         public static string ScreepsHttpUrl { get; set; } = string.Empty;
         public static bool ScreepsIsPrivateServer { get; set; }
         public static string ScreepsUsername { get; set; } = string.Empty;
@@ -63,6 +64,7 @@ namespace UserTrackerShared.States
 
             ScreepsToken = reader.GetString("SCREEPS_API_TOKEN");
             ScreepsHttpsUrl = reader.GetString("SCREEPS_API_HTTPS_URL");
+            ScreepsHttpsPrefix = reader.GetString("SCREEPS_API_HTTPS_PREFIX");
             ScreepsHttpUrl = reader.GetString("SCREEPS_API_HTTP_URL");
             ScreepsIsPrivateServer = ScreepsHttpsUrl != "https://screeps.com";
             ScreepsUsername = reader.GetString("SCREEPS_API_USERNAME");
