@@ -1141,7 +1141,7 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        private static QuestDBHistoryDTO GetQuestDBDto(ScreepsRoomHistoryDto screepsRoomHistory)
+        public static QuestDBHistoryDTO GetQuestDBDto(ScreepsRoomHistoryDto screepsRoomHistory)
         {
             var (structureCount, placedStructureCounts, structureCounts) = QuestDBDtoHelper.GetStructureCounts(screepsRoomHistory);
             var (creepCount, ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);

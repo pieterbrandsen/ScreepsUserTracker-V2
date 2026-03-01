@@ -94,7 +94,7 @@ namespace UserTracker.Tests.DBClients
         [Fact]
         public void QuestDBClientState_GetQuestDBDto_CalculatesControllerPointsPerTick()
         {
-            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(method);
 
             var history = new ScreepsRoomHistoryDto();
@@ -344,7 +344,7 @@ namespace UserTracker.Tests.DBClients
         public void QuestDBClientState_FromJsonFileProducesQuestDbDto()
         {
             var dto = LoadRoomHistoryDto("case1.json");
-            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(method);
 
             var questDto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { dto })!;
@@ -418,7 +418,7 @@ namespace UserTracker.Tests.DBClients
             history.Structures.Container.Store.power = 20;
             history.Structures.Link.Energy = 40;
 
-            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.NonPublic);
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(method);
             var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
 

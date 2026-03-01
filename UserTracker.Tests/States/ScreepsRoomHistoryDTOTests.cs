@@ -550,7 +550,7 @@ namespace UserTracker.Tests.Models
                     energy = 1000,
                     power = 1000,
                     alloy = 1000,
-                }
+                },
             };
             var creep2 = new CreepDto()
             {
@@ -1044,6 +1044,11 @@ namespace UserTracker.Tests.Models
             Assert.Equal(2000, aggregate.Creeps.OwnedCreeps.Store.energy);
             Assert.Equal(2000, aggregate.Creeps.OwnedCreeps.Store.power);
             Assert.Equal(2000, aggregate.Creeps.OwnedCreeps.Store.alloy);
+
+            var questDto = QuestDBClientState.GetQuestDBDto(aggregate);
+
+            Assert.Equal(2000, questDto.CreepEnergyInflow);
+            Assert.Equal(6000, questDto.CreepEnergyOutflow);
         }
 
         [Fact]
