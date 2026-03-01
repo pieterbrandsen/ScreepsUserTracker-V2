@@ -49,12 +49,12 @@ const roomDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}}) AN
 
 const baseQuery = {
   query: `SELECT timestamp as time, {{data}}, {{metric}}
-FROM mmo_{{usedDataType}}_history
+FROM {{datasource}}_{{usedDataType}}_history
 WHERE timestamp >= '{{fromTime}}' AND timestamp <= '{{toTime}}'
 {{usedDataTypeFilter}}
 SAMPLE BY {{sampleInterval}}
 ALIGN TO CALENDAR`,
-  params: ['metric', 'data', 'dataNames', 'usedDataType', 'shards', 'users', 'rooms', 'fromTime', 'toTime', 'sampleInterval'],
+  params: ['datasource', 'metric', 'data', 'dataNames', 'usedDataType', 'shards', 'users', 'rooms', 'fromTime', 'toTime', 'sampleInterval'],
 };
 
 function parseLooseBody(bodyText) {
