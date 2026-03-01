@@ -57,7 +57,7 @@ namespace UserTracker.Tests.DBClients
                 "spawn", "storage", "terminal", "tower", "nuker"
             };
 
-            var expectedStructureCount = 1 + expectedStructureKeys.Sum(key => structureCounts[key]);
+            var expectedStructureCount = expectedStructureKeys.Sum(key => structureCounts[key]);
             var expectedPlacedStructureCount = expectedPlacedKeys.Sum(key => structureCounts[key]);
 
             Assert.Equal(expectedStructureCount, structureCount);
@@ -80,7 +80,7 @@ namespace UserTracker.Tests.DBClients
         public void QuestDBDtoHelper_IncludesControllerMineralAndDepositCounts()
         {
             var history = new ScreepsRoomHistoryDto();
-            history.Structures.Controller.UserId = "player";
+            history.Structures.Controller.Count = 1;
             history.Structures.Mineral.Count = 1;
             history.Structures.Deposit.Count = 1;
 
@@ -175,7 +175,7 @@ namespace UserTracker.Tests.DBClients
             log.Spawned.Count = 1;
             log.Power.Count = 1;
 
-            var (count, counts) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
+            var (count, counts, inflow, outflow) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
 
             Assert.Equal(counts.Values.Sum(), count);
             Assert.Equal(2, counts["attack"]);
@@ -228,7 +228,7 @@ namespace UserTracker.Tests.DBClients
             log.Spawned.Count = 1;
             log.Power.Count = 1;
 
-            var (_, counts) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
+            var (_, counts, inflow, outflow) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
             var expectedKeys = new[]
             {
                 "attack", "attacked", "ranged_attack", "ranged_mass_attacked",
@@ -364,7 +364,7 @@ namespace UserTracker.Tests.DBClients
             var (_, ownedParts) = QuestDBDtoHelper.GetCreepPartsCounts(dto);
             Assert.Equal(ownedParts, questDto.OwnedCreepPartsCounts);
 
-            var (intentCount, intentCounts) = QuestDBDtoHelper.GetCreepIntentsCounts(dto);
+            var (intentCount, intentCounts, inflow, outflow) = QuestDBDtoHelper.GetCreepIntentsCounts(dto);
             Assert.Equal(intentCount, questDto.CreepIntentCount);
             Assert.Equal(intentCounts, questDto.CreepIntentCounts);
 
@@ -372,6 +372,8 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Upgraded), questDto.ControllerPointsPerTick);
+            Assert.Equal(0, inflow);
+            Assert.Equal(16, outflow);
 
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(dto);
             Assert.Equal(storeTotal, questDto.StoreTotal);
@@ -436,7 +438,7 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(ownedPartsCount, dto.OwnedCreepPartsCount);
             Assert.Equal(ownedParts, dto.OwnedCreepPartsCounts);
 
-            var (intentCount, intents) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
+            var (intentCount, intents, inflow, outflow) = QuestDBDtoHelper.GetCreepIntentsCounts(history);
             Assert.Equal(intentCount, dto.CreepIntentCount);
             Assert.Equal(intents, dto.CreepIntentCounts);
 
