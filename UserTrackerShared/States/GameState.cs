@@ -30,6 +30,10 @@ namespace UserTrackerShared.States
                 // onSetAdminUtilsDataTimer.Enabled = true;
                 // onSetAdminUtilsDataTimer.Elapsed += (s, e) => _ = OnUpdateAdminUtilsDataTimerAsync();
             }
+            else if (!string.IsNullOrEmpty(ConfigSettingsState.ScreepsShardName))
+            {
+                Shards.Add(new ShardStateManager(ConfigSettingsState.ScreepsShardName));
+            }
             else
             {
                 for (int i = 0; i <= 3; i++)

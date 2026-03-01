@@ -449,7 +449,7 @@ namespace UserTrackerShared.DBClients
                     {
                         key = kvp.Key.Replace($"users.{username}", "users", StringComparison.OrdinalIgnoreCase);
                     }
-                    
+
                     var pointParameters = new QuestAdminUtilsPointDataParameter(
                         database,
                         username,
@@ -885,7 +885,7 @@ namespace UserTrackerShared.DBClients
 
             return (creepPartsCount, creepPartsCounts);
         }
-        private static (int, Dictionary<string, int>,int,int) GetCreepIntentsCounts(ActionLogDto actionLog)
+        private static (int, Dictionary<string, int>, int, int) GetCreepIntentsCounts(ActionLogDto actionLog)
         {
             int energyInflow = 0;
             int energyOutflow = 0;
@@ -985,7 +985,7 @@ namespace UserTrackerShared.DBClients
 
             return (creepIntentsCount, creepIntentsCounts, energyInflow, energyOutflow);
         }
-        public static (int, Dictionary<string, int>, int,int) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
+        public static (int, Dictionary<string, int>, int, int) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
         {
             var creepEnergyInflow = 0;
             var creepEnergyOutflow = 0;
@@ -1178,7 +1178,7 @@ namespace UserTrackerShared.DBClients
 
                 StoreTotal = Convert.ToInt32(storeTotal),
                 StoreTotals = storeTotals
-            };,
+            };
 
             return questDBHistoryDTO;
         }
@@ -1206,7 +1206,7 @@ namespace UserTrackerShared.DBClients
                 var database = $"{ConfigSettingsState.ServerName}_room_history";
                 var questDBHistoryDTO = GetQuestDBDto(screepsRoomHistory);
 
-                // _logger.Information("Uploading room history data for {Shard}/{Room} at tick {Tick} (user: {Username})", shard, room, tick, username);
+                _logger.Information("Uploading room history data for {Shard}/{Room} at tick {Tick} (user: {Username}/{UserId})", shard, room, tick, username, userId);
                 QuestDBClientWriter.UploadRoomHistoryData(database, shard, room, tick, timestamp, username, questDBHistoryDTO);
             }
             catch (Exception e)
@@ -1296,7 +1296,7 @@ namespace UserTrackerShared.DBClients
                 seasonItem.Timestamp = DateTime.UtcNow;
                 var database = $"{ConfigSettingsState.ServerName}_current_leaderboard";
                 await QuestDBClientWriter.UploadLeaderboardData(database, seasonItem);
-                _logger.Information("Current leaderboard data for user {User} in season {Season} uploaded successfully.", seasonItem.UserName, seasonItem.Season);
+                _logger.Information("Current leaderboard data for user {User}/{UserId} in season {Season} uploaded successfully.", seasonItem.UserName, seasonItem.UserId, seasonItem.Season);
             }
             catch (Exception e)
             {
