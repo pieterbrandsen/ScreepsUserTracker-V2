@@ -239,6 +239,14 @@ namespace UserTrackerShared.Utilities
             return Result;
         }
 
+        private static async Task<ScoreListResponse?> GetCurrentScoreLeaderboard(int offset, int limit)
+        {
+            var path = $"/api/scoreboard/list?limit={limit}&offset={offset}";
+
+            var (Result, _) = await ExecuteRequestAsync<ScoreListResponse>(HttpMethod.Get, path);
+            return Result;
+        }
+
         private static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetSeasonLeaderboardData(string season)
         {
             var gclLeaderboardList = new List<SeasonListItem>();
@@ -253,7 +261,7 @@ namespace UserTrackerShared.Utilities
             {
                 var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
                 var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
-                var scoreListResponse = await GetCurrentSeasonLeaderboard("score", season, offset, limit);
+                var scoreListResponse = await GetCurrentScoreLeaderboard(offset, limit);
 
                 var didSomething = false;
                 if (gclListResponse != null && gclListResponse.List.Count > 0)
@@ -266,9 +274,19 @@ namespace UserTrackerShared.Utilities
                     powerLeaderboardList.AddRange(powerListResponse.List);
                     didSomething = true;
                 }
-                if (scoreListResponse != null && scoreListResponse.List.Count > 0)
+                if (scoreListResponse != null && scoreListResponse.Users.Count > 0)
                 {
-                    scoreLeaderboardList.AddRange(scoreListResponse.List);
+                    var scoreItems = scoreListResponse.Users.Select(user => new SeasonListItem
+                    {
+                        Type = "score",
+                        Id = $"{season}_{user.Username}",
+                        Season = season,
+                        UserName = user.Username,
+                        Score = user.Score,
+                        Rank = user.ScoreRank,
+                        Timestamp = DateTime.UtcNow
+                    }).ToList();
+                    scoreLeaderboardList.AddRange(scoreItems);
                     didSomething = true;
                 }
                 if (!didSomething) break;

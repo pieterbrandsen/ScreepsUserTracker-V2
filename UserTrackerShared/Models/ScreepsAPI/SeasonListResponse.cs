@@ -30,4 +30,12 @@ namespace UserTrackerShared.Models.ScreepsAPI
         [JsonProperty("users")]
         public required Dictionary<string, ScreepsUser> Users { get; set; }
     }
+
+    public class ScoreListResponse
+    {
+        [JsonProperty("ok")]
+        public int Ok { get; set; }
+        [JsonProperty("users")]
+        public required List<ScreepsUser> Users { get; set; }
+    }
 }

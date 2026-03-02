@@ -161,7 +161,7 @@ namespace UserTrackerShared.States
                             await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
                         }
                     }
-
+                    
                     foreach (var leaderboardSpot in scoreLeaderboard)
                     {
                         if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
@@ -188,7 +188,7 @@ namespace UserTrackerShared.States
             _leaderboardLogger.Information("Updating users leaderboard data");
             var userIdsUpdated = new HashSet<string>();
 
-            var (gclLeaderboard, powerLeaderboard) = await ScreepsAPI.GetCurrentSeasonLeaderboard();
+            var (gclLeaderboard, powerLeaderboard, scoreLeaderboard) = await ScreepsAPI.GetCurrentSeasonLeaderboard();
             _leaderboardLogger.Information("Fetched current season leaderboard data");
 
             _leaderboardLogger.Information("Updating user data from gcl leaderboard entries");
@@ -206,6 +206,7 @@ namespace UserTrackerShared.States
                     leaderboardSpot.Rank += 1;
                     leaderboardSpot.UserName = value.Username;
                     leaderboardSpot.Type = "gcl";
+                    value.Score = leaderboardSpot.Score;
                     await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
                 }
                 else
@@ -237,9 +238,39 @@ namespace UserTrackerShared.States
                 }
             }
 
-            _leaderboardLogger.Information("Updating user GCL and Power ranks");
+            _leaderboardLogger.Information("Updating user data from score leaderboard entries");
+            foreach (var leaderboardSpot in scoreLeaderboard)
+            {
+                var userId = Users.FirstOrDefault(kv => kv.Value.Username == leaderboardSpot.UserName).Key;
+                if (userId == null)
+                {
+                    continue;
+                }
+                if (!Users.TryGetValue(userId, out ScreepsUser? value) || !userIdsUpdated.Contains(userId))
+                {
+                    await GetUser(userId);
+                    Users.TryGetValue(userId, out value);
+                    userIdsUpdated.Add(userId);
+                }
+
+                if (value != null)
+                {
+                    leaderboardSpot.Rank += 1;
+                    leaderboardSpot.UserName = value.Username;
+                    leaderboardSpot.Type = "score";
+                    value.Score = leaderboardSpot.Score;
+                    await DBClient.WriteCurrentLeaderboardData(leaderboardSpot);
+                }
+                else
+                {
+                    _leaderboardLogger.Warning("User {UserId} not found when updating Score leaderboard", leaderboardSpot.UserName);
+                }
+            }
+
+            _leaderboardLogger.Information("Updating user GCL, Power and Score ranks");
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
             var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
+            var scoreSorted = Users.Values.OrderByDescending(x => x.Score).ToList();
             int gclRank = 1;
             foreach (var group in gclSorted.GroupBy(x => x.GCL))
             {
@@ -258,6 +289,16 @@ namespace UserTrackerShared.States
                     user.PowerRank = powerRank;
                 }
                 powerRank += group.Count();
+            }
+
+            int scoreRank = 1;
+            foreach (var group in scoreSorted.GroupBy(x => x.Score))
+            {
+                foreach (var user in group)
+                {
+                    user.ScoreRank = scoreRank;
+                }
+                scoreRank += group.Count();
             }
 
             _leaderboardLogger.Information("Writing all users to database");

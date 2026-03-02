@@ -503,6 +503,8 @@ namespace UserTrackerShared.DBClients
                     .Column("gclRank", user.GCLRank)
                     .Column("power", user.Power)
                     .Column("powerRank", user.PowerRank)
+                    .Column("score", user.Score)
+                    .Column("scoreRank", user.ScoreRank)
                     .AtAsync(DateTime.UtcNow);
 
                 Interlocked.Increment(ref _flushedPointCount);

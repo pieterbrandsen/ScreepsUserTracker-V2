@@ -22,5 +22,8 @@ namespace UserTrackerShared.Models
         public MapStatUserBadge Badge { get; set; } = null!;
         public int GCLRank { get; set; }
         public int PowerRank { get; set; }
+        [JsonProperty("rank")]
+        public int ScoreRank { get; set; }
+        public long Score { get; set; }
     }
 }
