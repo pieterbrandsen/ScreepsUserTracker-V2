@@ -627,7 +627,7 @@ namespace UserTrackerShared.Helpers
             if (actionLog.Harvest != null)
             {
                 actionLogDto.Harvest.Count += 1m / ConfigSettingsState.TicksInObject;
-                actionLogDto.Harvest.Inflow += (decimal)Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2));
+                actionLogDto.Harvest.Inflow += (decimal)Convert.ToInt64(Math.Round(workCount * 2 + intentPowerMap.Harvest * 2)) / ConfigSettingsState.TicksInObject;
             }
             #endregion
             #region Outflow
