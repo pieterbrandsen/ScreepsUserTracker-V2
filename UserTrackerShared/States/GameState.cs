@@ -126,7 +126,7 @@ namespace UserTrackerShared.States
                 var currentSeason = seasons.FirstOrDefault();
 
                 var leaderboardList = leaderboardsResponse.Where(kv => kv.Key != currentSeason).Select(kv => kv.Value).ToList();
-                foreach (var (gclLeaderboard, powerLeaderboard) in leaderboardList)
+                foreach (var (gclLeaderboard, powerLeaderboard, scoreLeaderboard) in leaderboardList)
                 {
                     foreach (var leaderboardSpot in gclLeaderboard)
                     {
@@ -158,6 +158,23 @@ namespace UserTrackerShared.States
                             leaderboardSpot.Rank += 1;
                             leaderboardSpot.UserName = value.Username;
                             leaderboardSpot.Type = "power";
+                            await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
+                        }
+                    }
+
+                    foreach (var leaderboardSpot in scoreLeaderboard)
+                    {
+                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
+                        {
+                            await GetUser(leaderboardSpot.UserId);
+                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
+                        }
+
+                        if (value != null)
+                        {
+                            leaderboardSpot.Rank += 1;
+                            leaderboardSpot.UserName = value.Username;
+                            leaderboardSpot.Type = "score";
                             await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
                         }
                     }

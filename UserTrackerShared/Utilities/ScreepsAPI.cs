@@ -239,10 +239,11 @@ namespace UserTrackerShared.Utilities
             return Result;
         }
 
-        private static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power)> GetSeasonLeaderboardData(string season)
+        private static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetSeasonLeaderboardData(string season)
         {
             var gclLeaderboardList = new List<SeasonListItem>();
             var powerLeaderboardList = new List<SeasonListItem>();
+            var scoreLeaderboardList = new List<SeasonListItem>();
 
             _leaderboardLogger.Information($"Starting leaderboard fetch for season {season}");
             int offset = 0;
@@ -252,6 +253,7 @@ namespace UserTrackerShared.Utilities
             {
                 var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
                 var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
+                var scoreListResponse = await GetCurrentSeasonLeaderboard("score", season, offset, limit);
 
                 var didSomething = false;
                 if (gclListResponse != null && gclListResponse.List.Count > 0)
@@ -264,38 +266,43 @@ namespace UserTrackerShared.Utilities
                     powerLeaderboardList.AddRange(powerListResponse.List);
                     didSomething = true;
                 }
+                if (scoreListResponse != null && scoreListResponse.List.Count > 0)
+                {
+                    scoreLeaderboardList.AddRange(scoreListResponse.List);
+                    didSomething = true;
+                }
                 if (!didSomething) break;
                 offset += limit;
                 iterationCount++;
             }
 
             _leaderboardLogger.Information($"Leaderboard completed for {season}: {iterationCount} total iterations, {gclLeaderboardList.Count} GCL items, {powerLeaderboardList.Count} power items");
-            return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList());
+            return (gclLeaderboardList.OrderBy(s => s.Rank).ToList(), powerLeaderboardList.OrderBy(s => s.Rank).ToList(), scoreLeaderboardList.OrderBy(s => s.Rank).ToList());
         }
 
-        public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power)> GetCurrentSeasonLeaderboard()
+        public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetCurrentSeasonLeaderboard()
         {
             var season = DateTime.Now.ToString("yyyy-MM");
             return await GetSeasonLeaderboardData(season);
         }
 
-        public static async Task<Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>> GetAllSeasonsLeaderboard()
+        public static async Task<Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)>> GetAllSeasonsLeaderboard()
         {
-            var leaderboardsList = new Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power)>();
+            var leaderboardsList = new Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)>();
 
             var lastSeasonEmpty = false;
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var (gclLeaderboardList, powerLeaderboardList) = await GetSeasonLeaderboardData(season);
+                var (gclLeaderboardList, powerLeaderboardList, scoreLeaderboardList) = await GetSeasonLeaderboardData(season);
 
-                if (gclLeaderboardList.Count + powerLeaderboardList.Count == 0)
+                if (gclLeaderboardList.Count + powerLeaderboardList.Count + scoreLeaderboardList.Count == 0)
                 {
                     lastSeasonEmpty = true;
                 }
                 else
                 {
-                    leaderboardsList.Add(season, (gclLeaderboardList, powerLeaderboardList));
+                    leaderboardsList.Add(season, (gclLeaderboardList, powerLeaderboardList, scoreLeaderboardList));
                     season = DateTime.Parse(season, CultureInfo.InvariantCulture).AddMonths(-1).ToString("yyyy-MM", CultureInfo.InvariantCulture);
                 }
             }
