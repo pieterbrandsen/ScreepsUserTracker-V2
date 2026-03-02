@@ -387,11 +387,7 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Level), questDto.ControllerLevel);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
-            var expectedPoints = dto.Structures.Controller == null
-                ? null
-                : Convert.ToInt32(dto.Structures.Controller.ScorePerTick != 0 ? dto.Structures.Controller.ScorePerTick : dto.Structures.Controller.Upgraded);
-            Assert.Equal(expectedPoints, questDto.ControllerPointsPerTick);
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ScorePerTick), questDto.ControllerScorePerTick);
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Upgraded), questDto.ControllerPointsPerTick);
             Assert.Equal(0, inflow);
             Assert.Equal(16, outflow);
 
