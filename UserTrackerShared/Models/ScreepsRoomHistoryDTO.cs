@@ -161,6 +161,7 @@ namespace UserTrackerShared.Models
         public decimal ReservationUserIdCount { get; set; } = 0;
         public decimal OwnedUserIdCount { get; set; } = 0;
         public decimal Upgraded { get; set; } = 0;
+        public decimal ScorePerTick { get; set; } = 0;
         public new void Clear()
         {
             Level = 0;
@@ -171,6 +172,7 @@ namespace UserTrackerShared.Models
             ReservationUserIdCount = 0;
             OwnedUserIdCount = 0;
             Upgraded = 0;
+            ScorePerTick = 0;
             base.Clear();
         }
     }

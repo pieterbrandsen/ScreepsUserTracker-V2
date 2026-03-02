@@ -188,7 +188,8 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
                 Progress = 10,
                 ProgressTotal = 20,
                 User = "owner",
-                _upgraded = 5
+                _upgraded = 5,
+                ScorePerTick = 7
             },
             Mineral = new StructureMineral(),
         };
@@ -218,6 +219,7 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
         Assert.Equal(20m / ticks, dto.Controller.ProgressTotal);
         Assert.Equal("owner", dto.Controller.UserId);
         Assert.Equal(5m / ticks, dto.Controller.Upgraded);
+        Assert.Equal(7m / ticks, dto.Controller.ScorePerTick);
 
         Assert.Equal(1m / ticks, dto.Mineral.Count);
         Assert.Equal(1m / ticks, dto.Deposit.Count);
@@ -248,6 +250,7 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
 
         a.Controller.Count = 1;
         a.Controller.Level = 2;
+        a.Controller.ScorePerTick = 4;
         a.Controller.UserId = "first";
         a.ConstructionSite.TypesBuilding["spawn"] = 1;
         a.Container.Count = 1;
@@ -256,6 +259,7 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
 
         b.Controller.Count = 2;
         b.Controller.Level = 3;
+        b.Controller.ScorePerTick = 6;
         b.Controller.UserId = "second";
         b.ConstructionSite.TypesBuilding["extension"] = 2;
         b.Container.Count = 4;
@@ -266,6 +270,7 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
 
         Assert.Equal(3, a.Controller.Count);
         Assert.Equal(5, a.Controller.Level);
+        Assert.Equal(10, a.Controller.ScorePerTick);
         Assert.Equal("first", a.Controller.UserId);
         Assert.Equal(2, a.ConstructionSite.TypesBuilding.Count);
         Assert.Equal(1, a.ConstructionSite.TypesBuilding["spawn"]);

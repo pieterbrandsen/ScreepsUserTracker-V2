@@ -102,6 +102,22 @@ namespace UserTracker.Tests.DBClients
 
             var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
             Assert.Equal(123, dto.ControllerPointsPerTick);
+            Assert.Equal(0, dto.ControllerScorePerTick);
+        }
+
+        [Fact]
+        public void QuestDBClientState_GetQuestDBDto_UsesControllerScorePerTickWhenPresent()
+        {
+            var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.Public);
+            Assert.NotNull(method);
+
+            var history = new ScreepsRoomHistoryDto();
+            history.Structures.Controller.Upgraded = 123;
+            history.Structures.Controller.ScorePerTick = 7;
+
+            var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
+            Assert.Equal(7, dto.ControllerPointsPerTick);
+            Assert.Equal(7, dto.ControllerScorePerTick);
         }
 
         [Fact]
@@ -371,7 +387,11 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Level), questDto.ControllerLevel);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
             Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Upgraded), questDto.ControllerPointsPerTick);
+            var expectedPoints = dto.Structures.Controller == null
+                ? null
+                : Convert.ToInt32(dto.Structures.Controller.ScorePerTick != 0 ? dto.Structures.Controller.ScorePerTick : dto.Structures.Controller.Upgraded);
+            Assert.Equal(expectedPoints, questDto.ControllerPointsPerTick);
+            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ScorePerTick), questDto.ControllerScorePerTick);
             Assert.Equal(0, inflow);
             Assert.Equal(16, outflow);
 
@@ -389,6 +409,7 @@ namespace UserTracker.Tests.DBClients
             history.Structures.Controller.Progress = 100;
             history.Structures.Controller.ProgressTotal = 500;
             history.Structures.Controller.Upgraded = 42;
+            history.Structures.Controller.ScorePerTick = 9;
             history.Structures.Controller.ReservationUserId = null;
             history.Structures.Wall.Count = 18m;
             history.Structures.Container.Count = 3.2m;
@@ -445,7 +466,8 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(5, dto.ControllerLevel);
             Assert.Equal(100, dto.ControllerProgress);
             Assert.Equal(500, dto.ControllerProgressTotal);
-            Assert.Equal(42, dto.ControllerPointsPerTick);
+            Assert.Equal(9, dto.ControllerPointsPerTick);
+            Assert.Equal(9, dto.ControllerScorePerTick);
 
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(history);
             Assert.Equal(storeTotal, dto.StoreTotal);
@@ -618,6 +640,7 @@ namespace UserTracker.Tests.DBClients
                 ControllerProgress = 200,
                 ControllerProgressTotal = 1000,
                 ControllerPointsPerTick = 3,
+                ControllerScorePerTick = 5,
                 StoreTotal = 600,
                 StoreTotals = new Dictionary<string, int>
                 {
@@ -703,6 +726,7 @@ namespace UserTracker.Tests.DBClients
                 ["controllerprogress"] = dto.ControllerProgress ?? 0,
                 ["controllerprogresstotal"] = dto.ControllerProgressTotal ?? 0,
                 ["controllerpointspertick"] = dto.ControllerPointsPerTick ?? 0,
+                ["controllerscorepertick"] = dto.ControllerScorePerTick ?? 0,
                 ["storetotal"] = dto.StoreTotal,
                 ["storetotals_energy"] = dto.StoreTotals["energy"],
                 ["storetotals_battery"] = dto.StoreTotals["battery"]

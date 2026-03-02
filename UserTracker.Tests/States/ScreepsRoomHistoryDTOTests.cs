@@ -294,7 +294,8 @@ namespace UserTracker.Tests.Models
                     ProgressTotal = 1000,
                     OwnedUserIdCount = 1000,
                     ReservationUserIdCount = 1000,
-                    Upgraded = 1000
+                    Upgraded = 1000,
+                    ScorePerTick = 1000
                 },
                 Mineral = new StructureMineralDto { 
                     Count = 1000,
@@ -950,6 +951,7 @@ namespace UserTracker.Tests.Models
             Assert.Equal(2000, aggregate.Structures.Controller.OwnedUserIdCount);
             Assert.Equal(2000, aggregate.Structures.Controller.ReservationUserIdCount);
             Assert.Equal(2000, aggregate.Structures.Controller.Upgraded);
+            Assert.Equal(2000, aggregate.Structures.Controller.ScorePerTick);
             Assert.Equal(2000, aggregate.Structures.Mineral.Count);
             Assert.Equal(2000, aggregate.Structures.Deposit.Count);
             Assert.Equal(2000, aggregate.Structures.Wall.Count);

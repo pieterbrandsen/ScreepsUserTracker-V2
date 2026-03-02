@@ -73,7 +73,7 @@ namespace UserTrackerShared.Managers
         private async Task StartSync()
         {
             var syncTime = GetSyncTime();
-            if (LastSyncTime == 0) LastSyncTime = syncTime - ConfigSettingsState.PullBackwardsTickAmount;
+            if (LastSyncTime == 0) LastSyncTime = Math.Max(0, syncTime - ConfigSettingsState.PullBackwardsTickAmount);
             if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;
 
             var ticksToBeSynced = syncTime - LastSyncTime;

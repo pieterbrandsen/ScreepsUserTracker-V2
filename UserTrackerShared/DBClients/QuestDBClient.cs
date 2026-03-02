@@ -1149,6 +1149,10 @@ namespace UserTrackerShared.DBClients
             var (creepIntentCount, creepIntentCounts, creepEnergyInflow, creepEnergyOutflow) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
             var (ownedRoomCount, reservedRoomCount) = (Convert.ToInt32(screepsRoomHistory.Structures.Controller.OwnedUserIdCount), Convert.ToInt32(screepsRoomHistory.Structures.Controller.ReservationUserIdCount));
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
+            var controller = screepsRoomHistory.Structures.Controller;
+            var controllerPointsPerTick = controller != null
+                ? (controller.ScorePerTick != 0 ? controller.ScorePerTick : controller.Upgraded)
+                : (decimal?)null;
 
             var questDBHistoryDTO = new QuestDBHistoryDTO()
             {
@@ -1171,10 +1175,11 @@ namespace UserTrackerShared.DBClients
                 OwnedRoomCount = ownedRoomCount,
                 ReservedRoomCount = reservedRoomCount,
 
-                ControllerLevel = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Level ?? null),
-                ControllerProgress = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Progress ?? null),
-                ControllerProgressTotal = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.ProgressTotal ?? null),
-                ControllerPointsPerTick = Convert.ToInt32(screepsRoomHistory.Structures.Controller?.Upgraded ?? null),
+                ControllerLevel = Convert.ToInt32(controller?.Level ?? null),
+                ControllerProgress = Convert.ToInt32(controller?.Progress ?? null),
+                ControllerProgressTotal = Convert.ToInt32(controller?.ProgressTotal ?? null),
+                ControllerPointsPerTick = Convert.ToInt32(controllerPointsPerTick ?? null),
+                ControllerScorePerTick = Convert.ToInt32(controller?.ScorePerTick ?? null),
 
                 StoreTotal = Convert.ToInt32(storeTotal),
                 StoreTotals = storeTotals

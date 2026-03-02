@@ -17,6 +17,7 @@ public class ScreepsRoomHistoryHelperTests
         var changes = new Dictionary<string, object?>
         {
             ["level"] = 5,
+            ["scorePerTick"] = 1,
             ["user"] = "owner"
         };
 
@@ -25,6 +26,7 @@ public class ScreepsRoomHistoryHelperTests
         Assert.NotNull(roomHistory.Structures.Controller);
         Assert.Equal("owner", roomHistory.Structures.Controller.User);
         Assert.Equal(5, roomHistory.Structures.Controller.Level);
+        Assert.Equal(1, roomHistory.Structures.Controller.ScorePerTick);
     }
 
     [Fact]
@@ -639,7 +641,8 @@ public class ScreepsRoomHistoryHelperRemainingTypesTests
         });
         ScreepsRoomHistoryHelper.UpdateRoomHistory("keeper1", history, new Dictionary<string, object?>
         {
-            ["nextSpawnTime"] = 77
+            ["nextSpawnTime"] = 77,
+            ["scorePerTick"] = 1
         });
 
         Assert.True(history.Structures.Extensions.ContainsKey("ext1"));
@@ -650,20 +653,28 @@ public class ScreepsRoomHistoryHelperRemainingTypesTests
         Assert.Equal(200m, history.Structures.InvaderCores["inv1"].Hits);
         Assert.True(history.Structures.KeeperLairs.ContainsKey("keeper1"));
         Assert.Equal(77m, history.Structures.KeeperLairs["keeper1"].NextSpawnTime);
+        Assert.Equal(1m, history.Structures.KeeperLairs["keeper1"].ScorePerTick);
     }
 
     [Fact]
-    public void UpdateRoomHistory_AddsSourcePowerSpawnFactoryAndObserver()
+    public void UpdateRoomHistory_AddsSourceMineralPowerSpawnFactoryAndObserver()
     {
         var history = new ScreepsRoomHistory();
         history.TypeMap["source1"] = "source";
+        history.TypeMap["mineral1"] = "mineral";
         history.TypeMap["powerSpawn1"] = "powerSpawn";
         history.TypeMap["factory1"] = "factory";
         history.TypeMap["observer1"] = "observer";
 
         ScreepsRoomHistoryHelper.UpdateRoomHistory("source1", history, new Dictionary<string, object?>
         {
-            ["energy"] = 300
+            ["energy"] = 300,
+            ["scorePerTick"] = 1
+        });
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("mineral1", history, new Dictionary<string, object?>
+        {
+            ["mineralAmount"] = 500,
+            ["scorePerTick"] = 1
         });
         ScreepsRoomHistoryHelper.UpdateRoomHistory("powerSpawn1", history, new Dictionary<string, object?>
         {
@@ -680,6 +691,10 @@ public class ScreepsRoomHistoryHelperRemainingTypesTests
 
         Assert.True(history.Structures.Sources.ContainsKey("source1"));
         Assert.Equal(300m, history.Structures.Sources["source1"].Energy);
+        Assert.Equal(1m, history.Structures.Sources["source1"].ScorePerTick);
+        Assert.NotNull(history.Structures.Mineral);
+        Assert.Equal(500m, history.Structures.Mineral!.MineralAmount);
+        Assert.Equal(1m, history.Structures.Mineral.ScorePerTick);
         Assert.True(history.Structures.PowerSpawns.ContainsKey("powerSpawn1"));
         Assert.Equal(40m, history.Structures.PowerSpawns["powerSpawn1"].Store.energy);
         Assert.True(history.Structures.Factories.ContainsKey("factory1"));

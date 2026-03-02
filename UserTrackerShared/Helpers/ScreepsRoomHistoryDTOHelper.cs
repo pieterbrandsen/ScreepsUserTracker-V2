@@ -114,6 +114,7 @@ namespace UserTrackerShared.Helpers
                 structuresDto.Controller.UserId = structures.Controller.User ?? "";
                 structuresDto.Controller.ReservationUserId = structures.Controller.Reservation?.User;
                 structuresDto.Controller.Upgraded += structures.Controller._upgraded / ConfigSettingsState.TicksInObject;
+                structuresDto.Controller.ScorePerTick += structures.Controller.ScorePerTick / ConfigSettingsState.TicksInObject;
                 
                 structuresDto.Controller.OwnedUserIdCount += (structures.Controller.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
                 structuresDto.Controller.ReservationUserIdCount += (structures.Controller.Reservation?.User != null) ? (1m / ConfigSettingsState.TicksInObject) : 0;
@@ -290,6 +291,7 @@ namespace UserTrackerShared.Helpers
             structuresDtoA.Controller.Progress += structuresDtoB.Controller.Progress;
             structuresDtoA.Controller.ProgressTotal += structuresDtoB.Controller.ProgressTotal;
             structuresDtoA.Controller.Upgraded += structuresDtoB.Controller.Upgraded;
+            structuresDtoA.Controller.ScorePerTick += structuresDtoB.Controller.ScorePerTick;
             structuresDtoA.Controller.ReservationUserIdCount += structuresDtoB.Controller.ReservationUserIdCount;
             structuresDtoA.Controller.OwnedUserIdCount += structuresDtoB.Controller.OwnedUserIdCount;
 

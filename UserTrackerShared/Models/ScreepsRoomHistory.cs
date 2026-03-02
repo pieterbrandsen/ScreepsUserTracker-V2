@@ -775,6 +775,8 @@ namespace UserTrackerShared.Models
         public decimal Progress { get; set; }
         [JsonProperty("progressTotal")]
         public decimal ProgressTotal { get; set; }
+        [JsonProperty("scorePerTick")]
+        public decimal ScorePerTick { get; set; }
     }
 
     public class PositionedStructure : BaseStructure

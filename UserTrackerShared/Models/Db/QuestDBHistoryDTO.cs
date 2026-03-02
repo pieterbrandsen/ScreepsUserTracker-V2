@@ -28,6 +28,7 @@ namespace UserTrackerShared.Models.Db
         public int? ControllerProgress { get; set; }
         public int? ControllerProgressTotal { get; set; }
         public int? ControllerPointsPerTick { get; set; }
+        public int? ControllerScorePerTick { get; set; }
 
         public int StoreTotal { get; set; }
         public Dictionary<string, int> StoreTotals { get; set; } = [];
