@@ -48,7 +48,7 @@ const userDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}})";
 const roomDataTypeFilter = "AND shard IN ({{shards}}) AND user IN ({{users}}) AND room IN ({{rooms}})";
 
 const baseQuery = {
-  query: `SELECT timestamp as time, {{data}}, {{metric}}
+  query: `SELECT timestamp as time, tick, {{data}}, {{metric}}
 FROM {{datasource}}_{{usedDataType}}_history
 WHERE timestamp >= '{{fromTime}}' AND timestamp <= '{{toTime}}'
 {{usedDataTypeFilter}}
@@ -172,11 +172,11 @@ function transformData(params, dataArray) {
   const dataList = [];
 
   for (const entry of dataArray) {
-    const dataEntry = { time: entry[0] };
+    const dataEntry = { time: entry[0], tick: entry[1] };
     let metricParts = [];
     let valueIndex = 0;
 
-    for (let i = 1; i < entry.length; i++) {
+    for (let i = 2; i < entry.length; i++) {
       const item = entry[i];
 
       if (typeof item === 'number') {

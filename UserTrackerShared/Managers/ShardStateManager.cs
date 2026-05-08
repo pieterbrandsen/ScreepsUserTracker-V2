@@ -28,6 +28,7 @@ namespace UserTrackerShared.Managers
                 foreach (var room in response.Rooms)
                 {
                     Rooms.Add(room.Key);
+                    _shardLogger.Information($"Added room {room.Key} to shard {Name}");
                 }
 
                 var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";

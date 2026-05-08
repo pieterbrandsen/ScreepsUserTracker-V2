@@ -42,16 +42,15 @@ namespace UserTrackerShared.States
                 }
             }
 
-            await UpdateUsersLeaderboard();
-            var updateLeaderboardWorker = new CronWorker(
-                "UpdateUsersLeaderboard",
-                "0 */6 * * *",
-                OnUpdateUsersLeaderboardTimer);
-            _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
-
-
             if (ConfigSettingsState.GetAllUsers)
             {
+                await UpdateUsersLeaderboard();
+                var updateLeaderboardWorker = new CronWorker(
+                    "UpdateUsersLeaderboard",
+                    "0 */6 * * *",
+                    OnUpdateUsersLeaderboardTimer);
+                _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
+
                 await GetAllUsers();
 
                 var getAllUsersWorker = new CronWorker(
@@ -164,10 +163,15 @@ namespace UserTrackerShared.States
                     
                     foreach (var leaderboardSpot in scoreLeaderboard)
                     {
-                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
+                        var userId = Users.FirstOrDefault(kv => kv.Value.Username == leaderboardSpot.UserName).Key;
+                        if (userId == null)
                         {
-                            await GetUser(leaderboardSpot.UserId);
-                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
+                            continue;
+                        }
+                        if (!Users.TryGetValue(userId, out ScreepsUser? value))
+                        {
+                            await GetUser(userId);
+                            Users.TryGetValue(userId, out value); // Retry after attempting to fetch
                         }
 
                         if (value != null)

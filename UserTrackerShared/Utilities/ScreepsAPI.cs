@@ -76,15 +76,15 @@ namespace UserTrackerShared.Utilities
             {
                 var retryCount = 0;
                 HttpResponseMessage? response = null;
-                int maxRetries = 5;
-                int delayMs = 200;
+                int maxRetries = 10;
+                int delayMs = 250;
 
                 await Task.Delay(delayMs);
                 while (retryCount < maxRetries)
                 {
                     if (retryCount > 0)
                     {
-                        await Task.Delay(delayMs);
+                        await Task.Delay(retryCount * delayMs);
                     }
 
                     using (var clonedRequest = await CloneHttpRequestMessageAsync(request))
@@ -96,6 +96,7 @@ namespace UserTrackerShared.Utilities
                     }
                     retryCount += 1;
                 }
+                _logger.Warning($"Request to {request.RequestUri} failed after {maxRetries} attempts. Last status code: {(int?)response?.StatusCode}");
                 return (response, retryCount);
             }
             finally
@@ -247,7 +248,7 @@ namespace UserTrackerShared.Utilities
             return Result;
         }
 
-        private static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetSeasonLeaderboardData(string season)
+        private static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetSeasonLeaderboardData(string season, string lastSeason)
         {
             var gclLeaderboardList = new List<SeasonListItem>();
             var powerLeaderboardList = new List<SeasonListItem>();
@@ -261,7 +262,11 @@ namespace UserTrackerShared.Utilities
             {
                 var gclListResponse = await GetCurrentSeasonLeaderboard("world", season, offset, limit);
                 var powerListResponse = await GetCurrentSeasonLeaderboard("power", season, offset, limit);
-                var scoreListResponse = await GetCurrentScoreLeaderboard(offset, limit);
+                ScoreListResponse? scoreListResponse = null;
+                if (season == lastSeason && ConfigSettingsState.ScreepsShardName == "shardSeason")
+                {
+                    scoreListResponse = await GetCurrentScoreLeaderboard(offset, limit);
+                }
 
                 var didSomething = false;
                 if (gclListResponse != null && gclListResponse.List.Count > 0)
@@ -301,7 +306,7 @@ namespace UserTrackerShared.Utilities
         public static async Task<(List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)> GetCurrentSeasonLeaderboard()
         {
             var season = DateTime.Now.ToString("yyyy-MM");
-            return await GetSeasonLeaderboardData(season);
+            return await GetSeasonLeaderboardData(season, season);
         }
 
         public static async Task<Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)>> GetAllSeasonsLeaderboard()
@@ -309,10 +314,11 @@ namespace UserTrackerShared.Utilities
             var leaderboardsList = new Dictionary<string, (List<SeasonListItem> gcl, List<SeasonListItem> power, List<SeasonListItem> score)>();
 
             var lastSeasonEmpty = false;
+            var lastSeason = DateTime.Now.ToString("yyyy-MM");
             var season = DateTime.Now.ToString("yyyy-MM");
             while (!lastSeasonEmpty)
             {
-                var (gclLeaderboardList, powerLeaderboardList, scoreLeaderboardList) = await GetSeasonLeaderboardData(season);
+                var (gclLeaderboardList, powerLeaderboardList, scoreLeaderboardList) = await GetSeasonLeaderboardData(season, lastSeason);
 
                 if (gclLeaderboardList.Count + powerLeaderboardList.Count + scoreLeaderboardList.Count == 0)
                 {
@@ -338,6 +344,10 @@ namespace UserTrackerShared.Utilities
 
         public static async Task<ScreepsUser?> GetUser(string userId)
         {
+            if (int.TryParse(userId, out _))
+            {
+                return null;
+            }
             var path = $"/api/user/find?id={userId}";
 
             var (Result, Status) = await ExecuteRequestAsync<GetUserResponse>(HttpMethod.Get, path);

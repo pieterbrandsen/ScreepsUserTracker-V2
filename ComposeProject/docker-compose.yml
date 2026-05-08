@@ -152,7 +152,7 @@ services:
         networks:
             - internal
         volumes:
-            - questdb-data:/var/lib/questdb
+            - questdb-data:/root/.questdb/db
             - ./conf/questdb/server.conf:/root/.questdb/conf/server.conf
         restart: unless-stopped
         logging: *default-logging

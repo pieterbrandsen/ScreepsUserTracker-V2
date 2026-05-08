@@ -135,7 +135,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'gcl' and rank <= 10000000\r\n  SAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM ${Server}_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'gcl' and rank <= 10000000\r\n  SAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -244,7 +244,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'power' and rank <= 10000000\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM ${Server}_current_leaderboard\r\nWHERE timestamp BETWEEN '${__from:date}' AND '${__to:date}'\r\n  AND type = 'power' and rank <= 10000000\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -366,7 +366,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historical_leaderboard\r\nwhere type='gcl' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM ${Server}_historical_leaderboard\r\nwhere type='gcl' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -475,7 +475,7 @@
             }
           },
           "queryType": "sql",
-          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM mmo_historical_leaderboard\r\nwhere type='power' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
+          "rawSql": "SELECT\r\n  timestamp AS \"time\",\r\n  avg(score) AS \" \",\r\n  user AS \"metric\"  \r\nFROM ${Server}_historical_leaderboard\r\nwhere type='power' and rank <= 100\r\nSAMPLE BY $__sampleByInterval \r\nALIGN TO CALENDAR",
           "refId": "A",
           "selectedFormat": 2
         }
@@ -488,7 +488,29 @@
   "schemaVersion": 41,
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "text": "mmo",
+          "value": "mmo"
+        },
+        "name": "Server",
+        "options": [
+          {
+            "selected": true,
+            "text": "mmo",
+            "value": "mmo"
+          },
+          {
+            "selected": false,
+            "text": "season8",
+            "value": "season8"
+          }
+        ],
+        "query": "mmo, season8",
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-7d",
@@ -498,5 +520,5 @@
   "timezone": "browser",
   "title": "MMO Leaderboard",
   "uid": "cd1030b7-ea0c-49e2-918e-bb8d15acae62",
-  "version": 2
+  "version": 4
 }
