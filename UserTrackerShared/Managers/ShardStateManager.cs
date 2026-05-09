@@ -30,7 +30,7 @@ namespace UserTrackerShared.Managers
                     Rooms.Add(room.Key);
                     _shardLogger.Information($"Added room {room.Key} to shard {Name}");
                 }
-                var mergedUsers = await GameState.MergeUsersBackfillingGclAsync(response.Users);
+                var mergedUsers = await GameState.MergeUsersRefetchingAsync(response.Users);
                 _shardLogger.Information("Merged {UserCount} users from initial map stats for shard {Shard}", mergedUsers, Name);
 
                 var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";

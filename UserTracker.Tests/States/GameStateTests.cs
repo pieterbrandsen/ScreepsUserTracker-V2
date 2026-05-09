@@ -81,23 +81,25 @@ namespace UserTracker.Tests.States
         }
 
         [Fact]
-        public async Task MergeUsersBackfillingGclAsync_UpsertsAndBackfillsId()
+        public async Task MergeUsersRefetchingAsync_UpsertsAndBackfillsId()
         {
-            var merged = await GameState.MergeUsersBackfillingGclAsync(new Dictionary<string, ScreepsUser>
-            {
-                ["u1"] = new ScreepsUser
+            var merged = await GameState.MergeUsersRefetchingAsync(
+                new Dictionary<string, ScreepsUser>
                 {
-                    Username = "one",
-                    Id = "",
-                    GCL = 1
+                    ["u1"] = new ScreepsUser
+                    {
+                        Username = "one",
+                        Id = "",
+                        GCL = 1
+                    },
+                    ["u2"] = new ScreepsUser
+                    {
+                        Username = "two",
+                        Id = "u2",
+                        GCL = 2
+                    }
                 },
-                ["u2"] = new ScreepsUser
-                {
-                    Username = "two",
-                    Id = "u2",
-                    GCL = 2
-                }
-            });
+                _ => Task.FromResult<ScreepsUser?>(null));
 
             Assert.Equal(2, merged);
             Assert.True(GameState.Users.TryGetValue("u1", out var user1));
@@ -109,14 +111,16 @@ namespace UserTracker.Tests.States
         }
 
         [Fact]
-        public async Task MergeUsersBackfillingGclAsync_SkipsInvalidEntries()
+        public async Task MergeUsersRefetchingAsync_SkipsInvalidEntries()
         {
-            var merged = await GameState.MergeUsersBackfillingGclAsync(new Dictionary<string, ScreepsUser>
-            {
-                [""] = new ScreepsUser { Username = "invalid-id" },
-                ["u1"] = new ScreepsUser { Username = "" },
-                ["u2"] = new ScreepsUser { Username = "ok", GCL = 1 }
-            });
+            var merged = await GameState.MergeUsersRefetchingAsync(
+                new Dictionary<string, ScreepsUser>
+                {
+                    [""] = new ScreepsUser { Username = "invalid-id" },
+                    ["u1"] = new ScreepsUser { Username = "" },
+                    ["u2"] = new ScreepsUser { Username = "ok", GCL = 1 }
+                },
+                _ => Task.FromResult<ScreepsUser?>(null));
 
             Assert.Equal(1, merged);
             Assert.Single(GameState.Users);
@@ -124,11 +128,11 @@ namespace UserTracker.Tests.States
         }
 
         [Fact]
-        public async Task MergeUsersBackfillingGclAsync_FetchesUsersWithZeroGcl()
+        public async Task MergeUsersRefetchingAsync_RefetchesEveryValidUser()
         {
             var fetchedUserIds = new List<string>();
 
-            var merged = await GameState.MergeUsersBackfillingGclAsync(
+            var merged = await GameState.MergeUsersRefetchingAsync(
                 new Dictionary<string, ScreepsUser>
                 {
                     ["u1"] = new ScreepsUser
@@ -148,15 +152,48 @@ namespace UserTracker.Tests.States
                     return Task.FromResult<ScreepsUser?>(new ScreepsUser
                     {
                         Id = userId,
-                        Username = "one",
-                        GCL = 123
+                        Username = $"fresh-{userId}",
+                        GCL = userId == "u1" ? 123 : 456
                     });
                 });
 
             Assert.Equal(2, merged);
-            Assert.Equal(new[] { "u1" }, fetchedUserIds);
+            Assert.Equal(new[] { "u1", "u2" }, fetchedUserIds);
             Assert.Equal(123, GameState.Users["u1"].GCL);
-            Assert.Equal(42, GameState.Users["u2"].GCL);
+            Assert.Equal(456, GameState.Users["u2"].GCL);
+            Assert.Equal("fresh-u1", GameState.Users["u1"].Username);
+            Assert.Equal("fresh-u2", GameState.Users["u2"].Username);
+        }
+
+        [Fact]
+        public async Task RefreshUsersByIds_OnlyKeepsSuccessfullyRefetchedUsers()
+        {
+            GameState.Users["u1"] = new ScreepsUser { Username = "stale", GCL = 0 };
+            var fetchedUserIds = new List<string>();
+
+            var refreshedUserIds = await GameState.RefreshUsersByIds(
+                new[] { "u1", "u1", "", "missing" },
+                userId =>
+                {
+                    fetchedUserIds.Add(userId);
+                    if (userId == "missing")
+                    {
+                        return Task.FromResult<ScreepsUser?>(null);
+                    }
+
+                    return Task.FromResult<ScreepsUser?>(new ScreepsUser
+                    {
+                        Id = userId,
+                        Username = "fresh",
+                        GCL = 321
+                    });
+                });
+
+            Assert.Equal(new[] { "u1", "missing" }, fetchedUserIds);
+            Assert.Equal(new[] { "u1" }, refreshedUserIds);
+            Assert.Equal("fresh", GameState.Users["u1"].Username);
+            Assert.Equal(321, GameState.Users["u1"].GCL);
+            Assert.False(GameState.Users.ContainsKey("missing"));
         }
     }
 }

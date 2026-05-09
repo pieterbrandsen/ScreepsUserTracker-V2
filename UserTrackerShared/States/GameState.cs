@@ -72,18 +72,33 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async Task<string?> GetUser(string userId)
+        private static async Task<ScreepsUser?> FindAndStoreUser(
+            string userId,
+            Func<string, Task<ScreepsUser?>>? findUserById = null)
         {
-            var userResponse = await ScreepsAPI.GetUser(userId);
-            if (userResponse != null)
+            if (string.IsNullOrWhiteSpace(userId))
             {
-                Users.AddOrUpdate(userId, userResponse, (key, oldValue) => userResponse);
-                return userResponse.Username;
+                return null;
             }
-            return null;
+
+            findUserById ??= ScreepsAPI.GetUser;
+
+            var userResponse = await findUserById(userId);
+            if (userResponse == null || string.IsNullOrWhiteSpace(userResponse.Username))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(userResponse.Id))
+            {
+                userResponse.Id = userId;
+            }
+
+            Users.AddOrUpdate(userId, userResponse, (key, oldValue) => userResponse);
+            return userResponse;
         }
 
-        internal static async Task<int> MergeUsersBackfillingGclAsync(
+        internal static async Task<int> MergeUsersRefetchingAsync(
             IReadOnlyDictionary<string, ScreepsUser>? usersById,
             Func<string, Task<ScreepsUser?>>? findUserById = null)
         {
@@ -97,26 +112,29 @@ namespace UserTrackerShared.States
             var mergedUsers = 0;
             foreach (var (userId, user) in usersById)
             {
-                if (string.IsNullOrWhiteSpace(userId) || user == null || string.IsNullOrWhiteSpace(user.Username))
+                if (string.IsNullOrWhiteSpace(userId))
                 {
                     continue;
                 }
 
                 var userToMerge = user;
-                if (user.GCL == 0)
+                try
                 {
-                    try
+                    var foundUser = await FindAndStoreUser(userId, findUserById);
+                    if (foundUser != null)
                     {
-                        var foundUser = await findUserById(userId);
-                        if (foundUser != null && !string.IsNullOrWhiteSpace(foundUser.Username))
-                        {
-                            userToMerge = foundUser;
-                        }
+                        mergedUsers++;
+                        continue;
                     }
-                    catch (Exception ex)
-                    {
-                        _leaderboardLogger.Warning(ex, "Failed to backfill GCL for user {UserId}", userId);
-                    }
+                }
+                catch (Exception ex)
+                {
+                    _leaderboardLogger.Warning(ex, "Failed to refetch user {UserId}", userId);
+                }
+
+                if (user == null || string.IsNullOrWhiteSpace(user.Username))
+                {
+                    continue;
                 }
 
                 if (string.IsNullOrWhiteSpace(userToMerge.Id))
@@ -131,9 +149,9 @@ namespace UserTrackerShared.States
             return mergedUsers;
         }
 
-        private static void UpdateCachedUserRanks()
+        private static void UpdateUserRanks()
         {
-            _leaderboardLogger.Information("Updating user GCL, Power and Score ranks from in-memory users");
+            _leaderboardLogger.Information("Updating user GCL, Power and Score ranks from refreshed users");
             var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
             var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
             var scoreSorted = Users.Values.OrderByDescending(x => x.Score).ToList();
@@ -169,14 +187,57 @@ namespace UserTrackerShared.States
             }
         }
 
-        private static async Task<int> PersistUsersFromCache()
+        internal static async Task<IReadOnlyList<string>> RefreshUsersByIds(
+            IEnumerable<string> userIds,
+            Func<string, Task<ScreepsUser?>>? findUserById = null)
         {
-            _leaderboardLogger.Information("Persisting users from in-memory cache (no user re-fetch)");
-            UpdateCachedUserRanks();
-            var userIds = Users.Keys.Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
-            var written = await WriteUsersByIds(userIds);
-            _leaderboardLogger.Information("Completed users cache persist with {UserCount} users written", written);
+            findUserById ??= ScreepsAPI.GetUser;
+
+            var refreshedUserIds = new List<string>();
+            var handledUserIds = new HashSet<string>();
+
+            foreach (var userId in userIds)
+            {
+                if (string.IsNullOrWhiteSpace(userId) || !handledUserIds.Add(userId))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var user = await FindAndStoreUser(userId, findUserById);
+                    if (user != null)
+                    {
+                        refreshedUserIds.Add(userId);
+                    }
+                    else
+                    {
+                        _leaderboardLogger.Warning("User {UserId} not found when refreshing user data", userId);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _leaderboardLogger.Warning(ex, "Failed to refresh user {UserId}", userId);
+                }
+            }
+
+            return refreshedUserIds;
+        }
+
+        private static async Task<int> RefreshAndPersistUsersByIds(IEnumerable<string> userIds)
+        {
+            var refreshedUserIds = await RefreshUsersByIds(userIds);
+            UpdateUserRanks();
+            var written = await WriteUsersByIds(refreshedUserIds);
+            _leaderboardLogger.Information("Completed users refresh with {UserCount} users written", written);
             return written;
+        }
+
+        private static async Task<int> RefreshAndPersistKnownUsers()
+        {
+            var userIds = Users.Keys.Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
+            _leaderboardLogger.Information("Refreshing {UserCount} known users through find user endpoint", userIds.Count);
+            return await RefreshAndPersistUsersByIds(userIds);
         }
 
         internal static IReadOnlyList<ScreepsUser> GetUsersForWrite(IEnumerable<string> userIds)
@@ -270,8 +331,8 @@ namespace UserTrackerShared.States
         {
             if (ConfigSettingsState.ScreepsIsPrivateServer)
             {
-                _leaderboardLogger.Information("Private server detected. Skipping leaderboard users pull and reusing in-memory users.");
-                await PersistUsersFromCache();
+                _leaderboardLogger.Information("Private server detected. Refreshing known users through find user endpoint.");
+                await RefreshAndPersistKnownUsers();
                 return;
             }
 
@@ -279,8 +340,8 @@ namespace UserTrackerShared.States
             var leaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard();
             if (leaderboardsResponse == null || leaderboardsResponse.Count == 0)
             {
-                _leaderboardLogger.Warning("Leaderboard response was empty. Falling back to in-memory users cache.");
-                await PersistUsersFromCache();
+                _leaderboardLogger.Warning("Leaderboard response was empty. Refreshing known users through find user endpoint.");
+                await RefreshAndPersistKnownUsers();
                 return;
             }
 
@@ -294,11 +355,7 @@ namespace UserTrackerShared.States
                 {
                     foreach (var leaderboardSpot in gclLeaderboard)
                     {
-                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
-                        {
-                            await GetUser(leaderboardSpot.UserId);
-                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
-                        }
+                        var value = await FindAndStoreUser(leaderboardSpot.UserId);
 
                         if (value != null)
                         {
@@ -311,11 +368,7 @@ namespace UserTrackerShared.States
 
                     foreach (var leaderboardSpot in powerLeaderboard)
                     {
-                        if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value))
-                        {
-                            await GetUser(leaderboardSpot.UserId);
-                            Users.TryGetValue(leaderboardSpot.UserId, out value); // Retry after attempting to fetch
-                        }
+                        var value = await FindAndStoreUser(leaderboardSpot.UserId);
 
                         if (value != null)
                         {
@@ -329,15 +382,12 @@ namespace UserTrackerShared.States
                     foreach (var leaderboardSpot in scoreLeaderboard)
                     {
                         var userId = Users.FirstOrDefault(kv => kv.Value.Username == leaderboardSpot.UserName).Key;
-                        if (userId == null)
+                        if (string.IsNullOrWhiteSpace(userId))
                         {
                             continue;
                         }
-                        if (!Users.TryGetValue(userId, out ScreepsUser? value))
-                        {
-                            await GetUser(userId);
-                            Users.TryGetValue(userId, out value); // Retry after attempting to fetch
-                        }
+
+                        var value = await FindAndStoreUser(userId);
 
                         if (value != null)
                         {
@@ -361,8 +411,8 @@ namespace UserTrackerShared.States
         {
             if (ConfigSettingsState.ScreepsIsPrivateServer)
             {
-                _leaderboardLogger.Information("Private server detected. Skipping leaderboard update and reusing in-memory users.");
-                await PersistUsersFromCache();
+                _leaderboardLogger.Information("Private server detected. Refreshing known users through find user endpoint.");
+                await RefreshAndPersistKnownUsers();
                 return;
             }
 
@@ -374,19 +424,26 @@ namespace UserTrackerShared.States
 
             if (gclLeaderboard.Count == 0 && powerLeaderboard.Count == 0 && scoreLeaderboard.Count == 0)
             {
-                _leaderboardLogger.Warning("Current season leaderboard response was empty. Falling back to in-memory users cache.");
-                await PersistUsersFromCache();
+                _leaderboardLogger.Warning("Current season leaderboard response was empty. Refreshing known users through find user endpoint.");
+                await RefreshAndPersistKnownUsers();
                 return;
             }
 
             _leaderboardLogger.Information("Updating user data from gcl leaderboard entries");
             foreach (var leaderboardSpot in gclLeaderboard)
             {
-                if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
+                ScreepsUser? value;
+                if (userIdsUpdated.Contains(leaderboardSpot.UserId))
                 {
-                    await GetUser(leaderboardSpot.UserId);
                     Users.TryGetValue(leaderboardSpot.UserId, out value);
-                    userIdsUpdated.Add(leaderboardSpot.UserId);
+                }
+                else
+                {
+                    value = await FindAndStoreUser(leaderboardSpot.UserId);
+                    if (value != null)
+                    {
+                        userIdsUpdated.Add(leaderboardSpot.UserId);
+                    }
                 }
 
                 if (value != null)
@@ -406,11 +463,18 @@ namespace UserTrackerShared.States
             _leaderboardLogger.Information("Updating user data from power leaderboard entries");
             foreach (var leaderboardSpot in powerLeaderboard)
             {
-                if (!Users.TryGetValue(leaderboardSpot.UserId, out ScreepsUser? value) || !userIdsUpdated.Contains(leaderboardSpot.UserId))
+                ScreepsUser? value;
+                if (userIdsUpdated.Contains(leaderboardSpot.UserId))
                 {
-                    await GetUser(leaderboardSpot.UserId);
                     Users.TryGetValue(leaderboardSpot.UserId, out value);
-                    userIdsUpdated.Add(leaderboardSpot.UserId);
+                }
+                else
+                {
+                    value = await FindAndStoreUser(leaderboardSpot.UserId);
+                    if (value != null)
+                    {
+                        userIdsUpdated.Add(leaderboardSpot.UserId);
+                    }
                 }
 
                 if (value != null)
@@ -430,15 +494,23 @@ namespace UserTrackerShared.States
             foreach (var leaderboardSpot in scoreLeaderboard)
             {
                 var userId = Users.FirstOrDefault(kv => kv.Value.Username == leaderboardSpot.UserName).Key;
-                if (userId == null)
+                if (string.IsNullOrWhiteSpace(userId))
                 {
                     continue;
                 }
-                if (!Users.TryGetValue(userId, out ScreepsUser? value) || !userIdsUpdated.Contains(userId))
+
+                ScreepsUser? value;
+                if (userIdsUpdated.Contains(userId))
                 {
-                    await GetUser(userId);
                     Users.TryGetValue(userId, out value);
-                    userIdsUpdated.Add(userId);
+                }
+                else
+                {
+                    value = await FindAndStoreUser(userId);
+                    if (value != null)
+                    {
+                        userIdsUpdated.Add(userId);
+                    }
                 }
 
                 if (value != null)
@@ -455,7 +527,7 @@ namespace UserTrackerShared.States
                 }
             }
 
-            UpdateCachedUserRanks();
+            UpdateUserRanks();
 
             await WriteUsersByIds(userIdsUpdated);
 
