@@ -46,7 +46,7 @@ namespace UserTrackerShared.States
             if (ConfigSettingsState.GetAllUsers)
             {
                 await UpdateUsersLeaderboard();
-                var updateUsersLeaderboardCron = isPrivateServer ? "*/2 * * * *" : "0 */6 * * *";
+                var updateUsersLeaderboardCron = isPrivateServer ? "0 * * * *" : "0 */6 * * *";
                 var updateLeaderboardWorker = new CronWorker(
                     "UpdateUsersLeaderboard",
                     updateUsersLeaderboardCron,
@@ -325,7 +325,7 @@ namespace UserTrackerShared.States
                             await DBClient.WriteHistoricalLeaderboardData(leaderboardSpot);
                         }
                     }
-                    
+
                     foreach (var leaderboardSpot in scoreLeaderboard)
                     {
                         var userId = Users.FirstOrDefault(kv => kv.Value.Username == leaderboardSpot.UserName).Key;
