@@ -11,6 +11,7 @@ namespace UserTrackerShared.States
     public static class GameState
     {
         private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
+        private static readonly SemaphoreSlim _leaderboardWorkSemaphore = new SemaphoreSlim(1, 1);
         public static List<ShardStateManager> Shards { get; set; } = new List<ShardStateManager>();
         public static ConcurrentDictionary<string, ScreepsUser> Users { get; set; } = new();
 
@@ -45,9 +46,10 @@ namespace UserTrackerShared.States
             if (ConfigSettingsState.GetAllUsers)
             {
                 await UpdateUsersLeaderboard();
+                var updateUsersLeaderboardCron = isPrivateServer ? "0 * * * *" : "0 */6 * * *";
                 var updateLeaderboardWorker = new CronWorker(
                     "UpdateUsersLeaderboard",
-                    "0 */6 * * *",
+                    updateUsersLeaderboardCron,
                     OnUpdateUsersLeaderboardTimer);
                 _ = updateLeaderboardWorker.StartAsync(new CancellationTokenSource().Token);
 
@@ -80,14 +82,137 @@ namespace UserTrackerShared.States
             }
             return null;
         }
-        private static async Task WriteAllUsers()
+
+        internal static int MergeUsers(IReadOnlyDictionary<string, ScreepsUser>? usersById)
         {
-            _leaderboardLogger.Information("Writing all users to database");
-            foreach (var user in Users)
+            if (usersById == null || usersById.Count == 0)
             {
-                _leaderboardLogger.Information("Writing user {UserId} to database", user.Value.Username);
+                return 0;
+            }
+
+            var mergedUsers = 0;
+            foreach (var (userId, user) in usersById)
+            {
+                if (string.IsNullOrWhiteSpace(userId) || user == null || string.IsNullOrWhiteSpace(user.Username))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(user.Id))
+                {
+                    user.Id = userId;
+                }
+
+                Users.AddOrUpdate(userId, user, (key, oldValue) => user);
+                mergedUsers++;
+            }
+
+            return mergedUsers;
+        }
+
+        private static void UpdateCachedUserRanks()
+        {
+            _leaderboardLogger.Information("Updating user GCL, Power and Score ranks from in-memory users");
+            var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
+            var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
+            var scoreSorted = Users.Values.OrderByDescending(x => x.Score).ToList();
+
+            int gclRank = 1;
+            foreach (var group in gclSorted.GroupBy(x => x.GCL))
+            {
+                foreach (var user in group)
+                {
+                    user.GCLRank = gclRank;
+                }
+                gclRank += group.Count();
+            }
+
+            int powerRank = 1;
+            foreach (var group in powerSorted.GroupBy(x => x.Power))
+            {
+                foreach (var user in group)
+                {
+                    user.PowerRank = powerRank;
+                }
+                powerRank += group.Count();
+            }
+
+            int scoreRank = 1;
+            foreach (var group in scoreSorted.GroupBy(x => x.Score))
+            {
+                foreach (var user in group)
+                {
+                    user.ScoreRank = scoreRank;
+                }
+                scoreRank += group.Count();
+            }
+        }
+
+        private static async Task<int> PersistUsersFromCache()
+        {
+            _leaderboardLogger.Information("Persisting users from in-memory cache (no user re-fetch)");
+            UpdateCachedUserRanks();
+            var userIds = Users.Keys.Where(id => !string.IsNullOrWhiteSpace(id)).ToList();
+            var written = await WriteUsersByIds(userIds);
+            _leaderboardLogger.Information("Completed users cache persist with {UserCount} users written", written);
+            return written;
+        }
+
+        internal static IReadOnlyList<ScreepsUser> GetUsersForWrite(IEnumerable<string> userIds)
+        {
+            var usersToWrite = new List<ScreepsUser>();
+            var handledUserIds = new HashSet<string>();
+
+            foreach (var userId in userIds)
+            {
+                if (string.IsNullOrWhiteSpace(userId) || !handledUserIds.Add(userId))
+                {
+                    continue;
+                }
+
+                if (Users.TryGetValue(userId, out var user))
+                {
+                    usersToWrite.Add(user);
+                }
+            }
+
+            return usersToWrite;
+        }
+
+        internal static async Task<int> WriteUsersByIds(
+            IEnumerable<string> userIds,
+            Func<ScreepsUser, Task>? writeSingleUserData = null)
+        {
+            var usersToWrite = GetUsersForWrite(userIds);
+            var writeUserData = writeSingleUserData ?? DBClient.WriteSingleUserData;
+
+            _leaderboardLogger.Information("Writing {UserCount} updated users to database", usersToWrite.Count);
+            foreach (var user in usersToWrite)
+            {
+                _leaderboardLogger.Information("Writing user {UserId} to database", user.Username);
                 await Task.Delay(10);
-                await DBClient.WriteSingleUserData(user.Value);
+                await writeUserData(user);
+            }
+
+            return usersToWrite.Count;
+        }
+
+        internal static async Task<bool> TryRunWithLeaderboardLock(string jobName, Func<Task> job)
+        {
+            if (!await _leaderboardWorkSemaphore.WaitAsync(0))
+            {
+                _leaderboardLogger.Warning("Skipping {JobName}: another leaderboard-heavy job is already running", jobName);
+                return false;
+            }
+
+            try
+            {
+                await job();
+                return true;
+            }
+            finally
+            {
+                _leaderboardWorkSemaphore.Release();
             }
         }
 
@@ -117,8 +242,27 @@ namespace UserTrackerShared.States
 
         public static async Task GetAllUsers()
         {
+            await TryRunWithLeaderboardLock("GetAllUsers", GetAllUsersCore);
+        }
+
+        private static async Task GetAllUsersCore()
+        {
+            if (ConfigSettingsState.ScreepsIsPrivateServer)
+            {
+                _leaderboardLogger.Information("Private server detected. Skipping leaderboard users pull and reusing in-memory users.");
+                await PersistUsersFromCache();
+                return;
+            }
+
             _leaderboardLogger.Information("Getting all users from leaderboard");
             var leaderboardsResponse = await ScreepsAPI.GetAllSeasonsLeaderboard();
+            if (leaderboardsResponse == null || leaderboardsResponse.Count == 0)
+            {
+                _leaderboardLogger.Warning("Leaderboard response was empty. Falling back to in-memory users cache.");
+                await PersistUsersFromCache();
+                return;
+            }
+
             if (leaderboardsResponse != null)
             {
                 var seasons = leaderboardsResponse.Select(kv => kv.Key).OrderDescending().ToList();
@@ -189,11 +333,30 @@ namespace UserTrackerShared.States
 
         private static async Task UpdateUsersLeaderboard()
         {
+            await TryRunWithLeaderboardLock("UpdateUsersLeaderboard", UpdateUsersLeaderboardCore);
+        }
+
+        private static async Task UpdateUsersLeaderboardCore()
+        {
+            if (ConfigSettingsState.ScreepsIsPrivateServer)
+            {
+                _leaderboardLogger.Information("Private server detected. Skipping leaderboard update and reusing in-memory users.");
+                await PersistUsersFromCache();
+                return;
+            }
+
             _leaderboardLogger.Information("Updating users leaderboard data");
             var userIdsUpdated = new HashSet<string>();
 
             var (gclLeaderboard, powerLeaderboard, scoreLeaderboard) = await ScreepsAPI.GetCurrentSeasonLeaderboard();
             _leaderboardLogger.Information("Fetched current season leaderboard data");
+
+            if (gclLeaderboard.Count == 0 && powerLeaderboard.Count == 0 && scoreLeaderboard.Count == 0)
+            {
+                _leaderboardLogger.Warning("Current season leaderboard response was empty. Falling back to in-memory users cache.");
+                await PersistUsersFromCache();
+                return;
+            }
 
             _leaderboardLogger.Information("Updating user data from gcl leaderboard entries");
             foreach (var leaderboardSpot in gclLeaderboard)
@@ -271,42 +434,9 @@ namespace UserTrackerShared.States
                 }
             }
 
-            _leaderboardLogger.Information("Updating user GCL, Power and Score ranks");
-            var gclSorted = Users.Values.OrderByDescending(x => x.GCL).ToList();
-            var powerSorted = Users.Values.OrderByDescending(x => x.Power).ToList();
-            var scoreSorted = Users.Values.OrderByDescending(x => x.Score).ToList();
-            int gclRank = 1;
-            foreach (var group in gclSorted.GroupBy(x => x.GCL))
-            {
-                foreach (var user in group)
-                {
-                    user.GCLRank = gclRank;
-                }
-                gclRank += group.Count();
-            }
+            UpdateCachedUserRanks();
 
-            int powerRank = 1;
-            foreach (var group in powerSorted.GroupBy(x => x.Power))
-            {
-                foreach (var user in group)
-                {
-                    user.PowerRank = powerRank;
-                }
-                powerRank += group.Count();
-            }
-
-            int scoreRank = 1;
-            foreach (var group in scoreSorted.GroupBy(x => x.Score))
-            {
-                foreach (var user in group)
-                {
-                    user.ScoreRank = scoreRank;
-                }
-                scoreRank += group.Count();
-            }
-
-            _leaderboardLogger.Information("Writing all users to database");
-            await WriteAllUsers();
+            await WriteUsersByIds(userIdsUpdated);
 
             _leaderboardLogger.Information("Completed updating users leaderboard data");
         }

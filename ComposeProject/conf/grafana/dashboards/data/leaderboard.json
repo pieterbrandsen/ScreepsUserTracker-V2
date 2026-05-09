@@ -503,11 +503,11 @@
           },
           {
             "selected": false,
-            "text": "season8",
-            "value": "season8"
+            "text": "td3",
+            "value": "td3"
           }
         ],
-        "query": "mmo, season8",
+        "query": "mmo, td3",
         "type": "custom"
       }
     ]

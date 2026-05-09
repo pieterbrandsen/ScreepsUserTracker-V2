@@ -44,7 +44,7 @@ namespace UserTrackerShared.Helpers
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        _logger.Error(ex, "Error occurred while running {JobName} job", _name);
                     }
                     finally
                     {
