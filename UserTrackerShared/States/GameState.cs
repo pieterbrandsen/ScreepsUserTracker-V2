@@ -46,7 +46,7 @@ namespace UserTrackerShared.States
             if (ConfigSettingsState.GetAllUsers)
             {
                 await UpdateUsersLeaderboard();
-                var updateUsersLeaderboardCron = isPrivateServer ? "0 * * * *" : "0 */6 * * *";
+                var updateUsersLeaderboardCron = isPrivateServer ? "*/2 * * * *" : "0 */6 * * *";
                 var updateLeaderboardWorker = new CronWorker(
                     "UpdateUsersLeaderboard",
                     updateUsersLeaderboardCron,
@@ -83,12 +83,16 @@ namespace UserTrackerShared.States
             return null;
         }
 
-        internal static int MergeUsers(IReadOnlyDictionary<string, ScreepsUser>? usersById)
+        internal static async Task<int> MergeUsersBackfillingGclAsync(
+            IReadOnlyDictionary<string, ScreepsUser>? usersById,
+            Func<string, Task<ScreepsUser?>>? findUserById = null)
         {
             if (usersById == null || usersById.Count == 0)
             {
                 return 0;
             }
+
+            findUserById ??= ScreepsAPI.GetUser;
 
             var mergedUsers = 0;
             foreach (var (userId, user) in usersById)
@@ -98,12 +102,29 @@ namespace UserTrackerShared.States
                     continue;
                 }
 
-                if (string.IsNullOrWhiteSpace(user.Id))
+                var userToMerge = user;
+                if (user.GCL == 0)
                 {
-                    user.Id = userId;
+                    try
+                    {
+                        var foundUser = await findUserById(userId);
+                        if (foundUser != null && !string.IsNullOrWhiteSpace(foundUser.Username))
+                        {
+                            userToMerge = foundUser;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _leaderboardLogger.Warning(ex, "Failed to backfill GCL for user {UserId}", userId);
+                    }
                 }
 
-                Users.AddOrUpdate(userId, user, (key, oldValue) => user);
+                if (string.IsNullOrWhiteSpace(userToMerge.Id))
+                {
+                    userToMerge.Id = userId;
+                }
+
+                Users.AddOrUpdate(userId, userToMerge, (key, oldValue) => userToMerge);
                 mergedUsers++;
             }
 
