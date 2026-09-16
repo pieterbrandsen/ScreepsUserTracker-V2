@@ -35,6 +35,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="States\ScreepsRoomHistoryDtoFileTests.cs" />
+    <Compile Remove="States\ScreepsRoomHistoryDtoTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

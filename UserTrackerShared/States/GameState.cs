@@ -43,7 +43,23 @@ namespace UserTrackerShared.States
                 }
             }
 
+            if (ConfigSettingsState.StartsShards)
+            {
+                foreach (var shard in Shards)
+                {
+                    shard.Start();
+                }
+            }
+
             if (ConfigSettingsState.GetAllUsers)
+            {
+                _ = InitializeUsersAsync(isPrivateServer);
+            }
+        }
+
+        private static async Task InitializeUsersAsync(bool isPrivateServer)
+        {
+            try
             {
                 await UpdateUsersLeaderboard();
                 var updateUsersLeaderboardCron = isPrivateServer ? "0 * * * *" : "0 */6 * * *";
@@ -60,15 +76,10 @@ namespace UserTrackerShared.States
                     "0 0 1,11,21,31 * *",
                     OnGetAllUsersTimer);
                 _ = getAllUsersWorker.StartAsync(new CancellationTokenSource().Token);
-
             }
-
-            if (ConfigSettingsState.StartsShards)
+            catch (Exception ex)
             {
-                foreach (var shard in Shards)
-                {
-                    shard.Start();
-                }
+                _leaderboardLogger.Error(ex, "Error initializing user leaderboard refreshes");
             }
         }
 

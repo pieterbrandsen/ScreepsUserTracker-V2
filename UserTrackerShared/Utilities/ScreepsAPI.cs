@@ -35,6 +35,7 @@ namespace UserTrackerShared.Utilities
         private static readonly Serilog.ILogger _leaderboardLogger = Logger.GetLogger(LogCategory.Leaderboard);
         private static readonly Dictionary<string, SemaphoreSlim> _pathThrottlers = new();
         private static readonly object _throttlerLock = new();
+        private static readonly SemaphoreSlim _historyRequestThrottler = new(100);
 
         private static readonly HttpClient _normalHttpClient = new(new SocketsHttpHandler
         {
@@ -51,7 +52,12 @@ namespace UserTrackerShared.Utilities
         {
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             ConnectTimeout = TimeSpan.FromSeconds(10),
-        });
+            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+        })
+        {
+            Timeout = TimeSpan.FromSeconds(60)
+        };
 
         private static SemaphoreSlim GetThrottlerForPath(string path)
         {
@@ -74,30 +80,39 @@ namespace UserTrackerShared.Utilities
             await throttler.WaitAsync();
             try
             {
-                var retryCount = 0;
-                HttpResponseMessage? response = null;
-                int maxRetries = 10;
-                int delayMs = 250;
+                const int maxRetries = 10;
+                const int delayMs = 250;
 
                 await Task.Delay(delayMs);
-                while (retryCount < maxRetries)
+                for (var retryCount = 0; retryCount < maxRetries; retryCount++)
                 {
                     if (retryCount > 0)
                     {
                         await Task.Delay(retryCount * delayMs);
                     }
 
-                    using (var clonedRequest = await CloneHttpRequestMessageAsync(request))
+                    try
                     {
-                        response = await _normalHttpClient.SendAsync(clonedRequest);
+                        using var clonedRequest = await CloneHttpRequestMessageAsync(request);
+                        var response = await _normalHttpClient.SendAsync(clonedRequest);
                         _logger.Information($"Request to {request.RequestUri} returned status code {(int)response.StatusCode} on attempt {retryCount + 1}");
-                        if (response.IsSuccessStatusCode || (int)response.StatusCode >= 500)
+                        if (response.IsSuccessStatusCode)
                             return (response, retryCount);
+
+                        if (response.StatusCode != HttpStatusCode.TooManyRequests && (int)response.StatusCode < 500)
+                        {
+                            return (response, retryCount);
+                        }
+
+                        response.Dispose();
                     }
-                    retryCount += 1;
+                    catch (Exception ex) when (retryCount < maxRetries - 1)
+                    {
+                        _logger.Warning(ex, "Request to {RequestUri} failed on attempt {Attempt}/{MaxAttempts}", request.RequestUri, retryCount + 1, maxRetries);
+                    }
                 }
-                _logger.Warning($"Request to {request.RequestUri} failed after {maxRetries} attempts. Last status code: {(int?)response?.StatusCode}");
-                return (response, retryCount);
+                _logger.Warning("Request to {RequestUri} failed after {MaxAttempts} attempts", request.RequestUri, maxRetries);
+                return (null, maxRetries);
             }
             finally
             {
@@ -131,6 +146,50 @@ namespace UserTrackerShared.Utilities
             return clone;
         }
 
+        private static async Task<HttpResponseMessage?> GetHistoryFileAsync(string requestUrl)
+        {
+            const int maxAttempts = 5;
+            const int initialDelayMs = 500;
+
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    await _historyRequestThrottler.WaitAsync();
+                    HttpResponseMessage response;
+                    try
+                    {
+                        using var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+                        response = await _filesHttpClient.SendAsync(request);
+                    }
+                    finally
+                    {
+                        _historyRequestThrottler.Release();
+                    }
+
+                    if (response.IsSuccessStatusCode || ((int)response.StatusCode < 500 && response.StatusCode != HttpStatusCode.TooManyRequests) || attempt == maxAttempts)
+                    {
+                        return response;
+                    }
+
+                    response.Dispose();
+                }
+                catch (Exception ex) when (attempt < maxAttempts)
+                {
+                    _logger.Warning(ex, "History request to {RequestUrl} failed on attempt {Attempt}/{MaxAttempts}", requestUrl, attempt, maxAttempts);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, requestUrl);
+                    return null;
+                }
+
+                await Task.Delay(initialDelayMs * attempt);
+            }
+
+            return null;
+        }
+
         public static string ScreepsAPIUrl => ConfigSettingsState.ScreepsHttpsUrl;
         public static string ScreepsAPIPrefix => ConfigSettingsState.ScreepsHttpsPrefix;
         public static string ScreepsAPIHTTPUrl => ConfigSettingsState.ScreepsHttpUrl;
@@ -159,23 +218,14 @@ namespace UserTrackerShared.Utilities
 
             try
             {
-                var retryCount = 0;
                 HttpResponseMessage? response = null;
                 if (isHistoryRequest)
                 {
-                    try
-                    {
-                        response = await _filesHttpClient.GetAsync(reqUrl);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error(ex, reqUrl);
-                        return (default, HttpStatusCode.InternalServerError);
-                    }
+                    response = await GetHistoryFileAsync(reqUrl);
                 }
                 else
                 {
-                    var request = new HttpRequestMessage()
+                    using var request = new HttpRequestMessage()
                     {
                         RequestUri = new Uri(reqUrl),
                         Method = method,
@@ -187,17 +237,23 @@ namespace UserTrackerShared.Utilities
 
                     request.Headers.Add("X-Token", ScreepsAPIToken);
                     request.Headers.Add("X-Username", ScreepsAPIToken);
-                    (response, retryCount) = await ThrottledRequestAsync(request, path);
+                    (response, _) = await ThrottledRequestAsync(request, path);
                 }
 
-                if (response?.IsSuccessStatusCode ?? false)
+                if (response == null)
                 {
-                    var result = await JsonConvertHelper.ReadAndConvertStream<T>(response.Content);
-                    return (result, response.StatusCode);
+                    return (default, HttpStatusCode.InternalServerError);
                 }
-                else
+
+                using (response)
                 {
-                    return (default, response?.StatusCode ?? HttpStatusCode.InternalServerError);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var result = await JsonConvertHelper.ReadAndConvertStream<T>(response.Content);
+                        return (result, response.StatusCode);
+                    }
+
+                    return (default, response.StatusCode);
                 }
             }
             catch (Exception ex)

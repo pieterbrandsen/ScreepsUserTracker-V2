@@ -10496,8 +10496,8 @@
             {
                 "allowCustomValue": true,
                 "current": {
-                    "text": "td3",
-                    "value": "td3"
+                    "text": "mmo",
+                    "value": "mmo"
                 },
                 "name": "Server",
                 "options": [
@@ -10508,11 +10508,11 @@
                     },
                     {
                         "selected": true,
-                        "text": "td3",
-                        "value": "td3"
+                        "text": "seasonal",
+                        "value": "seasonal"
                     }
                 ],
-                "query": "mmo, td3",
+                "query": "mmo, seasonal",
                 "type": "custom"
             },
             {

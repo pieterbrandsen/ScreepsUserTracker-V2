@@ -503,11 +503,11 @@
           },
           {
             "selected": false,
-            "text": "td3",
-            "value": "td3"
+            "text": "seasonal",
+            "value": "seasonal"s
           }
         ],
-        "query": "mmo, td3",
+        "query": "mmo, seasonal",
         "type": "custom"
       }
     ]

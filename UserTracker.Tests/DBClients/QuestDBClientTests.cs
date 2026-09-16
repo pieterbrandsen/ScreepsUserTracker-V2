@@ -106,7 +106,7 @@ namespace UserTracker.Tests.DBClients
         }
 
         [Fact]
-        public void QuestDBClientState_GetQuestDBDto_UsesControllerScorePerTickWhenPresent()
+        public void QuestDBClientState_GetQuestDBDto_KeepsControllerUpgradedWhenScoreIsPresent()
         {
             var method = typeof(QuestDBClientState).GetMethod("GetQuestDBDto", BindingFlags.Static | BindingFlags.Public);
             Assert.NotNull(method);
@@ -116,7 +116,7 @@ namespace UserTracker.Tests.DBClients
             history.Structures.Controller.ScorePerTick = 7;
 
             var dto = (QuestDBHistoryDTO)method.Invoke(null, new object?[] { history })!;
-            Assert.Equal(7, dto.ControllerPointsPerTick);
+            Assert.Equal(123, dto.ControllerPointsPerTick);
             Assert.Equal(7, dto.ControllerScorePerTick);
         }
 
@@ -462,7 +462,7 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(5, dto.ControllerLevel);
             Assert.Equal(100, dto.ControllerProgress);
             Assert.Equal(500, dto.ControllerProgressTotal);
-            Assert.Equal(9, dto.ControllerPointsPerTick);
+            Assert.Equal(42, dto.ControllerPointsPerTick);
             Assert.Equal(9, dto.ControllerScorePerTick);
 
             var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(history);
@@ -595,7 +595,7 @@ namespace UserTracker.Tests.DBClients
             if (_configInitialized) return;
             var configFileMap = new ExeConfigurationFileMap
             {
-                ExeConfigFilename = "App.Config"
+                ExeConfigFilename = "App.config"
             };
             var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
             ConfigSettingsState.InitTest(configuration.AppSettings);

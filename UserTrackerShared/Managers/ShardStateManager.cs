@@ -13,6 +13,7 @@ namespace UserTrackerShared.Managers
     {
         private readonly Serilog.ILogger _shardLogger = Logger.GetLogger(LogCategory.Shard);
         private readonly Serilog.ILogger _performanceLogger = Logger.GetLogger(LogCategory.PullPerformance);
+        private Timer? _setTimeTimer;
 
         public ShardStateManager(string Name)
         {
@@ -21,30 +22,67 @@ namespace UserTrackerShared.Managers
         }
         public async void Start()
         {
+            while (true)
+            {
+                try
+                {
+                    _shardLogger.Information($"Starting ShardStateManager for {Name}");
+                    var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
+                    if (response == null)
+                    {
+                        _shardLogger.Warning("Unable to load map stats for shard {Shard}; retrying in 30 seconds", Name);
+                        await Task.Delay(TimeSpan.FromSeconds(30));
+                        continue;
+                    }
+
+                    foreach (var room in response.Rooms)
+                    {
+                        if (!Rooms.Contains(room.Key))
+                        {
+                            Rooms.Add(room.Key);
+                            _shardLogger.Information($"Added room {room.Key} to shard {Name}");
+                        }
+                    }
+                    foreach (var (userId, user) in response.Users)
+                    {
+                        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(user.Username))
+                        {
+                            continue;
+                        }
+
+                        user.Id = userId;
+                        GameState.Users.TryAdd(userId, user);
+                    }
+                    _ = MergeInitialUsersAsync(response.Users);
+
+                    var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
+                    _shardLogger.Information(message);
+                    _ = StartUpdate();
+
+                    _setTimeTimer = new Timer(300000);
+                    _setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
+                    _setTimeTimer.AutoReset = true;
+                    _setTimeTimer.Enabled = true;
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    _shardLogger.Error(ex, "Error starting ShardStateManager for {Shard}; retrying in 30 seconds", Name);
+                    await Task.Delay(TimeSpan.FromSeconds(30));
+                }
+            }
+        }
+
+        private async Task MergeInitialUsersAsync(IReadOnlyDictionary<string, ScreepsUser> users)
+        {
             try
             {
-                _shardLogger.Information($"Starting ShardStateManager for {Name}");
-                var response = await ScreepsAPI.GetAllMapStats(Name, "claim0");
-                foreach (var room in response.Rooms)
-                {
-                    Rooms.Add(room.Key);
-                    _shardLogger.Information($"Added room {room.Key} to shard {Name}");
-                }
-                var mergedUsers = await GameState.MergeUsersRefetchingAsync(response.Users);
+                var mergedUsers = await GameState.MergeUsersRefetchingAsync(users);
                 _shardLogger.Information("Merged {UserCount} users from initial map stats for shard {Shard}", mergedUsers, Name);
-
-                var message = $"Loaded Shard {Name} with rooms {response.Rooms.Count}";
-                _shardLogger.Information(message);
-                _ = StartUpdate();
-
-                var setTimeTimer = new Timer(300000);
-                setTimeTimer.Elapsed += (s, e) => _ = StartUpdate();
-                setTimeTimer.AutoReset = true;
-                setTimeTimer.Enabled = true;
             }
             catch (Exception ex)
             {
-                _shardLogger.Error(ex, $"Error starting ShardStateManager for {Name}: {ex.Message}");
+                _shardLogger.Error(ex, "Error merging users from initial map stats for shard {Shard}", Name);
             }
         }
 
@@ -77,7 +115,7 @@ namespace UserTrackerShared.Managers
         {
             var syncTime = GetSyncTime();
             if (LastSyncTime == 0) LastSyncTime = Math.Max(0, syncTime - ConfigSettingsState.PullBackwardsTickAmount);
-            if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - 100;
+            if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - ConfigSettingsState.TicksInObject;
 
             var ticksToBeSynced = syncTime - LastSyncTime;
             if (ticksToBeSynced <= 0 || IsSyncing) return;
@@ -97,7 +135,7 @@ namespace UserTrackerShared.Managers
                     var tasks = new List<Task>();
 
                     var userLocks = new ConcurrentDictionary<string, object>();
-                    var semaphore = new SemaphoreSlim(1000);
+                    var semaphore = new SemaphoreSlim(100);
                     foreach (var room in Rooms)
                     {
                         await semaphore.WaitAsync();

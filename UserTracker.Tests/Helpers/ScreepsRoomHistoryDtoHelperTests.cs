@@ -13,7 +13,7 @@ public class ScreepsRoomHistoryDtoHelperTests
     {
         var configFileMap = new ExeConfigurationFileMap
         {
-            ExeConfigFilename = "App.Config"
+            ExeConfigFilename = "App.config"
         };
         var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
         ConfigSettingsState.InitTest(configuration.AppSettings);
@@ -155,7 +155,7 @@ public class ScreepsRoomHistoryDtoHelperTests
         Assert.Equal(1m / ticks, actionLogDto.Heal.Count);
         Assert.Equal(24m / ticks, actionLogDto.Heal.Heal);
         Assert.Equal(1m / ticks, actionLogDto.Harvest.Count);
-        Assert.Equal(10m, actionLogDto.Harvest.Inflow);
+        Assert.Equal(10m / ticks, actionLogDto.Harvest.Inflow);
         Assert.Equal(1m / ticks, actionLogDto.Build.Count);
         Assert.Equal(3m / ticks, actionLogDto.Build.Outflow);
         Assert.Equal(20m / ticks, actionLogDto.Build.Effect);
@@ -170,7 +170,7 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
     {
         var configFileMap = new ExeConfigurationFileMap
         {
-            ExeConfigFilename = "App.Config"
+            ExeConfigFilename = "App.config"
         };
         var configuration = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
         ConfigSettingsState.InitTest(configuration.AppSettings);
