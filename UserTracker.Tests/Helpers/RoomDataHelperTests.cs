@@ -52,12 +52,12 @@ public class RoomDataHelperTests : IDisposable
 
         RoomDataHelper.SetHistoryFetcher((shard, room, tick) => Task.FromResult<(JObject?, HttpStatusCode)>((roomData, HttpStatusCode.OK)));
 
-        var dataByRoom = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
-        var userLocks = new ConcurrentDictionary<string, object>();
+        var dataByWindow = new ConcurrentDictionary<long, ConcurrentDictionary<string, ScreepsRoomHistoryDto>>();
 
-        var status = await RoomDataHelper.GetAndHandleRoomData("shard0", "roomA", 1, dataByRoom, userLocks);
+        var status = await RoomDataHelper.GetAndHandleRoomData("shard0", "roomA", 0, dataByWindow);
 
         Assert.Equal(200, status);
+        var dataByRoom = Assert.Single(dataByWindow).Value;
         Assert.Contains("roomA", dataByRoom.Keys);
         var dto = dataByRoom["roomA"];
         Assert.Equal(1, dto.Tick);
@@ -70,11 +70,11 @@ public class RoomDataHelperTests : IDisposable
     {
         RoomDataHelper.SetHistoryFetcher((_, _, _) => Task.FromResult<(JObject?, HttpStatusCode)>((null, HttpStatusCode.NotFound)));
 
-        var dataByRoom = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
-        var userLocks = new ConcurrentDictionary<string, object>();
+        var dataByWindow = new ConcurrentDictionary<long, ConcurrentDictionary<string, ScreepsRoomHistoryDto>>();
 
-        var status = await RoomDataHelper.GetAndHandleRoomData("shard0", "roomB", 1, dataByRoom, userLocks);
+        var status = await RoomDataHelper.GetAndHandleRoomData("shard0", "roomB", 0, dataByWindow);
 
         Assert.Equal((int)HttpStatusCode.NotFound, status);
+        Assert.Empty(dataByWindow);
     }
 }

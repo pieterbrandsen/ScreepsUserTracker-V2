@@ -97,6 +97,7 @@ namespace UserTrackerShared.States
             PullBackwardsTickAmount = reader.GetRequiredInt("PULL_BACKWARDS_TICK_AMOUNT");
             TicksInFile = reader.GetRequiredInt("TICKS_IN_FILE");
             TicksInObject = reader.GetRequiredInt("TICKS_IN_OBJECT");
+            ValidateTickWindows();
             GetAllUsers = reader.GetRequiredBool("GET_ALL_USERS");
             StartsShards = reader.GetRequiredBool("START_SHARDS");
             LogsFolder = reader.GetRequiredString("LOGS_FOLDER");
@@ -112,6 +113,18 @@ namespace UserTrackerShared.States
             var settings = appSettingsSection.Settings;
             TicksInFile = Convert.ToInt32(settings["TICKS_IN_FILE"].Value);
             TicksInObject = Convert.ToInt32(settings["TICKS_IN_OBJECT"].Value);
+            ValidateTickWindows();
+        }
+
+        internal static void ValidateTickWindows()
+        {
+            if (TicksInFile <= 0 || TicksInObject <= 0 ||
+                (TicksInObject % TicksInFile != 0 && TicksInFile % TicksInObject != 0))
+            {
+                throw new ArgumentException(
+                    "TICKS_IN_FILE and TICKS_IN_OBJECT must be positive; TICKS_IN_OBJECT must be " +
+                    "a multiple or an exact divisor of TICKS_IN_FILE.");
+            }
         }
     }
 }

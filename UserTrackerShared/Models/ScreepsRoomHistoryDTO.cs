@@ -499,7 +499,7 @@ namespace UserTrackerShared.Models
                     currentAmount = existingGroundResource;
                 }
 
-                GroundResources[resourceType] = currentAmount + toBeAddedAmount / ConfigSettingsState.TicksInFile;
+                GroundResources[resourceType] = currentAmount + (decimal)toBeAddedAmount / ConfigSettingsState.TicksInObject;
             }
         }
         public void CombineGroundResources(ScreepsRoomHistoryDto hisDto)
@@ -527,11 +527,11 @@ namespace UserTrackerShared.Models
         }
         public void CombineCreeps(ScreepsRoomHistoryDto hisDto)
         {
-            Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.OwnedCreeps, Creeps.OwnedCreeps);
-            Creeps.EnemyCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.EnemyCreeps, Creeps.EnemyCreeps);
-            Creeps.OtherCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.OtherCreeps, Creeps.OtherCreeps);
+            Creeps.OwnedCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(Creeps.OwnedCreeps, hisDto.Creeps.OwnedCreeps);
+            Creeps.EnemyCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(Creeps.EnemyCreeps, hisDto.Creeps.EnemyCreeps);
+            Creeps.OtherCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(Creeps.OtherCreeps, hisDto.Creeps.OtherCreeps);
 
-            Creeps.PowerCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(hisDto.Creeps.PowerCreeps, Creeps.PowerCreeps);
+            Creeps.PowerCreeps = ScreepsRoomHistoryDtoHelper.CombineCreeps(Creeps.PowerCreeps, hisDto.Creeps.PowerCreeps);
         }
 
         public void ProcessStructures(ScreepsRoomHistory his)
@@ -541,7 +541,7 @@ namespace UserTrackerShared.Models
 
         public void CombineStructures(ScreepsRoomHistoryDto his)
         {
-            Structures = ScreepsRoomHistoryDtoHelper.CombineStructures(his.Structures, Structures);
+            Structures = ScreepsRoomHistoryDtoHelper.CombineStructures(Structures, his.Structures);
         }
 
         public void Update(ScreepsRoomHistory his)

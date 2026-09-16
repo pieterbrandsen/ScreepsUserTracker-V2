@@ -62,7 +62,7 @@ namespace UserTracker.Tests.Models
             dto.ProcessGroundResources(history);
 
             Assert.Single(dto.GroundResources);
-            Assert.Equal(1000 / ConfigSettingsState.TicksInFile, dto.GroundResources["energy"]);
+            Assert.Equal(1000m / ConfigSettingsState.TicksInObject, dto.GroundResources["energy"]);
         }
 
         [Fact]

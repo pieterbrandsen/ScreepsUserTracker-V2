@@ -87,12 +87,15 @@ namespace UserTrackerShared.Managers
         }
 
         public string Name { get; set; }
-        private long LastSyncTime { get; set; }
+        private long? LastSyncTime { get; set; }
         public long Time { get; set; }
         public List<string> Rooms { get; set; } = [];
         public bool IsSyncing = false;
-        private long lastTickUploaded = 0;
-        private ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom = new();
+        private readonly ConcurrentDictionary<long, ConcurrentDictionary<string, ScreepsRoomHistoryDto>> dataByWindow = new();
+
+        internal Func<string, string, long, long, ScreepsRoomHistoryDto, Task> RoomHistoryWriter { get; set; } = DBClient.WriteScreepsRoomHistory;
+        internal Action<string, string, long, long, ScreepsRoomHistoryDto> UserHistoryWriter { get; set; } = DBClient.WriteScreepsUserHistory;
+        internal Action<string, long, long, ScreepsRoomHistoryDto> GlobalHistoryWriter { get; set; } = DBClient.WriteScreepsGlobalHistory;
 
 
         public async Task StartUpdate()
@@ -105,20 +108,27 @@ namespace UserTrackerShared.Managers
             }
         }
 
-        private long GetSyncTime()
+        internal long GetSyncTime()
         {
-            var syncTime = Convert.ToInt32(Math.Round(Convert.ToDouble((Time - 500) / 100)) * 100);
-            return syncTime;
+            var availableTime = Math.Max(0, Time - 500);
+            return availableTime - availableTime % ConfigSettingsState.TicksInFile;
         }
 
-        private async Task StartSync()
+        internal async Task StartSync()
         {
+            if (IsSyncing) return;
+            ConfigSettingsState.ValidateTickWindows();
             var syncTime = GetSyncTime();
-            if (LastSyncTime == 0) LastSyncTime = Math.Max(0, syncTime - ConfigSettingsState.PullBackwardsTickAmount);
-            if (lastTickUploaded == 0) lastTickUploaded = LastSyncTime - ConfigSettingsState.TicksInObject;
+            if (LastSyncTime == null)
+            {
+                // Begin on both a file and an output-window boundary, including at startup.
+                var start = Math.Max(0, syncTime - ConfigSettingsState.PullBackwardsTickAmount);
+                var alignment = Math.Max(ConfigSettingsState.TicksInFile, ConfigSettingsState.TicksInObject);
+                LastSyncTime = start - start % alignment;
+            }
 
-            var ticksToBeSynced = syncTime - LastSyncTime;
-            if (ticksToBeSynced <= 0 || IsSyncing) return;
+            var ticksToBeSynced = syncTime - LastSyncTime.Value;
+            if (ticksToBeSynced <= 0) return;
             IsSyncing = true;
 
             var message = $"Syncing Shard {Name} for {ticksToBeSynced} ticks and {Rooms.Count} rooms, last sync time was {LastSyncTime}, current sync time is {syncTime}";
@@ -126,16 +136,14 @@ namespace UserTrackerShared.Managers
 
             try
             {
-                for (long i = LastSyncTime; i < syncTime; i += 100)
+                for (long i = LastSyncTime.Value; i < syncTime; i += ConfigSettingsState.TicksInFile)
                 {
                     var resultCodes = new ConcurrentDictionary<int, int>();
 
-                    var shouldUploadAllData = i - lastTickUploaded >= ConfigSettingsState.TicksInObject;
                     var mainStopwatch = Stopwatch.StartNew();
                     var tasks = new List<Task>();
 
-                    var userLocks = new ConcurrentDictionary<string, object>();
-                    var semaphore = new SemaphoreSlim(100);
+                    using var semaphore = new SemaphoreSlim(100);
                     foreach (var room in Rooms)
                     {
                         await semaphore.WaitAsync();
@@ -143,7 +151,7 @@ namespace UserTrackerShared.Managers
                         {
                             try
                             {
-                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByRoom, userLocks);
+                                var statusResult = await RoomDataHelper.GetAndHandleRoomData(Name, room, i, dataByWindow);
                                 resultCodes.AddOrUpdate(statusResult, 1, (key, value) => value + 1);
                             }
                             catch (Exception ex)
@@ -159,10 +167,13 @@ namespace UserTrackerShared.Managers
                     }
                     await Task.WhenAll(tasks);
 
-                    if (shouldUploadAllData)
+                    var fileEnd = i + ConfigSettingsState.TicksInFile;
+                    foreach (var windowStart in dataByWindow.Keys.OrderBy(tick => tick))
                     {
+                        if (windowStart + ConfigSettingsState.TicksInObject > fileEnd) break;
+                        if (!dataByWindow.TryRemove(windowStart, out var dataByRoom)) continue;
                         var globalData = new ScreepsRoomHistoryDto();
-                        var dataByUser = new ConcurrentDictionary<string, ScreepsRoomHistoryDto>();
+                        var dataByUser = new Dictionary<string, ScreepsRoomHistoryDto>();
 
                         var roomDataSnapshot = dataByRoom.ToArray();
                         foreach (var kvp in roomDataSnapshot)
@@ -170,16 +181,17 @@ namespace UserTrackerShared.Managers
                             try
                             {
                                 var roomData = kvp.Value;
-                                _ = DBClient.WriteScreepsRoomHistory(Name, kvp.Key, i, roomData.TimeStamp, roomData);
+                                await RoomHistoryWriter(Name, kvp.Key, windowStart, roomData.TimeStamp, roomData);
 
                                 if (!string.IsNullOrEmpty(roomData.UserId) && GameState.Users.TryGetValue(roomData.UserId, out ScreepsUser? user))
                                 {
                                     var username = user.Username;
-                                    dataByUser.AddOrUpdate(username, roomData, (key, existingData) =>
+                                    if (!dataByUser.TryGetValue(username, out var userData))
                                     {
-                                        existingData.Combine(roomData);
-                                        return existingData;
-                                    });
+                                        userData = new ScreepsRoomHistoryDto();
+                                        dataByUser[username] = userData;
+                                    }
+                                    userData.Combine(roomData);
                                 }
                             }
                             catch (Exception ex)
@@ -187,13 +199,12 @@ namespace UserTrackerShared.Managers
                                 _shardLogger.Error(ex, "Error uploading room data for {Room}", kvp.Key);
                             }
                         }
-                        dataByRoom.Clear();
 
                         foreach (var userKvp in dataByUser)
                         {
                             try
                             {
-                                DBClient.WriteScreepsUserHistory(Name, userKvp.Key, i, userKvp.Value.TimeStamp, userKvp.Value);
+                                UserHistoryWriter(Name, userKvp.Key, windowStart, userKvp.Value.TimeStamp, userKvp.Value);
                                 globalData.Combine(userKvp.Value);
                             }
                             catch (Exception ex)
@@ -202,9 +213,12 @@ namespace UserTrackerShared.Managers
                             }
                         }
 
-                        DBClient.WriteScreepsGlobalHistory(Name, i, globalData.TimeStamp, globalData);
-                        lastTickUploaded = i;
+                        if (dataByUser.Count > 0)
+                        {
+                            GlobalHistoryWriter(Name, windowStart, globalData.TimeStamp, globalData);
+                        }
                     }
+                    LastSyncTime = fileEnd;
 
                     mainStopwatch.Stop();
                     var totalMilliseconds = mainStopwatch.ElapsedMilliseconds;

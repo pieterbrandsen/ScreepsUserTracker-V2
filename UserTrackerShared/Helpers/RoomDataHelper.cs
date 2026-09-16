@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.Net;
-using UserTrackerShared.DBClients;
 using UserTrackerShared.Models;
 using UserTrackerShared.States;
 using UserTrackerShared.Utilities;
@@ -23,7 +22,8 @@ namespace UserTrackerShared.Helpers
             HistoryFetcher = ScreepsAPI.GetHistory;
         }
 
-        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick, ConcurrentDictionary<string, ScreepsRoomHistoryDto> dataByRoom, ConcurrentDictionary<string, object> userLocks)
+        public static async Task<int> GetAndHandleRoomData(string shard, string name, long tick,
+            ConcurrentDictionary<long, ConcurrentDictionary<string, ScreepsRoomHistoryDto>> dataByWindow)
         {
             try
             {
@@ -34,11 +34,6 @@ namespace UserTrackerShared.Helpers
                 }
 
                 var roomHistory = new ScreepsRoomHistory();
-                if (!dataByRoom.TryGetValue(name, out ScreepsRoomHistoryDto? roomHistoryDto))
-                {
-                    roomHistoryDto = new ScreepsRoomHistoryDto();
-                    dataByRoom[name] = roomHistoryDto;
-                }
                 roomData.TryGetValue("timestamp", out JToken? jTokenTime);
                 if (jTokenTime != null) roomHistory.TimeStamp = jTokenTime.Value<long>();
 
@@ -51,8 +46,12 @@ namespace UserTrackerShared.Helpers
                     {
                         long tickNumber = roomHistory.Base + i;
                         roomHistory.Tick = tickNumber;
+                        // Keep reconstructed history across windows, but average each window separately.
+                        var windowStart = tickNumber - tickNumber % ConfigSettingsState.TicksInObject;
+                        var dataByRoom = dataByWindow.GetOrAdd(windowStart, _ => new());
+                        var roomHistoryDto = dataByRoom.GetOrAdd(name, _ => new());
 
-                        if (jObjectTicks != null && jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
+                        if (jObjectTicks.TryGetValue(tickNumber.ToString(), out JToken? tickObject) && tickObject != null)
                         {
                             try
                             {
