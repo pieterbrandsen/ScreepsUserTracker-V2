@@ -43,6 +43,11 @@ internal sealed class AppSettingsReader
         throw new ArgumentException($"Invalid appSetting '{key}' (expected int).");
     }
 
+    public bool GetBool(string key, bool defaultValue = false)
+    {
+        return _settings[key] == null ? defaultValue : GetRequiredBool(key);
+    }
+
     public bool GetRequiredBool(string key)
     {
         var value = _settings[key];

@@ -66,6 +66,7 @@ public class ShardStateManagerTests : IDisposable
     }
 
     [Theory]
+    [InlineData(100, 1)]
     [InlineData(100, 10)]
     [InlineData(100, 100)]
     [InlineData(100, 1000)]
@@ -102,6 +103,32 @@ public class ShardStateManagerTests : IDisposable
         await shard.StartSync();
         Assert.Equal(totalTicks / file * 2, requests.Count);
         Assert.Equal(totalTicks / window * 2, roomRows.Count);
+    }
+
+    [Fact]
+    public async Task Sync_RoomsWaitingForRetriesDoNotBlockOtherRoomsFromStarting()
+    {
+        var shard = CreateShard(100, 100);
+        shard.Rooms = Enumerable.Range(0, 150).Select(i => $"room{i}").ToList();
+        var allStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var started = 0;
+        RoomDataHelper.SetHistoryFetcher(async (_, _, _) =>
+        {
+            if (Interlocked.Increment(ref started) == shard.Rooms.Count) allStarted.SetResult();
+            await release.Task;
+            return (null, HttpStatusCode.InternalServerError);
+        });
+        shard.Time = 600;
+        var sync = shard.StartSync();
+        try { await allStarted.Task.WaitAsync(TimeSpan.FromSeconds(5)); }
+        finally
+        {
+            release.SetResult();
+            await sync;
+        }
+        Assert.Equal(150, started);
+        Assert.Empty(roomRows);
     }
 
     [Fact]

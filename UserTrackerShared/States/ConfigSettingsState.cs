@@ -36,6 +36,7 @@ namespace UserTrackerShared.States
         public static string TimeScaleDbPassword { get; set; } = string.Empty;
 
         public static bool QuestDbEnabled { get; set; }
+        public static bool QuestDbDetailedEnabled { get; set; }
         public static int QuestDbPort { get; set; }
         public static string QuestDbHost { get; set; } = string.Empty;
         public static string QuestDbUser { get; set; } = string.Empty;
@@ -89,6 +90,7 @@ namespace UserTrackerShared.States
             TimeScaleDbPassword = reader.GetString("TIMESCALE_PASSWORD");
 
             QuestDbEnabled = reader.GetRequiredBool("QUESTDB_ENABLED");
+            QuestDbDetailedEnabled = reader.GetBool("QUESTDB_DETAILED_ENABLED", false);
             QuestDbHost = reader.GetString("QUESTDB_HOST");
             QuestDbPort = reader.GetRequiredInt("QUESTDB_PORT");
             QuestDbUser = reader.GetString("QUESTDB_USERNAME");

@@ -1,36 +1,46 @@
+using Newtonsoft.Json;
+
 namespace UserTrackerShared.Models.Db
 {
     public class QuestDBHistoryDTO
     {
-        public int StructureCount { get; set; }
-        public int PlacedStructureCount { get; set; }
-        public Dictionary<string, int> StructureCounts { get; set; } = [];
+        public decimal StructureCount { get; set; }
+        public decimal PlacedStructureCount { get; set; }
+        public Dictionary<string, decimal> StructureCounts { get; set; } = [];
 
 
-        public int CreepCount { get; set; }
-        public int OwnedCreepCount { get; set; }
-        public int EnemyCreepCount { get; set; }
-        public int OtherCreepCount { get; set; }
-        public int PowerCreepCount { get; set; }
+        public decimal CreepCount { get; set; }
+        public decimal OwnedCreepCount { get; set; }
+        public decimal EnemyCreepCount { get; set; }
+        public decimal OtherCreepCount { get; set; }
+        public decimal PowerCreepCount { get; set; }
 
-        public int OwnedCreepPartsCount { get; set; }
-        public Dictionary<string, int> OwnedCreepPartsCounts { get; set; } = [];
+        public decimal OwnedCreepPartsCount { get; set; }
+        public Dictionary<string, decimal> OwnedCreepPartsCounts { get; set; } = [];
 
-        public int CreepIntentCount { get; set; }
-        public Dictionary<string, int> CreepIntentCounts { get; set; } = [];
-        public int CreepEnergyInflow { get; set; }
-        public int CreepEnergyOutflow { get; set; }
+        public decimal CreepIntentCount { get; set; }
+        public Dictionary<string, decimal> CreepIntentCounts { get; set; } = [];
+        public decimal CreepEnergyInflow { get; set; }
+        public decimal CreepEnergyOutflow { get; set; }
 
-        public int OwnedRoomCount { get; set; }
-        public int ReservedRoomCount { get; set; }
+        public decimal OwnedRoomCount { get; set; }
+        public decimal ReservedRoomCount { get; set; }
 
-        public int? ControllerLevel { get; set; }
-        public int? ControllerProgress { get; set; }
-        public int? ControllerProgressTotal { get; set; }
-        public int? ControllerPointsPerTick { get; set; }
-        public int? ControllerScorePerTick { get; set; }
+        public decimal? ControllerLevel { get; set; }
+        public decimal? ControllerProgress { get; set; }
+        public decimal? ControllerProgressTotal { get; set; }
+        public decimal? ControllerPointsPerTick { get; set; }
+        public decimal? ControllerScorePerTick { get; set; }
 
-        public int StoreTotal { get; set; }
-        public Dictionary<string, int> StoreTotals { get; set; } = [];
+        // Null when detailed output is disabled, preserving the compact schema.
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public StructuresDto? Structures { get; set; }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public CreepsDto? Creeps { get; set; }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, decimal>? GroundResources { get; set; }
+
+        public decimal StoreTotal { get; set; }
+        public Dictionary<string, decimal> StoreTotals { get; set; } = [];
     }
 }

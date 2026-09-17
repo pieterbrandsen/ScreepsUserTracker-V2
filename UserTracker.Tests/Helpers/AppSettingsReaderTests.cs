@@ -55,6 +55,17 @@ public class AppSettingsReaderTests
     }
 
     [Fact]
+    public void GetBool_DefaultsOnlyWhenAbsent_AndRejectsInvalidValues()
+    {
+        var reader = new AppSettingsReader(new NameValueCollection { ["on"] = "true", ["off"] = "0", ["invalid"] = "maybe" });
+        Assert.False(reader.GetBool("missing"));
+        Assert.True(reader.GetBool("missing", true));
+        Assert.True(reader.GetBool("on"));
+        Assert.False(reader.GetBool("off", true));
+        Assert.Throws<ArgumentException>(() => reader.GetBool("invalid"));
+    }
+
+    [Fact]
     public void GetRequiredBool_ReturnsTrue_WhenOne()
     {
         var reader = new AppSettingsReader(new NameValueCollection { ["flag"] = "1" });

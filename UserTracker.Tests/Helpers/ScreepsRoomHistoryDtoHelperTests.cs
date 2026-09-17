@@ -194,6 +194,8 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
             Mineral = new StructureMineral(),
         };
         structures.Deposits["dep1"] = new StructureDeposit();
+        structures.Ramparts["rampart1"] = new StructureRampart { Hits = 200 };
+        structures.InvaderCores["core1"] = new StructureInvaderCore();
         structures.Walls["wall1"] = new StructureWall { Hits = 100 };
         structures.ConstructionSites["site1"] = new StructureConstructionSite { StructureType = "spawn", Progress = 4, ProgressTotal = 10 };
         structures.Containers["cont1"] = new StructureContainer { Store = new Store { energy = 100 } };
@@ -225,8 +227,11 @@ public class ScreepsRoomHistoryDtoHelperStructuresTests
         Assert.Equal(1m / ticks, dto.Deposit.Count);
         Assert.Equal(1m / ticks, dto.Wall.Count);
         Assert.Equal(100m / ticks, dto.Wall.Hits);
+        Assert.Equal(1m / ticks, dto.Rampart.Count);
+        Assert.Equal(200m / ticks, dto.Rampart.Hits);
+        Assert.Equal(1m / ticks, dto.InvaderCore.Count);
         Assert.Equal(1m / ticks, dto.ConstructionSite.Count);
-        Assert.True(dto.ConstructionSite.TypesBuilding.ContainsKey("spawn"));
+        Assert.Equal(1m / ticks, dto.ConstructionSite.TypesBuilding["spawn"]);
         Assert.Equal(1m / ticks, dto.Container.Count);
         Assert.Equal(100m / ticks, dto.Container.Store.energy);
         Assert.Equal(1m / ticks, dto.Extension.Count);

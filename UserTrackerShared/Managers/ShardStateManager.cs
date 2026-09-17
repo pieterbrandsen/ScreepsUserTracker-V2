@@ -143,10 +143,10 @@ namespace UserTrackerShared.Managers
                     var mainStopwatch = Stopwatch.StartNew();
                     var tasks = new List<Task>();
 
-                    using var semaphore = new SemaphoreSlim(100);
+                    // ScreepsAPI bounds active HTTP requests. Do not hold another slot
+                    // across retry delays: missing rooms would block subsequent rooms.
                     foreach (var room in Rooms)
                     {
-                        await semaphore.WaitAsync();
                         tasks.Add(Task.Run(async () =>
                         {
                             try
@@ -158,10 +158,6 @@ namespace UserTrackerShared.Managers
                             {
                                 _shardLogger.Error(ex, "Error processing room {Room} for tick {Tick}", room, i);
                                 resultCodes.AddOrUpdate(500, 1, (key, value) => value + 1); // Error code
-                            }
-                            finally
-                            {
-                                semaphore.Release();
                             }
                         }));
                     }

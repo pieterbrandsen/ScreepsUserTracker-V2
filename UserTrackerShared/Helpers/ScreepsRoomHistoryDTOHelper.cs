@@ -148,7 +148,7 @@ namespace UserTrackerShared.Helpers
                     {
                         current = 0;
                     }
-                    structuresDto.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1 / ConfigSettingsState.TicksInObject;
+                    structuresDto.ConstructionSite.TypesBuilding[typeBeingBuild] = current + 1m / ConfigSettingsState.TicksInObject;
                 }
             }
             foreach (var container in structures.Containers.Select(x => x.Value))
@@ -173,10 +173,6 @@ namespace UserTrackerShared.Helpers
             foreach (var factory in structures.Factories.Select(x => x.Value))
             {
                 structuresDto.Factory.Count += 1m / ConfigSettingsState.TicksInObject;
-            }
-            foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
-            {
-                structuresDto.InvaderCore.Count += 1m / ConfigSettingsState.TicksInObject;
             }
             foreach (var invderCore in structures.InvaderCores.Select(x => x.Value))
             {
@@ -225,21 +221,11 @@ namespace UserTrackerShared.Helpers
             {
                 structuresDto.Ruin.Count += 1m / ConfigSettingsState.TicksInObject;
             }
-            foreach (var rampart in structures.Ramparts.Select(x => x.Value))
-            {
-                structuresDto.Rampart.Count += 1m / ConfigSettingsState.TicksInObject;
-                structuresDto.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInObject;
-            }
             foreach (var source in structures.Sources.Select(x => x.Value))
             {
                 structuresDto.Source.Count += 1m / ConfigSettingsState.TicksInObject;
                 structuresDto.Source.Energy += source.Energy / ConfigSettingsState.TicksInObject;
                 structuresDto.Source.EnergyCapacity += source.EnergyCapacity / ConfigSettingsState.TicksInObject;
-            }
-            foreach (var rampart in structures.Ramparts.Select(x => x.Value))
-            {
-                structuresDto.Rampart.Count += 1m / ConfigSettingsState.TicksInObject;
-                structuresDto.Rampart.Hits += rampart.Hits / ConfigSettingsState.TicksInObject;
             }
             foreach (var spawn in structures.Spawns.Select(x => x.Value))
             {

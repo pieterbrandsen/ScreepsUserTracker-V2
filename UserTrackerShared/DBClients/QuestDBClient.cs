@@ -37,7 +37,7 @@ namespace UserTrackerShared.DBClients
         private static bool _isInitialized = false;
         private static bool _isRunning = true;
         // Use an unbounded channel for high-performance concurrent writes.
-        private static Channel<QuestHistoryPointDataParameter>? _historyChannel = null;
+        private static Channel<IReadOnlyList<QuestHistoryPointDataParameter>>? _historyChannel = null;
         private static Channel<QuestAdminUtilsPointDataParameter>? _adminUtilsChannel = null;
 
         // Counters for statistics.
@@ -73,7 +73,7 @@ namespace UserTrackerShared.DBClients
                 throw;
             }
 
-            _historyChannel = Channel.CreateUnbounded<QuestHistoryPointDataParameter>(new UnboundedChannelOptions
+            _historyChannel = Channel.CreateUnbounded<IReadOnlyList<QuestHistoryPointDataParameter>>(new UnboundedChannelOptions
             {
                 SingleReader = true,
                 SingleWriter = false
@@ -92,11 +92,6 @@ namespace UserTrackerShared.DBClients
             _logger.Information("Worker tasks started.");
         }
 
-        private static string GetBatchKey(QuestHistoryPointDataParameter point)
-        {
-            return $"{point.Database}|{point.Shard}|{point.Room}|{point.Username}|{point.Tick}";
-        }
-
         private static async Task HistoryWorkerLoop()
         {
             try
@@ -109,25 +104,21 @@ namespace UserTrackerShared.DBClients
                         continue;
 
                     var sender = await GetSenderInstanceAsync("history");
-                    var batchDict = new Dictionary<string, List<QuestHistoryPointDataParameter>>();
-                    int batchCount = 0;
-                    while (_historyChannel.Reader.TryRead(out var item))
+                    // A channel item is a complete row. Draining individual fields could
+                    // split a producer's row into two partial rows at a batch boundary.
+                    var batchRows = new List<IReadOnlyList<QuestHistoryPointDataParameter>>();
+                    while (batchRows.Count < 256 && _historyChannel.Reader.TryRead(out var row))
                     {
-                        var batchKey = GetBatchKey(item);
-                        if (!batchDict.ContainsKey(batchKey))
-                            batchDict[batchKey] = [];
-
-                        batchDict[batchKey].Add(item);
-                        batchCount++;
-                        Interlocked.Decrement(ref _pendingPointCount);
+                        batchRows.Add(row);
+                        Interlocked.Add(ref _pendingPointCount, -row.Count);
                     }
-                    _logger.Information("Processing batch of {BatchCount} data points", batchCount);
+                    _logger.Information("Processing batch of {RowCount} history rows", batchRows.Count);
 
-                    foreach (var kvp in batchDict)
+                    foreach (var row in batchRows)
                     {
                         try
                         {
-                            var firstPoint = kvp.Value.FirstOrDefault();
+                            var firstPoint = row.FirstOrDefault();
                             if (firstPoint == null) continue;
 
                             sender.Table(firstPoint.Database)
@@ -136,7 +127,7 @@ namespace UserTrackerShared.DBClients
                                 .Symbol("user", firstPoint.Username)
                                 .Column("tick", firstPoint.Tick);
 
-                            foreach (var point in kvp.Value)
+                            foreach (var point in row)
                             {
                                 sender = QuestDBPointHelper.UpdateHistoryPoint(sender, point);
                                 Interlocked.Add(ref _flushedPointCount, 1);
@@ -151,7 +142,6 @@ namespace UserTrackerShared.DBClients
                     }
 
                     await FlushSender(sender);
-                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
             catch (Exception ex)
@@ -306,22 +296,21 @@ namespace UserTrackerShared.DBClients
             }
         }
 
-        public static void AddPoint(QuestHistoryPointDataParameter pointParameters)
+        private static void AddHistoryRow(IReadOnlyList<QuestHistoryPointDataParameter> row)
         {
-            if (_historyChannel == null)
+            if (row.Count == 0) return;
+            var channel = _historyChannel;
+            if (channel == null)
             {
-                _logger.Warning("History channel is null, cannot add point");
+                _logger.Warning("History channel is null, cannot add row");
                 return;
             }
 
-            var written = _historyChannel.Writer.TryWrite(pointParameters);
-            if (written)
+            Interlocked.Add(ref _pendingPointCount, row.Count);
+            if (!channel.Writer.TryWrite(row))
             {
-                Interlocked.Increment(ref _pendingPointCount);
-            }
-            else
-            {
-                _logger.Warning("Failed to write to history channel - channel may be full or closed");
+                Interlocked.Add(ref _pendingPointCount, -row.Count);
+                _logger.Warning("Failed to write to history channel - channel may be closed");
             }
         }
 
@@ -345,89 +334,32 @@ namespace UserTrackerShared.DBClients
         }
 
         public static void UploadRoomHistoryData(string database, string shard, string room, long tick, long timestamp, string username, object obj)
+            => UploadHistoryData(database, shard, room, tick, timestamp, username, obj);
+
+        public static void UploadUserHistoryData(string database, string shard, long tick, long timestamp, string username, object obj)
+            => UploadHistoryData(database, shard, "", tick, timestamp, username, obj);
+
+        public static void UploadGlobalHistoryData(string database, string shard, long tick, long timestamp, object obj)
+            => UploadHistoryData(database, shard, "", tick, timestamp, "", obj);
+
+        private static void UploadHistoryData(string database, string shard, string room, long tick, long timestamp, string username, object obj)
         {
             try
             {
                 var flattenedData = new Dictionary<string, object?>();
-                var writer = new JTokenWriter();
-                _serializer.Serialize(writer, obj);
-                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
-
-                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
+                // Each call gets its own serializer; room producers may run concurrently.
+                JsonHelper.FlattenJson(JToken.FromObject(obj), new StringBuilder(), flattenedData);
+                var row = new List<QuestHistoryPointDataParameter>();
+                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long or int or double or decimal))
                 {
-                    var pointParameters = new QuestHistoryPointDataParameter(
-                        database,
-                        shard,
-                        room,
-                        tick,
-                        timestamp,
-                        username,
-                        kvp.Key.ToLower(),
-                        Convert.ToDouble(kvp.Value));
-                    AddPoint(pointParameters);
+                    row.Add(new QuestHistoryPointDataParameter(database, shard, room, tick, timestamp,
+                        username, kvp.Key.ToLowerInvariant(), Convert.ToDouble(kvp.Value)));
                 }
+                AddHistoryRow(row);
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error in UploadHistoryData");
-            }
-        }
-
-        public static void UploadUserHistoryData(string database, string shard, long tick, long timestamp, string username, object obj)
-        {
-            try
-            {
-                var flattenedData = new Dictionary<string, object?>();
-                var writer = new JTokenWriter();
-                _serializer.Serialize(writer, obj);
-                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
-
-                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
-                {
-                    var pointParameters = new QuestHistoryPointDataParameter(
-                        database,
-                        shard,
-                        "",
-                        tick,
-                        timestamp,
-                        username,
-                        kvp.Key.ToLower(),
-                        Convert.ToDouble(kvp.Value));
-                    AddPoint(pointParameters);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error in UploadUserHistoryData");
-            }
-        }
-
-        public static void UploadGlobalHistoryData(string database, string shard, long tick, long timestamp, object obj)
-        {
-            try
-            {
-                var flattenedData = new Dictionary<string, object?>();
-                var writer = new JTokenWriter();
-                _serializer.Serialize(writer, obj);
-                JsonHelper.FlattenJson(writer.Token!, new StringBuilder(), flattenedData);
-
-                foreach (var kvp in flattenedData.Where(kvp => kvp.Value is long || kvp.Value is int || kvp.Value is double || kvp.Value is decimal))
-                {
-                    var pointParameters = new QuestHistoryPointDataParameter(
-                        database,
-                        shard,
-                        "",
-                        tick,
-                        timestamp,
-                        "",
-                        kvp.Key.ToLower(),
-                        Convert.ToDouble(kvp.Value));
-                    AddPoint(pointParameters);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, "Error in UploadGlobalHistoryData");
             }
         }
 
@@ -578,36 +510,39 @@ namespace UserTrackerShared.DBClients
 
     public static class QuestDBDtoHelper
     {
-        public static (int, int, Dictionary<string, int>) GetStructureCounts(ScreepsRoomHistoryDto history)
+        private static readonly System.Reflection.PropertyInfo[] StoreResourceProperties = typeof(Store)
+            .GetProperties().Where(p => p.PropertyType == typeof(decimal?)).ToArray();
+
+        public static (decimal, decimal, Dictionary<string, decimal>) GetStructureCounts(ScreepsRoomHistoryDto history)
         {
-            var structureCounts = new Dictionary<string, int>();
-            int structureCount = 0;
-            int placedStructureCounts = 0;
+            var structureCounts = new Dictionary<string, decimal>();
+            decimal structureCount = 0;
+            decimal placedStructureCounts = 0;
 
             if (history.Structures.Controller != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Controller.Count));
+                var count = history.Structures.Controller.Count;
                 structureCounts["controller"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Mineral != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Mineral.Count));
+                var count = history.Structures.Mineral.Count;
                 structureCounts["mineral"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Deposit != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Deposit.Count));
+                var count = history.Structures.Deposit.Count;
                 structureCounts["deposit"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Wall != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Wall.Count));
+                var count = history.Structures.Wall.Count;
                 structureCounts["wall"] = count;
 
                 structureCount += count;
@@ -615,12 +550,12 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.ConstructionSite != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.ConstructionSite.Count));
+                var count = history.Structures.ConstructionSite.Count;
                 structureCounts["constructionsite"] = count;
             }
             if (history.Structures.Container != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Container.Count));
+                var count = history.Structures.Container.Count;
                 structureCounts["container"] = count;
 
                 structureCount += count;
@@ -628,7 +563,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Extension != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Extension.Count));
+                var count = history.Structures.Extension.Count;
                 structureCounts["extension"] = count;
 
                 structureCount += count;
@@ -636,7 +571,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Extractor != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Extractor.Count));
+                var count = history.Structures.Extractor.Count;
                 structureCounts["extractor"] = count;
 
                 structureCount += count;
@@ -644,7 +579,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Factory != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Factory.Count));
+                var count = history.Structures.Factory.Count;
                 structureCounts["factory"] = count;
 
                 structureCount += count;
@@ -652,19 +587,19 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.InvaderCore != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.InvaderCore.Count));
+                var count = history.Structures.InvaderCore.Count;
                 structureCounts["invadercore"] = count;
             }
             if (history.Structures.KeeperLair != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.KeeperLair.Count));
+                var count = history.Structures.KeeperLair.Count;
                 structureCounts["keeperlair"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Lab != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Lab.Count));
+                var count = history.Structures.Lab.Count;
                 structureCounts["lab"] = count;
 
                 structureCount += count;
@@ -672,7 +607,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Link != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Link.Count));
+                var count = history.Structures.Link.Count;
                 structureCounts["link"] = count;
 
                 structureCount += count;
@@ -680,7 +615,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Observer != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Observer.Count));
+                var count = history.Structures.Observer.Count;
                 structureCounts["observer"] = count;
 
                 structureCount += count;
@@ -688,21 +623,21 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Portal != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Portal.Count));
+                var count = history.Structures.Portal.Count;
                 structureCounts["portal"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.PowerBank != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.PowerBank.Count));
+                var count = history.Structures.PowerBank.Count;
                 structureCounts["powerbank"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.PowerSpawn != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.PowerSpawn.Count));
+                var count = history.Structures.PowerSpawn.Count;
                 structureCounts["powerspawn"] = count;
 
                 structureCount += count;
@@ -710,7 +645,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Rampart != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Rampart.Count));
+                var count = history.Structures.Rampart.Count;
                 structureCounts["rampart"] = count;
 
                 structureCount += count;
@@ -718,7 +653,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Road != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Road.Count));
+                var count = history.Structures.Road.Count;
                 structureCounts["road"] = count;
 
                 structureCount += count;
@@ -726,21 +661,21 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Ruin != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Ruin.Count));
+                var count = history.Structures.Ruin.Count;
                 structureCounts["ruin"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Source != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Source.Count));
+                var count = history.Structures.Source.Count;
                 structureCounts["source"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Spawn != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Spawn.Count));
+                var count = history.Structures.Spawn.Count;
                 structureCounts["spawn"] = count;
 
                 structureCount += count;
@@ -748,7 +683,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Storage != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Storage.Count));
+                var count = history.Structures.Storage.Count;
                 structureCounts["storage"] = count;
 
                 structureCount += count;
@@ -756,7 +691,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Terminal != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Terminal.Count));
+                var count = history.Structures.Terminal.Count;
                 structureCounts["terminal"] = count;
 
                 structureCount += count;
@@ -764,14 +699,14 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Tombstone != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Tombstone.Count));
+                var count = history.Structures.Tombstone.Count;
                 structureCounts["tombstone"] = count;
 
                 structureCount += count;
             }
             if (history.Structures.Tower != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Tower.Count));
+                var count = history.Structures.Tower.Count;
                 structureCounts["tower"] = count;
 
                 structureCount += count;
@@ -779,7 +714,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Nuker != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Nuker.Count));
+                var count = history.Structures.Nuker.Count;
                 structureCounts["nuker"] = count;
 
                 structureCount += count;
@@ -787,7 +722,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Nuke != null)
             {
-                var count = Convert.ToInt32(Math.Floor(history.Structures.Nuke.Count));
+                var count = history.Structures.Nuke.Count;
                 structureCounts["nuke"] = count;
 
                 structureCount += count;
@@ -796,37 +731,37 @@ namespace UserTrackerShared.DBClients
             return (structureCount, placedStructureCounts, structureCounts);
         }
 
-        public static (int, int, int, int, int) GetCreepCounts(ScreepsRoomHistoryDto history)
+        public static (decimal, decimal, decimal, decimal, decimal) GetCreepCounts(ScreepsRoomHistoryDto history)
         {
-            int ownedCreepCount = 0;
-            int enemyCreepCount = 0;
-            int otherCreepCount = 0;
-            int powerCreepCount = 0;
+            decimal ownedCreepCount = 0;
+            decimal enemyCreepCount = 0;
+            decimal otherCreepCount = 0;
+            decimal powerCreepCount = 0;
 
             if (history.Creeps.OwnedCreeps != null)
             {
-                ownedCreepCount += Convert.ToInt32(history.Creeps.OwnedCreeps.Count);
+                ownedCreepCount += history.Creeps.OwnedCreeps.Count;
             }
             if (history.Creeps.EnemyCreeps != null)
             {
-                enemyCreepCount += Convert.ToInt32(history.Creeps.EnemyCreeps.Count);
+                enemyCreepCount += history.Creeps.EnemyCreeps.Count;
             }
             if (history.Creeps.OtherCreeps != null)
             {
-                otherCreepCount += Convert.ToInt32(history.Creeps.OtherCreeps.Count);
+                otherCreepCount += history.Creeps.OtherCreeps.Count;
             }
             if (history.Creeps.PowerCreeps != null)
             {
-                powerCreepCount = Convert.ToInt32(history.Creeps.PowerCreeps.Count);
+                powerCreepCount = history.Creeps.PowerCreeps.Count;
             }
 
-            int creepCount = ownedCreepCount + enemyCreepCount + otherCreepCount + powerCreepCount;
+            decimal creepCount = ownedCreepCount + enemyCreepCount + otherCreepCount + powerCreepCount;
             return (creepCount, ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount);
         }
-        private static (int, Dictionary<string, int>) GetCreepPartsCounts(CountByPartDto countByPart)
+        private static (decimal, Dictionary<string, decimal>) GetCreepPartsCounts(CountByPartDto countByPart)
         {
-            int creepPartsCount = 0;
-            var creepPartsCounts = new Dictionary<string, int>()
+            decimal creepPartsCount = 0;
+            var creepPartsCounts = new Dictionary<string, decimal>()
             {
                 {"attack", 0},
                 {"carry", 0},
@@ -839,37 +774,37 @@ namespace UserTrackerShared.DBClients
             };
 
 
-            creepPartsCount += Convert.ToInt32(countByPart.Attack);
-            creepPartsCounts["attack"] = Convert.ToInt32(countByPart.Attack);
+            creepPartsCount += countByPart.Attack;
+            creepPartsCounts["attack"] = countByPart.Attack;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Carry);
-            creepPartsCounts["carry"] = Convert.ToInt32(countByPart.Carry);
+            creepPartsCount += countByPart.Carry;
+            creepPartsCounts["carry"] = countByPart.Carry;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Heal);
-            creepPartsCounts["heal"] = Convert.ToInt32(countByPart.Heal);
+            creepPartsCount += countByPart.Heal;
+            creepPartsCounts["heal"] = countByPart.Heal;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Move);
-            creepPartsCounts["move"] = Convert.ToInt32(countByPart.Move);
+            creepPartsCount += countByPart.Move;
+            creepPartsCounts["move"] = countByPart.Move;
 
-            creepPartsCount += Convert.ToInt32(countByPart.RangedAttack);
-            creepPartsCounts["ranged_attack"] = Convert.ToInt32(countByPart.RangedAttack);
+            creepPartsCount += countByPart.RangedAttack;
+            creepPartsCounts["ranged_attack"] = countByPart.RangedAttack;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Tough);
-            creepPartsCounts["tough"] = Convert.ToInt32(countByPart.Tough);
+            creepPartsCount += countByPart.Tough;
+            creepPartsCounts["tough"] = countByPart.Tough;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Work);
-            creepPartsCounts["work"] = Convert.ToInt32(countByPart.Work);
+            creepPartsCount += countByPart.Work;
+            creepPartsCounts["work"] = countByPart.Work;
 
-            creepPartsCount += Convert.ToInt32(countByPart.Claim);
-            creepPartsCounts["claim"] = Convert.ToInt32(countByPart.Claim);
+            creepPartsCount += countByPart.Claim;
+            creepPartsCounts["claim"] = countByPart.Claim;
 
 
             return (creepPartsCount, creepPartsCounts);
         }
-        public static (int, Dictionary<string, int>) GetCreepPartsCounts(ScreepsRoomHistoryDto history)
+        public static (decimal, Dictionary<string, decimal>) GetCreepPartsCounts(ScreepsRoomHistoryDto history)
         {
-            var creepPartsCounts = new Dictionary<string, int>();
-            int creepPartsCount = 0;
+            var creepPartsCounts = new Dictionary<string, decimal>();
+            decimal creepPartsCount = 0;
 
             if (history.Creeps.OwnedCreeps != null)
             {
@@ -887,12 +822,12 @@ namespace UserTrackerShared.DBClients
 
             return (creepPartsCount, creepPartsCounts);
         }
-        private static (int, Dictionary<string, int>, int, int) GetCreepIntentsCounts(ActionLogDto actionLog)
+        private static (decimal, Dictionary<string, decimal>, decimal, decimal) GetCreepIntentsCounts(ActionLogDto actionLog)
         {
-            int energyInflow = 0;
-            int energyOutflow = 0;
-            int creepIntentsCount = 0;
-            var creepIntentsCounts = new Dictionary<string, int>()
+            decimal energyInflow = 0;
+            decimal energyOutflow = 0;
+            decimal creepIntentsCount = 0;
+            var creepIntentsCounts = new Dictionary<string, decimal>()
             {
                 {"attack", 0},
                 {"attacked", 0},
@@ -917,82 +852,82 @@ namespace UserTrackerShared.DBClients
                 {"power", 0}
             };
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Attack.Count);
-            creepIntentsCounts["attack"] = Convert.ToInt32(actionLog.Attack.Count);
+            creepIntentsCount += actionLog.Attack.Count;
+            creepIntentsCounts["attack"] = actionLog.Attack.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Attacked.Count);
-            creepIntentsCounts["attacked"] = Convert.ToInt32(actionLog.Attacked.Count);
+            creepIntentsCount += actionLog.Attacked.Count;
+            creepIntentsCounts["attacked"] = actionLog.Attacked.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.RangedAttack.Count);
-            creepIntentsCounts["ranged_attack"] = Convert.ToInt32(actionLog.RangedAttack.Count);
+            creepIntentsCount += actionLog.RangedAttack.Count;
+            creepIntentsCounts["ranged_attack"] = actionLog.RangedAttack.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.RangedMassAttack.Count);
-            creepIntentsCounts["ranged_mass_attacked"] = Convert.ToInt32(actionLog.RangedMassAttack.Count);
+            creepIntentsCount += actionLog.RangedMassAttack.Count;
+            creepIntentsCounts["ranged_mass_attacked"] = actionLog.RangedMassAttack.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.RangedHeal.Count);
-            creepIntentsCounts["ranged_heal"] = Convert.ToInt32(actionLog.RangedHeal.Count);
+            creepIntentsCount += actionLog.RangedHeal.Count;
+            creepIntentsCounts["ranged_heal"] = actionLog.RangedHeal.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Heal.Count);
-            creepIntentsCounts["heal"] = Convert.ToInt32(actionLog.Heal.Count);
+            creepIntentsCount += actionLog.Heal.Count;
+            creepIntentsCounts["heal"] = actionLog.Heal.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Healed.Count);
-            creepIntentsCounts["healed"] = Convert.ToInt32(actionLog.Healed.Count);
+            creepIntentsCount += actionLog.Healed.Count;
+            creepIntentsCounts["healed"] = actionLog.Healed.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Harvest.Count);
-            creepIntentsCounts["harvest"] = Convert.ToInt32(actionLog.Harvest.Count);
-            energyInflow += Convert.ToInt32(actionLog.Harvest.Inflow);
+            creepIntentsCount += actionLog.Harvest.Count;
+            creepIntentsCounts["harvest"] = actionLog.Harvest.Count;
+            energyInflow += actionLog.Harvest.Inflow;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Repair.Count);
-            creepIntentsCounts["repair"] = Convert.ToInt32(actionLog.Repair.Count);
-            energyOutflow += Convert.ToInt32(actionLog.Repair.Outflow);
+            creepIntentsCount += actionLog.Repair.Count;
+            creepIntentsCounts["repair"] = actionLog.Repair.Count;
+            energyOutflow += actionLog.Repair.Outflow;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Build.Count);
-            creepIntentsCounts["build"] = Convert.ToInt32(actionLog.Build.Count);
-            energyOutflow += Convert.ToInt32(actionLog.Build.Outflow);
+            creepIntentsCount += actionLog.Build.Count;
+            creepIntentsCounts["build"] = actionLog.Build.Count;
+            energyOutflow += actionLog.Build.Outflow;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.UpgradeController.Count);
-            creepIntentsCounts["upgrade_controller"] = Convert.ToInt32(actionLog.UpgradeController.Count);
-            energyOutflow += Convert.ToInt32(actionLog.UpgradeController.Outflow);
+            creepIntentsCount += actionLog.UpgradeController.Count;
+            creepIntentsCounts["upgrade_controller"] = actionLog.UpgradeController.Count;
+            energyOutflow += actionLog.UpgradeController.Outflow;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Move.Count);
-            creepIntentsCounts["move"] = Convert.ToInt32(actionLog.Move.Count);
+            creepIntentsCount += actionLog.Move.Count;
+            creepIntentsCounts["move"] = actionLog.Move.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Say.Count);
-            creepIntentsCounts["say"] = Convert.ToInt32(actionLog.Say.Count);
+            creepIntentsCount += actionLog.Say.Count;
+            creepIntentsCounts["say"] = actionLog.Say.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.ReserveController.Count);
-            creepIntentsCounts["reserve_controller"] = Convert.ToInt32(actionLog.ReserveController.Count);
+            creepIntentsCount += actionLog.ReserveController.Count;
+            creepIntentsCounts["reserve_controller"] = actionLog.ReserveController.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.AttackController.Count);
-            creepIntentsCounts["attack_controller"] = Convert.ToInt32(actionLog.AttackController.Count);
+            creepIntentsCount += actionLog.AttackController.Count;
+            creepIntentsCounts["attack_controller"] = actionLog.AttackController.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Produce.Count);
-            creepIntentsCounts["produce"] = Convert.ToInt32(actionLog.Produce.Count);
+            creepIntentsCount += actionLog.Produce.Count;
+            creepIntentsCounts["produce"] = actionLog.Produce.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.TransferEnergy.Count);
-            creepIntentsCounts["transfer_energy"] = Convert.ToInt32(actionLog.TransferEnergy.Count);
+            creepIntentsCount += actionLog.TransferEnergy.Count;
+            creepIntentsCounts["transfer_energy"] = actionLog.TransferEnergy.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.RunReaction.Count);
-            creepIntentsCounts["run_reaction"] = Convert.ToInt32(actionLog.RunReaction.Count);
+            creepIntentsCount += actionLog.RunReaction.Count;
+            creepIntentsCounts["run_reaction"] = actionLog.RunReaction.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.ReverseReaction.Count);
-            creepIntentsCounts["reverse_reaction"] = Convert.ToInt32(actionLog.ReverseReaction.Count);
+            creepIntentsCount += actionLog.ReverseReaction.Count;
+            creepIntentsCounts["reverse_reaction"] = actionLog.ReverseReaction.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Spawned.Count);
-            creepIntentsCounts["spawned"] = Convert.ToInt32(actionLog.Spawned.Count);
+            creepIntentsCount += actionLog.Spawned.Count;
+            creepIntentsCounts["spawned"] = actionLog.Spawned.Count;
 
-            creepIntentsCount += Convert.ToInt32(actionLog.Power.Count);
-            creepIntentsCounts["power"] = Convert.ToInt32(actionLog.Power.Count);
+            creepIntentsCount += actionLog.Power.Count;
+            creepIntentsCounts["power"] = actionLog.Power.Count;
 
 
             return (creepIntentsCount, creepIntentsCounts, energyInflow, energyOutflow);
         }
-        public static (int, Dictionary<string, int>, int, int) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
+        public static (decimal, Dictionary<string, decimal>, decimal, decimal) GetCreepIntentsCounts(ScreepsRoomHistoryDto history)
         {
-            var creepEnergyInflow = 0;
-            var creepEnergyOutflow = 0;
-            var creepIntentsCounts = new Dictionary<string, int>();
-            int creepIntentsCount = 0;
+            decimal creepEnergyInflow = 0;
+            decimal creepEnergyOutflow = 0;
+            var creepIntentsCounts = new Dictionary<string, decimal>();
+            decimal creepIntentsCount = 0;
 
             if (history.Creeps.OwnedCreeps != null)
             {
@@ -1013,18 +948,26 @@ namespace UserTrackerShared.DBClients
             return (creepIntentsCount, creepIntentsCounts, creepEnergyInflow, creepEnergyOutflow);
         }
 
-        public static (int, Dictionary<string, int>) GetStructureStoreCounts(Store store)
+        public static (decimal, Dictionary<string, decimal>) GetStructureStoreCounts(Store store, bool detailed = false)
         {
-            var storeTotals = new Dictionary<string, int>();
-            int storeTotal = 0;
+            var storeTotals = new Dictionary<string, decimal>();
+            decimal storeTotal = 0;
 
             void Add(string key, decimal? value)
             {
                 if (value.HasValue)
                 {
-                    storeTotals[key] = (int)value.Value;
-                    storeTotal += (int)value.Value;
+                    storeTotals[key] = value.Value;
+                    storeTotal += value.Value;
                 }
+            }
+
+            if (detailed)
+            {
+                // Include zero stock, too, so a depleted resource is not a missing metric.
+                foreach (var property in StoreResourceProperties)
+                    Add(property.Name.ToLowerInvariant(), (decimal?)property.GetValue(store) ?? 0m);
+                return (storeTotal, storeTotals);
             }
 
             Add(nameof(store.energy), store.energy);
@@ -1044,14 +987,14 @@ namespace UserTrackerShared.DBClients
 
             return (storeTotal, storeTotals);
         }
-        public static (int, Dictionary<string, int>) GetStoreCounts(ScreepsRoomHistoryDto history)
+        public static (decimal, Dictionary<string, decimal>) GetStoreCounts(ScreepsRoomHistoryDto history, bool detailed = false)
         {
-            var storeTotals = new Dictionary<string, int>();
-            int storeTotal = 0;
+            var storeTotals = new Dictionary<string, decimal>();
+            decimal storeTotal = 0;
 
             if (history.Structures.Storage != null)
             {
-                var (total, totals) = GetStructureStoreCounts(history.Structures.Storage.Store);
+                var (total, totals) = GetStructureStoreCounts(history.Structures.Storage.Store, detailed);
                 storeTotal += total;
                 foreach (var kvp in totals)
                 {
@@ -1063,7 +1006,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Terminal != null)
             {
-                var (total, totals) = GetStructureStoreCounts(history.Structures.Terminal.Store);
+                var (total, totals) = GetStructureStoreCounts(history.Structures.Terminal.Store, detailed);
                 storeTotal += total;
                 foreach (var kvp in totals)
                 {
@@ -1075,7 +1018,7 @@ namespace UserTrackerShared.DBClients
             }
             if (history.Structures.Container != null)
             {
-                var (total, totals) = GetStructureStoreCounts(history.Structures.Container.Store);
+                var (total, totals) = GetStructureStoreCounts(history.Structures.Container.Store, detailed);
                 storeTotal += total;
                 foreach (var kvp in totals)
                 {
@@ -1088,14 +1031,14 @@ namespace UserTrackerShared.DBClients
             if (history.Structures.Link != null)
             {
                 var energyTotal = history.Structures.Link.Energy;
-                storeTotal += Convert.ToInt32(energyTotal);
+                storeTotal += energyTotal;
                 if (storeTotals.ContainsKey("energy"))
                 {
-                    storeTotals["energy"] += Convert.ToInt32(energyTotal);
+                    storeTotals["energy"] += energyTotal;
                 }
                 else
                 {
-                    storeTotals["energy"] = Convert.ToInt32(energyTotal);
+                    storeTotals["energy"] = energyTotal;
                 }
             }
 
@@ -1149,8 +1092,8 @@ namespace UserTrackerShared.DBClients
             var (creepCount, ownedCreepCount, enemyCreepCount, otherCreepCount, powerCreepCount) = QuestDBDtoHelper.GetCreepCounts(screepsRoomHistory);
             var (ownedCreepPartsCount, ownedCreepPartsCounts) = QuestDBDtoHelper.GetCreepPartsCounts(screepsRoomHistory);
             var (creepIntentCount, creepIntentCounts, creepEnergyInflow, creepEnergyOutflow) = QuestDBDtoHelper.GetCreepIntentsCounts(screepsRoomHistory);
-            var (ownedRoomCount, reservedRoomCount) = (Convert.ToInt32(screepsRoomHistory.Structures.Controller.OwnedUserIdCount), Convert.ToInt32(screepsRoomHistory.Structures.Controller.ReservationUserIdCount));
-            var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory);
+            var (ownedRoomCount, reservedRoomCount) = (screepsRoomHistory.Structures.Controller.OwnedUserIdCount, screepsRoomHistory.Structures.Controller.ReservationUserIdCount);
+            var (storeTotal, storeTotals) = QuestDBDtoHelper.GetStoreCounts(screepsRoomHistory, ConfigSettingsState.QuestDbDetailedEnabled);
             var controller = screepsRoomHistory.Structures.Controller;
 
             var questDBHistoryDTO = new QuestDBHistoryDTO()
@@ -1174,14 +1117,17 @@ namespace UserTrackerShared.DBClients
                 OwnedRoomCount = ownedRoomCount,
                 ReservedRoomCount = reservedRoomCount,
 
-                ControllerLevel = Convert.ToInt32(controller?.Level ?? null),
-                ControllerProgress = Convert.ToInt32(controller?.Progress ?? null),
-                ControllerProgressTotal = Convert.ToInt32(controller?.ProgressTotal ?? null),
-                ControllerPointsPerTick = Convert.ToInt32(controller?.Upgraded ?? null),
-                ControllerScorePerTick = Convert.ToInt32(controller?.ScorePerTick ?? null),
+                ControllerLevel = controller?.Level,
+                ControllerProgress = controller?.Progress,
+                ControllerProgressTotal = controller?.ProgressTotal,
+                ControllerPointsPerTick = controller?.Upgraded,
+                ControllerScorePerTick = controller?.ScorePerTick,
 
-                StoreTotal = Convert.ToInt32(storeTotal),
-                StoreTotals = storeTotals
+                StoreTotal = storeTotal,
+                StoreTotals = storeTotals,
+                Structures = ConfigSettingsState.QuestDbDetailedEnabled ? screepsRoomHistory.Structures : null,
+                Creeps = ConfigSettingsState.QuestDbDetailedEnabled ? screepsRoomHistory.Creeps : null,
+                GroundResources = ConfigSettingsState.QuestDbDetailedEnabled ? screepsRoomHistory.GroundResources : null
             };
 
             return questDBHistoryDTO;

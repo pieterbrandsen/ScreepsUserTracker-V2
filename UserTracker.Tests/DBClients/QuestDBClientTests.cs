@@ -62,18 +62,18 @@ namespace UserTracker.Tests.DBClients
 
             Assert.Equal(expectedStructureCount, structureCount);
             Assert.Equal(expectedPlacedStructureCount, placedStructureCount);
-            Assert.Equal(12, structureCounts["wall"]);
-            Assert.Equal(3, structureCounts["container"]);
-            Assert.Equal(5, structureCounts["extension"]);
-            Assert.Equal(6, structureCounts["rampart"]);
-            Assert.Equal(3, structureCounts["link"]);
-            Assert.Equal(4, structureCounts["powerspawn"]);
-            Assert.Equal(10, structureCounts["road"]);
-            Assert.Equal(3, structureCounts["spawn"]);
-            Assert.Equal(1, structureCounts["storage"]);
-            Assert.Equal(2, structureCounts["terminal"]);
-            Assert.Equal(2, structureCounts["tower"]);
-            Assert.Equal(1, structureCounts["nuker"]);
+            Assert.Equal(12.9m, structureCounts["wall"]);
+            Assert.Equal(3.4m, structureCounts["container"]);
+            Assert.Equal(5.2m, structureCounts["extension"]);
+            Assert.Equal(6.8m, structureCounts["rampart"]);
+            Assert.Equal(3.9m, structureCounts["link"]);
+            Assert.Equal(4.2m, structureCounts["powerspawn"]);
+            Assert.Equal(10.5m, structureCounts["road"]);
+            Assert.Equal(3.5m, structureCounts["spawn"]);
+            Assert.Equal(1.0m, structureCounts["storage"]);
+            Assert.Equal(2.1m, structureCounts["terminal"]);
+            Assert.Equal(2.8m, structureCounts["tower"]);
+            Assert.Equal(1.0m, structureCounts["nuker"]);
         }
 
         [Fact]
@@ -296,7 +296,7 @@ namespace UserTracker.Tests.DBClients
         [Fact]
         public void QuestDBDtoHelper_GetStructureStoreCounts_IncludesEveryPart()
         {
-            var expectedValues = new Dictionary<string, int>
+            var expectedValues = new Dictionary<string, decimal>
             {
                 ["energy"] = 10,
                 ["battery"] = 20,
@@ -384,10 +384,10 @@ namespace UserTracker.Tests.DBClients
             Assert.Equal(intentCount, questDto.CreepIntentCount);
             Assert.Equal(intentCounts, questDto.CreepIntentCounts);
 
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Level), questDto.ControllerLevel);
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Progress), questDto.ControllerProgress);
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.ProgressTotal), questDto.ControllerProgressTotal);
-            Assert.Equal(dto.Structures.Controller == null ? null : Convert.ToInt32(dto.Structures.Controller.Upgraded), questDto.ControllerPointsPerTick);
+            Assert.Equal(dto.Structures.Controller == null ? null : dto.Structures.Controller.Level, questDto.ControllerLevel);
+            Assert.Equal(dto.Structures.Controller == null ? null : dto.Structures.Controller.Progress, questDto.ControllerProgress);
+            Assert.Equal(dto.Structures.Controller == null ? null : dto.Structures.Controller.ProgressTotal, questDto.ControllerProgressTotal);
+            Assert.Equal(dto.Structures.Controller == null ? null : dto.Structures.Controller.Upgraded, questDto.ControllerPointsPerTick);
             Assert.Equal(0, inflow);
             Assert.Equal(16, outflow);
 
@@ -552,6 +552,127 @@ namespace UserTracker.Tests.DBClients
             Assert.Contains("structurecount", points.Select(p => p.Field));
         }
 
+        [Fact]
+        public void Projection_PreservesFractionalWindowAverages()
+        {
+            var history = new ScreepsRoomHistoryDto();
+            history.Structures.Controller.Level = 2.37m;
+            history.Structures.Controller.OwnedUserIdCount = 0.37m;
+            history.Structures.Rampart.Count = 0.01m;
+            history.Structures.Storage.Store.energy = 0.25m;
+            history.Creeps.OwnedCreeps.Count = 0.01m;
+            history.Creeps.OwnedCreeps.BodyParts.Work = 0.03m;
+            history.Creeps.OwnedCreeps.ActionLog.Harvest.Count = 0.01m;
+            history.Creeps.OwnedCreeps.ActionLog.Harvest.Inflow = 0.02m;
+            history.Creeps.OwnedCreeps.ActionLog.Repair.Outflow = 0.04m;
+
+            var dto = QuestDBClientState.GetQuestDBDto(history);
+            var fields = CaptureUploadedPoints(() => QuestDBClientWriter.UploadRoomHistoryData(
+                "test", "shard", "room", 100, 200, "user", dto)).ToDictionary(p => p.Field, p => p.Value);
+            Assert.Equal(2.37, fields["controllerlevel"]);
+            Assert.Equal(0.37, fields["ownedroomcount"]);
+            Assert.Equal(0.01, fields["structurecounts_rampart"]);
+            Assert.Equal(0.25, fields["storetotals_energy"]);
+            Assert.Equal(0.01, fields["ownedcreepcount"]);
+            Assert.Equal(0.03, fields["ownedcreeppartscounts_work"]);
+            Assert.Equal(0.01, fields["creepintentcounts_harvest"]);
+            Assert.Equal(0.02, fields["creepenergyinflow"]);
+            Assert.Equal(0.04, fields["creepenergyoutflow"]);
+        }
+
+        [Theory]
+        [InlineData(false, "room")]
+        [InlineData(false, "user")]
+        [InlineData(false, "global")]
+        [InlineData(true, "room")]
+        [InlineData(true, "user")]
+        [InlineData(true, "global")]
+        public void DetailedProjection_IsOptInForEveryHistoryTable(bool detailed, string table)
+        {
+            var previous = ConfigSettingsState.QuestDbDetailedEnabled;
+            ConfigSettingsState.QuestDbDetailedEnabled = detailed;
+            try
+            {
+                var history = new ScreepsRoomHistoryDto();
+                history.Structures.Wall.Hits = 100.5m;
+                history.Structures.Rampart.Hits = 200.25m;
+                history.Structures.Extension.EnergyCapacity = 50;
+                history.Structures.Link.Energy = 10;
+                history.Structures.Tower.Energy = 20;
+                history.Structures.Source.Energy = 30;
+                history.Structures.ConstructionSite.Progress = 40;
+                history.Structures.ConstructionSite.ProgressTotal = 500;
+                history.Structures.ConstructionSite.TypesBuilding["spawn"] = 0.5m;
+                history.Structures.Storage.Store.XGH2O = 1.25m;
+                history.Structures.Terminal.Store.XGH2O = 2.5m;
+                history.Structures.Container.Store.XGH2O = 3.75m;
+                history.Creeps.OwnedCreeps.ActionLog.Attack.Damage = 9;
+                history.Creeps.EnemyCreeps.ActionLog.Heal.Heal = 8;
+                history.Creeps.OtherCreeps.ActionLog.Build.Outflow = 7;
+                history.Creeps.PowerCreeps.ActionLog.Repair.Effect = 6;
+                history.GroundResources["energy"] = 12.5m;
+                var dto = QuestDBClientState.GetQuestDBDto(history);
+                var fields = CaptureUploadedPoints(() =>
+                {
+                    if (table == "room") QuestDBClientWriter.UploadRoomHistoryData("test", "shard", "room", 1, 2, "user", dto);
+                    else if (table == "user") QuestDBClientWriter.UploadUserHistoryData("test", "shard", 1, 2, "user", dto);
+                    else QuestDBClientWriter.UploadGlobalHistoryData("test", "shard", 1, 2, dto);
+                }).ToDictionary(p => p.Field, p => p.Value);
+
+                Assert.Contains("structurecount", fields.Keys);
+                Assert.Contains("storetotals_energy", fields.Keys);
+                if (!detailed)
+                {
+                    Assert.DoesNotContain(fields.Keys, k => k.StartsWith("structures_") || k.StartsWith("creeps_") || k.StartsWith("groundresources_"));
+                    Assert.DoesNotContain("storetotals_xgh2o", fields.Keys);
+                    return;
+                }
+
+                var expected = new Dictionary<string, double>
+                {
+                    ["structures_wall_hits"] = 100.5, ["structures_rampart_hits"] = 200.25,
+                    ["structures_extension_energycapacity"] = 50, ["structures_link_energy"] = 10,
+                    ["structures_tower_energy"] = 20, ["structures_source_energy"] = 30,
+                    ["structures_constructionsite_progress"] = 40, ["structures_constructionsite_progresstotal"] = 500,
+                    ["structures_constructionsite_typesbuilding_spawn"] = 0.5,
+                    ["structures_storage_store_xgh2o"] = 1.25, ["structures_terminal_store_xgh2o"] = 2.5,
+                    ["structures_container_store_xgh2o"] = 3.75, ["storetotals_xgh2o"] = 7.5,
+                    ["creeps_ownedcreeps_actionlog_attack_damage"] = 9,
+                    ["creeps_enemycreeps_actionlog_heal_heal"] = 8,
+                    ["creeps_othercreeps_actionlog_build_outflow"] = 7,
+                    ["creeps_powercreeps_actionlog_repair_effect"] = 6,
+                    ["groundresources_energy"] = 12.5
+                };
+                foreach (var (key, value) in expected) Assert.Equal(value, fields[key]);
+                foreach (var property in typeof(Store).GetProperties())
+                    Assert.Contains("storetotals_" + property.Name.ToLowerInvariant(), fields.Keys);
+                Assert.Equal(0, fields["storetotals_xuh2o"]);
+            }
+            finally { ConfigSettingsState.QuestDbDetailedEnabled = previous; }
+        }
+
+        [Fact]
+        public async Task ConcurrentUploads_EnqueueCompleteRowsIncludingDistinctTicksAtSameTimestamp()
+        {
+            var channel = InitializeHistoryChannel();
+            try
+            {
+                await Task.WhenAll(Enumerable.Range(0, 100).Select(tick => Task.Run(() =>
+                    QuestDBClientWriter.UploadRoomHistoryData("test", "shard", "room", tick, 123, "user", CreateSampleQuestDto()))));
+                var ticks = new HashSet<long>();
+                var expected = CreateExpectedFieldValues(CreateSampleQuestDto());
+                while (channel.Reader.TryRead(out var row))
+                {
+                    Assert.True(ticks.Add(row[0].Tick));
+                    Assert.All(row, p => Assert.Equal(row[0].Tick, p.Tick));
+                    var fields = row.ToDictionary(p => p.Field, p => p.Value);
+                    foreach (var (key, value) in expected) Assert.Equal(value, fields[key]);
+                }
+                Assert.Equal(100, ticks.Count);
+            }
+            finally { ResetHistoryChannel(); }
+        }
+
         private static ScreepsRoomHistoryDto LoadRoomHistoryDto(string fileName)
         {
             EnsureConfigInitialized();
@@ -608,7 +729,7 @@ namespace UserTracker.Tests.DBClients
             {
                 StructureCount = 3,
                 PlacedStructureCount = 4,
-                StructureCounts = new Dictionary<string, int>
+                StructureCounts = new Dictionary<string, decimal>
                 {
                     ["wall"] = 2,
                     ["extension"] = 1
@@ -619,13 +740,13 @@ namespace UserTracker.Tests.DBClients
                 OtherCreepCount = 2,
                 PowerCreepCount = 1,
                 OwnedCreepPartsCount = 6,
-                OwnedCreepPartsCounts = new Dictionary<string, int>
+                OwnedCreepPartsCounts = new Dictionary<string, decimal>
                 {
                     ["move"] = 3,
                     ["work"] = 3
                 },
                 CreepIntentCount = 5,
-                CreepIntentCounts = new Dictionary<string, int>
+                CreepIntentCounts = new Dictionary<string, decimal>
                 {
                     ["move"] = 3,
                     ["attack"] = 2
@@ -638,7 +759,7 @@ namespace UserTracker.Tests.DBClients
                 ControllerPointsPerTick = 3,
                 ControllerScorePerTick = 5,
                 StoreTotal = 600,
-                StoreTotals = new Dictionary<string, int>
+                StoreTotals = new Dictionary<string, decimal>
                 {
                     ["energy"] = 500,
                     ["battery"] = 100
@@ -660,9 +781,9 @@ namespace UserTracker.Tests.DBClients
             }
         }
 
-        private static Channel<QuestHistoryPointDataParameter> InitializeHistoryChannel()
+        private static Channel<IReadOnlyList<QuestHistoryPointDataParameter>> InitializeHistoryChannel()
         {
-            var channel = Channel.CreateUnbounded<QuestHistoryPointDataParameter>(new UnboundedChannelOptions
+            var channel = Channel.CreateUnbounded<IReadOnlyList<QuestHistoryPointDataParameter>>(new UnboundedChannelOptions
             {
                 SingleReader = true,
                 SingleWriter = true
@@ -686,12 +807,12 @@ namespace UserTracker.Tests.DBClients
             field!.SetValue(null, value);
         }
 
-        private static List<QuestHistoryPointDataParameter> ReadHistoryChannel(Channel<QuestHistoryPointDataParameter> channel)
+        private static List<QuestHistoryPointDataParameter> ReadHistoryChannel(Channel<IReadOnlyList<QuestHistoryPointDataParameter>> channel)
         {
             var points = new List<QuestHistoryPointDataParameter>();
             while (channel.Reader.TryRead(out var point))
             {
-                points.Add(point);
+                points.AddRange(point);
             }
 
             return points;
@@ -701,31 +822,31 @@ namespace UserTracker.Tests.DBClients
         {
             return new Dictionary<string, double>
             {
-                ["structurecount"] = dto.StructureCount,
-                ["placedstructurecount"] = dto.PlacedStructureCount,
-                ["structurecounts_wall"] = dto.StructureCounts["wall"],
-                ["structurecounts_extension"] = dto.StructureCounts["extension"],
-                ["creepcount"] = dto.CreepCount,
-                ["ownedcreepcount"] = dto.OwnedCreepCount,
-                ["enemycreepcount"] = dto.EnemyCreepCount,
-                ["othercreepcount"] = dto.OtherCreepCount,
-                ["powercreepcount"] = dto.PowerCreepCount,
-                ["ownedcreeppartscount"] = dto.OwnedCreepPartsCount,
-                ["ownedcreeppartscounts_move"] = dto.OwnedCreepPartsCounts["move"],
-                ["ownedcreeppartscounts_work"] = dto.OwnedCreepPartsCounts["work"],
-                ["creepintentcount"] = dto.CreepIntentCount,
-                ["creepintentcounts_move"] = dto.CreepIntentCounts["move"],
-                ["creepintentcounts_attack"] = dto.CreepIntentCounts["attack"],
-                ["ownedroomcount"] = dto.OwnedRoomCount,
-                ["reservedroomcount"] = dto.ReservedRoomCount,
-                ["controllerlevel"] = dto.ControllerLevel ?? 0,
-                ["controllerprogress"] = dto.ControllerProgress ?? 0,
-                ["controllerprogresstotal"] = dto.ControllerProgressTotal ?? 0,
-                ["controllerpointspertick"] = dto.ControllerPointsPerTick ?? 0,
-                ["controllerscorepertick"] = dto.ControllerScorePerTick ?? 0,
-                ["storetotal"] = dto.StoreTotal,
-                ["storetotals_energy"] = dto.StoreTotals["energy"],
-                ["storetotals_battery"] = dto.StoreTotals["battery"]
+                ["structurecount"] = (double)(dto.StructureCount),
+                ["placedstructurecount"] = (double)(dto.PlacedStructureCount),
+                ["structurecounts_wall"] = (double)(dto.StructureCounts["wall"]),
+                ["structurecounts_extension"] = (double)(dto.StructureCounts["extension"]),
+                ["creepcount"] = (double)(dto.CreepCount),
+                ["ownedcreepcount"] = (double)(dto.OwnedCreepCount),
+                ["enemycreepcount"] = (double)(dto.EnemyCreepCount),
+                ["othercreepcount"] = (double)(dto.OtherCreepCount),
+                ["powercreepcount"] = (double)(dto.PowerCreepCount),
+                ["ownedcreeppartscount"] = (double)(dto.OwnedCreepPartsCount),
+                ["ownedcreeppartscounts_move"] = (double)(dto.OwnedCreepPartsCounts["move"]),
+                ["ownedcreeppartscounts_work"] = (double)(dto.OwnedCreepPartsCounts["work"]),
+                ["creepintentcount"] = (double)(dto.CreepIntentCount),
+                ["creepintentcounts_move"] = (double)(dto.CreepIntentCounts["move"]),
+                ["creepintentcounts_attack"] = (double)(dto.CreepIntentCounts["attack"]),
+                ["ownedroomcount"] = (double)(dto.OwnedRoomCount),
+                ["reservedroomcount"] = (double)(dto.ReservedRoomCount),
+                ["controllerlevel"] = (double)(dto.ControllerLevel ?? 0),
+                ["controllerprogress"] = (double)(dto.ControllerProgress ?? 0),
+                ["controllerprogresstotal"] = (double)(dto.ControllerProgressTotal ?? 0),
+                ["controllerpointspertick"] = (double)(dto.ControllerPointsPerTick ?? 0),
+                ["controllerscorepertick"] = (double)(dto.ControllerScorePerTick ?? 0),
+                ["storetotal"] = (double)(dto.StoreTotal),
+                ["storetotals_energy"] = (double)(dto.StoreTotals["energy"]),
+                ["storetotals_battery"] = (double)(dto.StoreTotals["battery"])
             };
         }
 
