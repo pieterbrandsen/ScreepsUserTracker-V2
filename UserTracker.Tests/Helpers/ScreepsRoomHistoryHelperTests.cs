@@ -76,6 +76,52 @@ public class ScreepsRoomHistoryHelperTests
     }
 
     [Fact]
+    public void UpdateRoomHistory_CountsCreepOfReservationOwnerAsOwned()
+    {
+        var roomHistory = new ScreepsRoomHistory();
+        roomHistory.TypeMap["creep1"] = "creep";
+        roomHistory.Structures.Controller = new StructureController { Reservation = new Reservation { User = "reserver" } };
+
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("creep1", roomHistory, new Dictionary<string, object?> { ["user"] = "reserver" });
+
+        Assert.True(roomHistory.Creeps.OwnedCreeps.ContainsKey("creep1"));
+        Assert.Empty(roomHistory.Creeps.EnemyCreeps);
+    }
+
+    [Fact]
+    public void UpdateRoomHistory_CountsCreepsInUnownedUnreservedRoomAsOwned()
+    {
+        var roomHistory = new ScreepsRoomHistory();
+        roomHistory.TypeMap["miner"] = "creep";
+        roomHistory.TypeMap["hauler"] = "creep";
+        roomHistory.Structures.Controller = new StructureController();
+
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("miner", roomHistory, new Dictionary<string, object?> { ["user"] = "me" });
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("hauler", roomHistory, new Dictionary<string, object?> { ["user"] = "me" });
+
+        Assert.Equal(2, roomHistory.Creeps.OwnedCreeps.Count);
+        Assert.Empty(roomHistory.Creeps.EnemyCreeps);
+    }
+
+    [Fact]
+    public void UpdateRoomHistory_KeepsOtherUsersCreepEnemyInUnownedUnreservedRoom()
+    {
+        var roomHistory = new ScreepsRoomHistory();
+        roomHistory.TypeMap["miner"] = "creep";
+        roomHistory.TypeMap["hauler"] = "creep";
+        roomHistory.TypeMap["raider"] = "creep";
+        roomHistory.Structures.Controller = new StructureController();
+
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("miner", roomHistory, new Dictionary<string, object?> { ["user"] = "me" });
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("hauler", roomHistory, new Dictionary<string, object?> { ["user"] = "me" });
+        ScreepsRoomHistoryHelper.UpdateRoomHistory("raider", roomHistory, new Dictionary<string, object?> { ["user"] = "them" });
+
+        Assert.True(roomHistory.Creeps.OwnedCreeps.ContainsKey("miner"));
+        Assert.True(roomHistory.Creeps.OwnedCreeps.ContainsKey("hauler"));
+        Assert.True(roomHistory.Creeps.EnemyCreeps.ContainsKey("raider"));
+    }
+
+    [Fact]
     public void RemoveFromRoomHistory_RemovesWallAndControllerReferences()
     {
         var roomHistory = new ScreepsRoomHistory();
