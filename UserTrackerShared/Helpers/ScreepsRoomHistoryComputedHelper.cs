@@ -10,6 +10,33 @@ namespace UserTrackerShared.Helpers
 
     public static class ScreepsRoomHistoryHelper
     {
+        /// <summary>
+        /// Whether a creep of <paramref name="user"/> counts as owned in a room that has a controller.
+        /// A controller's owner or reserver decides it. A room nobody owns or reserves (an unreserved
+        /// remote) has no one to be enemy of, so the creep is owned when its user is the room's dominant
+        /// creep user, which is also the user the room's row is attributed to; a different user's
+        /// creeps there stay enemy.
+        /// </summary>
+        private static bool IsOwnCreep(string key, string? user, ScreepsRoomHistory roomHistory)
+        {
+            var controller = roomHistory.Structures.Controller;
+            var controlledBy = controller?.User ?? controller?.Reservation?.User;
+            if (controlledBy != null) return controlledBy == user;
+            if (user == null) return false;
+
+            string? dominant = null;
+            var dominantCount = 0;
+            var counts = new Dictionary<string, int>();
+            foreach (var (id, creepUser) in roomHistory.ObjectUserMap)
+            {
+                if (id == key || roomHistory.TypeMap.GetValueOrDefault(id) != "creep") continue;
+                var count = counts.GetValueOrDefault(creepUser) + 1;
+                counts[creepUser] = count;
+                if (count > dominantCount) (dominant, dominantCount) = (creepUser, count);
+            }
+            return dominant == null || dominant == user;
+        }
+
         public static ScreepsRoomHistory UpdateRoomHistory(string key, ScreepsRoomHistory roomHistory, Dictionary<string, object?> changes)
         {
             var type = roomHistory.TypeMap.GetValueOrDefault(key);
@@ -50,7 +77,7 @@ namespace UserTrackerShared.Helpers
                     break;
                 case "creep":
                     var hasController = roomHistory.Structures.Controller != null;
-                    var isOwnCreep = hasController && (roomHistory.Structures.Controller?.User == user || roomHistory.Structures.Controller?.Reservation?.User == user);
+                    var isOwnCreep = hasController && IsOwnCreep(key, user, roomHistory);
                     Creep? creep = null;
                     roomHistory.Creeps.OwnedCreeps.TryGetValue(key, out Creep? owCreep);
                     roomHistory.Creeps.EnemyCreeps.TryGetValue(key, out Creep? eCreep);
